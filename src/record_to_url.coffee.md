@@ -3,6 +3,7 @@
     mkfifo = require './mkfifo'
     wait_for_stream = require './wait_for_stream'
     request = require 'superagent-as-promised'
+    assert = require 'assert'
 
     winston = require 'winston'
     logger = winston
@@ -12,6 +13,8 @@ Usage: `record_to_url.call(call,fifo_path,upload_url).then (res) -> @command ...
 The DTMF that was pressed is available in `call.body.playback_terminator_used` in the callback
 
     module.exports = (fifo_path,upload_url,message_max_duration = 300,streaming = false) ->
+      assert fifo_path?, 'Missing fifo_path'
+      assert upload_url?, 'Missing upload_url'
 
       logger.info "record_to_url", {fifo_path,upload_url,message_max_duration,streaming}
 

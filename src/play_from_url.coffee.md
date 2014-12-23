@@ -2,10 +2,13 @@
     fs = Promise.promisifyAll require 'fs'
     mkfifo = require './mkfifo'
     request = require 'superagent-as-promised'
+    assert = require 'assert'
 
 Usage: `play_from_url.call(call,fifo_path,download_url).then (res) -> @command ...`
 
     module.exports = (fifo_path,download_url,streaming = true) ->
+      assert fifo_path?, 'Missing fifo_path'
+      assert download_url?, 'Missing download_url'
 
       logger.info "play_from_url", {fifo_path,download_url,streaming}
 
