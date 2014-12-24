@@ -2,3 +2,5 @@
 --reporter spec
 --require chai
 --require chai-as-promised
+--bail
+--check-leaks

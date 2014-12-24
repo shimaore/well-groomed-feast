@@ -9,9 +9,12 @@ The plan
     path = require 'path'
     current_dir = path.dirname __filename
     process.chdir current_dir
-    exec = (cmd) ->
+    exec = (cmd,fail_if_stderr = false) ->
       logger.info cmd
       _exec cmd
+      .then ([stdout,stderr]) ->
+        logger.info 'Command returned', {cmd,stdout,stderr}
+        throw new Error stderr if stderr and fail_if_stderr
       .catch (error) ->
         logger.error "#{cmd} failed: #{error}"
         throw error
@@ -47,16 +50,16 @@ and start it
         .then -> exec "docker build -t #{docker.image} #{docker.dir}"
         .then -> exec "docker kill #{docker.container}"
         .catch -> true
+        .delay 2*seconds
         .then -> exec "docker rm #{docker.container}"
         .catch -> true
         .then -> exec "docker run -d --net=host --name #{docker.container} #{docker.image}"
-        .catch (error) ->
-          logger.error "play-record tester: Error running the image: #{error}"
-          throw error
         .then ->
           logger.info "play-record tester: Waiting for FreeSwitch to be ready."
         .delay 4*seconds
-        .then -> exec "docker exec #{docker.container} npm test"
+        # .then -> exec "docker exec #{docker.container} npm test"
+        # FIXME apparently docker exec doesn't propagate the exit code (tested with mocha directly as well).
+        .then -> exec "docker exec #{docker.container} npm test", true
 
 Call the recording profile and record
 Call the playing profile and play

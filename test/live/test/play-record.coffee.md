@@ -9,6 +9,7 @@ The plan
     seconds = 1000
 
     zappa = require 'zappajs'
+    parse_express_raw_body = (require 'parse-express-raw-body')()
     FS = require 'esl'
     logger = require 'winston'
     logger.remove logger.transports.Console
@@ -37,25 +38,25 @@ Create a FreeSwitch image with our scripts
         url: "http://#{web.host}:#{web.port}/content.wav"
 
       before ->
-        @timeout 9*seconds
 
         web.server = zappa web.host, web.port, ->
           @get '/content.wav', ->
             logger.info 'play-record tester: GET /content.wav'
             @res.type web.content_type
             @send web.content
-          @put '/content.wav', ->
-            logger.info 'play-record tester: PUT /content.wav'
+          @put '/content.wav', parse_express_raw_body, ->
+            logger.info 'play-record tester: PUT /content.wav' # , (require 'util').inspect @request
             web.content_type = @req.get 'content-type'
-            logger.info 'play-record tester', typeof @body
-            web.content = new Buffer @body
+            web.content = @body
             @res.status 200
 
         fs.server = FS.server ->
           logger.info "FS.server: Call in" #, @data
+          ###
           @trace (o) ->
             delete o.body
             logger.info 'FS.server', o
+          ###
           switch @data['Channel-Destination-Number']
             when 'record'
               @linger()
@@ -63,7 +64,7 @@ Create a FreeSwitch image with our scripts
                 @command 'answer'
               .then ->
                 logger.info "FS.server: Calling record_to_url"
-                record_to_url.call this, fs.our_fifo_dir, fs.url
+                record_to_url.call this, fs.fifo_path, fs.url
               .then (res) ->
                 logger.info 'FS.server: Response after record_to_url', res
             when 'play'
@@ -80,7 +81,9 @@ Create a FreeSwitch image with our scripts
 and start it
 
       it 'should save a recording', (done) ->
-        @timeout 12*seconds
+        record_time = 10*seconds
+        wait_time = 4*seconds
+        @timeout record_time+wait_time+1*seconds
         logger.info "play-record tester: Starting..."
         call_uuid = null
 
@@ -95,15 +98,16 @@ and start it
           .then (res) ->
             logger.info "FS.client: Recording"
             call_uuid = res.uuid
-          .delay 7*seconds
+          .delay record_time
           .then ->
             @hangup_uuid call_uuid
-          .delay 3*seconds
+          .delay wait_time
           .then ->
             fs.client.end()
-            web.should.have.property 'content'
-            # web.content.byteLength().should.be.greater.than ...
-          .then done
+            web.should.have.property('content_type').equal 'audio/vnd.wave'
+            logger.info "web.content.length = #{web.content.length}"
+            web.should.have.property('content').with.length.gt 0
+            done()
           .catch done
         fs.client.connect fs.event_port, fs.host
 

@@ -1,7 +1,7 @@
     Promise = require 'bluebird'
     fs = Promise.promisifyAll require 'fs'
     mkfifo = require './mkfifo'
-    wait_for_stream = require './wait_for_stream'
+    stream_as_promised = require 'stream-as-promised'
     request = require 'superagent-as-promised'
     assert = require 'assert'
 
@@ -28,6 +28,15 @@ The first one is to stream the audio directly to CouchDB. In that case we create
       stream = null
       req = null
 
+      create_stream = ->
+        logger.info "Stats for #{fifo_path}", fs.statSync fifo_path
+        s = fs.createReadStream fifo_path
+        stream = stream_as_promised s
+        req = request.put upload_url
+        req.type 'audio/vnd.wave' # RFC2361
+        s.pipe req
+        return
+
       if streaming
         it =
           mkfifo fifo_path
@@ -36,11 +45,7 @@ Start the proxy on the fifo
 
           .then ->
             logger.info "record_to_url: Starting proxy for #{fifo_path} to #{upload_url}"
-            stream = fs.createReadStream fifo_path
-            req = request
-              .put upload_url
-              .type 'audio/vnd.wave' # RFC2361
-            stream.pipe req
+            create_stream()
 
         wait =
           @once 'RECORD_STOP'
@@ -54,11 +59,7 @@ The other one is to first record the audio in a file (using FreeSwitch), then pu
           @once 'RECORD_STOP'
           .then ->
             logger.info "record_to_url: Pushing #{fifo_path} to #{upload_url}", fs.statSync fifo_path
-            stream = fs.createReadStream fifo_path
-            req = request
-              .put upload_url
-              .type 'audio/vnd.wave' # RFC2361
-            stream.pipe req
+            create_stream()
 
       it = it.bind this
 
@@ -82,12 +83,12 @@ Play beep to indicate we are ready to record
         wait
       .then ->
         logger.info 'record_to_url: Wait done'
+        stream
+      .then ->
+        logger.info 'record_to_url: Stream completed'
         req
       .then ->
         logger.info 'record_to_url: Request completed'
-        wait_for_stream stream
-      .then ->
-        logger.info 'record_to_url: Stream completed'
       .then cleanup
       .catch (error) ->
         logger.error "record_to_url: #{error}"
