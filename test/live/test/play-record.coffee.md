@@ -44,6 +44,7 @@ Create a FreeSwitch image with our scripts
             logger.info 'play-record tester: GET /content.wav'
             @res.type web.content_type
             @send web.content
+            web.content_requested = true
           @put '/content.wav', parse_express_raw_body, ->
             logger.info 'play-record tester: PUT /content.wav' # , (require 'util').inspect @request
             web.content_type = @req.get 'content-type'
@@ -73,7 +74,7 @@ Create a FreeSwitch image with our scripts
                 @command 'answer'
               .then ->
                 logger.info "FS.server: Calling play_from_url"
-                play_from_url.call this, fs.fifo_dir, fs.url
+                play_from_url.call this, fs.fifo_path, fs.url
               .then (res) ->
                 logger.info 'FS.server: play_from_url', res
         fs.server.listen fs.server_port
@@ -81,13 +82,13 @@ Create a FreeSwitch image with our scripts
 and start it
 
       it 'should save a recording', (done) ->
+        logger.info "test record: Starting."
         record_time = 10*seconds
         wait_time = 4*seconds
         @timeout record_time+wait_time+1*seconds
-        logger.info "play-record tester: Starting..."
         call_uuid = null
 
-        fs.client = FS.client ->
+        fs.record_client = FS.client ->
           ###
           @trace (o) ->
             logger.info 'FS.client', o
@@ -103,13 +104,14 @@ and start it
             @hangup_uuid call_uuid
           .delay wait_time
           .then ->
-            fs.client.end()
+            fs.record_client.end()
             web.should.have.property('content_type').equal 'audio/vnd.wave'
             logger.info "web.content.length = #{web.content.length}"
             web.should.have.property('content').with.length.gt 0
             done()
           .catch done
-        fs.client.connect fs.event_port, fs.host
+        fs.record_client.connect fs.event_port, fs.host
+
 
 Call the recording profile and record
 Call the playing profile and play
