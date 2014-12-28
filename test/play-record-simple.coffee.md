@@ -20,7 +20,7 @@ These tests validate the base functioning by `emulating` ESL.
 Record To URL
 =============
 
-    describe.only 'White-box test of record_to_url', ->
+    describe 'White-box test of record_to_url', ->
 
       class RecordSocket
         write: (text) ->
@@ -79,10 +79,10 @@ Create the web service
         fifo_path = path.join fifo_dir, 'record.some.file.wav'
         record_to_url.call response, fifo_path, rec.url, null, false
         .then ->
-          rec.should.have.property('content_type').eql 'audio/vnd.wave'
-          rec.should.have.property('content').length 8000/20*5
           fs.unlinkAsync fifo_path
             .catch -> yes
+          rec.should.have.property('content_type').eql 'audio/vnd.wave'
+          rec.should.have.property('content').length 8000/20*5
 
       it 'should pipe the file', ->
         rec = server()
@@ -93,10 +93,10 @@ Create the web service
         fifo_path = path.join fifo_dir, 'record.some.fifo.wav'
         record_to_url.call response, fifo_path, rec.url, null, true
         .then ->
-          rec.should.have.property('content_type').eql 'audio/vnd.wave'
-          rec.should.have.property('content').length 8000/20*5
           fs.unlinkAsync fifo_path
             .catch -> yes
+          rec.should.have.property('content_type').eql 'audio/vnd.wave'
+          rec.should.have.property('content').length 8000/20*5
 
 Play From URL
 =============
