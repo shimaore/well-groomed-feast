@@ -6,8 +6,11 @@ Simple (white-box) tests for record and play
 
     Promise = require 'bluebird'
     fs = Promise.promisifyAll require 'fs'
+    stream_as_promised = require 'stream-as-promised'
     path = require 'path'
     emulator = require './esl_emulator'
+    Response = require 'esl/lib/response'
+    write_some_streaming_content = require './write_some_streaming_content'
 
     fifo_dir = path.dirname module.filename
 
@@ -36,38 +39,39 @@ Create the web service
       before ->
         zappa = require 'zappajs'
         parse_express_raw_body = (require 'parse-express-raw-body')()
-        web.server = zappa web.host, web.port, ->
+        web.app = zappa web.host, web.port, ->
           @put '/content.wav', parse_express_raw_body, ->
             web.content_type = @req.get 'content-type'
             web.content = @body
             @json ok:true
         fsp.url = "http://#{web.host}:#{web.port}/content.wav"
 
-      it 'should save the file', ->
-        write_some_streaming_content = (p) ->
-          # console.log "*** Writing some streaming content to #{p}"
-          (require './write_some_streaming_content') fs.createWriteStream p
+      after ->
+        web.app.server.close()
+        fs.unlinkAsync fsp.fifo_path
+          .catch -> yes
 
-        Response = require 'esl/lib/response'
-        class Socket
+      it 'should save the file', ->
+        class RecordSocket
           write: (text) ->
             {cmd,headers,body} = emulator.parse text
-            emits = => emulator.emits @response, headers
 
             if headers['execute-app-name'] is 'record'
-              write_some_streaming_content headers['execute-app-arg'].split(' ')[0]
-              .then emits
+              emulator.emits @response, headers
+              filename = headers['execute-app-arg'].split(' ')[0]
+              console.log "*** RecordSocket.write: write stream #{filename}"
+              write_some_streaming_content fs.createWriteStream filename
               .then =>
                 @response.emit 'RECORD_STOP'
 
             else if text.match /^sendmsg/
-              emits()
+              emulator.emits @response, headers
 
           end: ->
             # console.log '*** Socket.end()'
             return
 
-        socket = new Socket()
+        socket = new RecordSocket()
         response = new Response socket
         # response.trace on
         socket.response = response
