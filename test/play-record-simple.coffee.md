@@ -7,10 +7,14 @@ Simple (white-box) tests for record and play
     Promise = require 'bluebird'
     fs = Promise.promisifyAll require 'fs'
     path = require 'path'
+    emulator = require './esl_emulator'
 
     fifo_dir = path.dirname module.filename
 
 These tests validate the base functioning by `emulating` ESL.
+
+Record To URL
+=============
 
     describe.only 'White-box test of record_to_url', ->
 
@@ -44,30 +48,11 @@ Create the web service
           # console.log "*** Writing some streaming content to #{p}"
           (require './write_some_streaming_content') fs.createWriteStream p
 
-
         Response = require 'esl/lib/response'
         class Socket
           write: (text) ->
-            lines = text.split /\n/
-            cmd = lines.shift()
-            # console.log "*** Socket.write #{JSON.stringify lines}"
-            headers = {}
-            while (line = lines.shift()) isnt ''
-              [key,value] = line.split ': '
-              headers[key] = value
-
-            body = lines.join '\n'
-            # console.log "*** Socket.write #{JSON.stringify {cmd,headers,body}}"
-
-            emits = =>
-              @response.emit 'freeswitch_command_reply',
-                headers:
-                  'Reply-Text': '+OK'
-              @response.emit [
-                'CHANNEL_EXECUTE_COMPLETE'
-                headers['execute-app-name']
-                headers['execute-app-arg']
-              ].join ' '
+            {cmd,headers,body} = emulator.parse text
+            emits = => emulator.emits @response, headers
 
             if headers['execute-app-name'] is 'record'
               write_some_streaming_content headers['execute-app-arg'].split(' ')[0]
