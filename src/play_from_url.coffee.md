@@ -1,6 +1,7 @@
     Promise = require 'bluebird'
     fs = Promise.promisifyAll require 'fs'
     mkfifo = require './mkfifo'
+    stream_as_promised = require 'stream-as-promised'
     request = require 'superagent-as-promised'
     assert = require 'assert'
 
@@ -34,22 +35,18 @@ When streaming, first start the proxy on the fifo
         return
 
       if streaming
-        it =
-          mkfifo fifo_path
-          .then ->
-            logger.info "Preparing streaming from #{download_url} to #{fifo_path}"
-            create_stream()
+        it = mkfifo fifo_path
 
 Download the file
 
       else
-        logger.info "Downloading #{download_url} to #{fifo_path}"
-        create_stream()
-        it = req
+        it = Promise.resolve()
 
       it = it.bind this
 
       it
+      .then ->
+        create_stream()
       .then ->
 
 Play the file, expecting a single digit, storing the outcome in (FreeSwitch) variable `choice`.
