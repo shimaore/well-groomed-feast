@@ -27,7 +27,7 @@
     "nodemailer": "^1.3.0",
     "nodemailer-smtp-transport": "^0.1.13",
     "stream-as-promised": "^2.0.0",
-    "superagent-as-promised": "^1.0.1",
+    "superagent-as-promised": "^2.0.0",
     "timezone": "0.0.38"
   },
   "devDependencies": {

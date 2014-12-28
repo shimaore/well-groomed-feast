@@ -11,6 +11,7 @@ Simple (white-box) tests for record and play
     emulator = require './esl_emulator'
     Response = require 'esl/lib/response'
     write_some_streaming_content = require './write_some_streaming_content'
+    zappa = require 'zappajs'
 
     fifo_dir = path.dirname module.filename
 
@@ -51,40 +52,51 @@ Create the web service
       web =
         host: '127.0.0.1'
         port: 3002
+        ref: {}
 
-      before ->
-        zappa = require 'zappajs'
+      server = ->
+        port = web.port++
         parse_express_raw_body = (require 'parse-express-raw-body')()
-        web.app = zappa web.host, web.port, ->
+        rec =
+          url: "http://#{web.host}:#{port}/content.wav"
+        rec.app = zappa web.host, port, ->
           @put '/content.wav', parse_express_raw_body, ->
-            web.content_type = @req.get 'content-type'
-            web.content = @body
+            rec.content_type = @req.get 'content-type'
+            rec.content = @body
             @json ok:true
-        web.url = "http://#{web.host}:#{web.port}/content.wav"
+        web.ref[port] = rec
 
       after ->
-        web.app.server.close()
+        for own port, rec of web.ref
+          do (rec) -> rec.app.server.close()
 
       it 'should save the file', ->
+        rec = server()
+        socket = new RecordSocket()
+        response = new Response socket
+        # response.trace on
+        socket.response = response
+        fifo_path = path.join fifo_dir, 'record.some.file.wav'
+        record_to_url.call response, fifo_path, rec.url, null, false
+        .then ->
+          rec.should.have.property('content_type').eql 'audio/vnd.wave'
+          rec.should.have.property('content').length 8000/20*5
+          fs.unlinkAsync fifo_path
+            .catch -> yes
+
+      it 'should pipe the file', ->
+        rec = server()
         socket = new RecordSocket()
         response = new Response socket
         # response.trace on
         socket.response = response
         fifo_path = path.join fifo_dir, 'record.some.fifo.wav'
-        record_to_url.call response, fifo_path, web.url
+        record_to_url.call response, fifo_path, rec.url, null, true
         .then ->
-          web.should.have.property('content_type').eql 'audio/vnd.wave'
-          web.should.have.property('content').length 8000/20*5
+          rec.should.have.property('content_type').eql 'audio/vnd.wave'
+          rec.should.have.property('content').length 8000/20*5
           fs.unlinkAsync fifo_path
             .catch -> yes
-
-      it 'should pipe the file', ->
-        socket = new RecordSocket()
-        response = new Response socket
-        # response.trace on
-        socket.response = response
-        fifo_path = path.join fifo_dir, 'record.some.other.fifo.wav'
-        record_to_url.call response, fifo_path, web.url, null, true
         .then ->
           web.should.have.property('content_type').eql 'audio/vnd.wave'
           web.should.have.property('content').length 8000/20*5
