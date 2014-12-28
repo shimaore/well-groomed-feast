@@ -4,11 +4,8 @@ Simple (white-box) tests for record and play
     chai = require 'chai'
     chai.should()
 
-    msec = 1
-
     Promise = require 'bluebird'
     fs = Promise.promisifyAll require 'fs'
-    stream_as_promised = require 'stream-as-promised'
     path = require 'path'
 
     fifo_dir = path.dirname module.filename
@@ -45,26 +42,8 @@ Create the web service
       it 'should save the file', ->
         write_some_streaming_content = (p) ->
           # console.log "*** Writing some streaming content to #{p}"
-          w = stream_as_promised fs.createWriteStream p
-          chunk = new Buffer 8000/20
-          Promise
-          .delay 20*msec
-          .then ->
-            w.stream.writeAsync chunk
-          .delay 20*msec
-          .then ->
-            w.stream.writeAsync chunk
-          .delay 20*msec
-          .then ->
-            w.stream.writeAsync chunk
-          .delay 20*msec
-          .then ->
-            w.stream.writeAsync chunk
-          .delay 20*msec
-          .then ->
-            w.stream.writeAsync chunk
-          .then ->
-            w.stream.end()
+          (require './write_some_streaming_content') fs.createWriteStream p
+
 
         Response = require 'esl/lib/response'
         class Socket
