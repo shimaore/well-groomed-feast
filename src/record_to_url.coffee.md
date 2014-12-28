@@ -29,11 +29,13 @@ The first one is to stream the audio directly to CouchDB. In that case we create
       req = null
 
       create_stream = ->
-        logger.info "Stats for #{fifo_path}", fs.statSync fifo_path
+        # logger.info "Stats for #{fifo_path}", fs.statSync fifo_path
         s = fs.createReadStream fifo_path
         stream = stream_as_promised s
-        req = request.put upload_url
-        req.type 'audio/vnd.wave' # RFC2361
+        req = request
+          .put upload_url
+          .type 'audio/vnd.wave' # RFC2361
+          .accept 'json'
         s.pipe req
         return
 
@@ -86,9 +88,6 @@ Play beep to indicate we are ready to record
         stream
       .then ->
         logger.info 'record_to_url: Stream completed'
-        req
-      .then ->
-        logger.info 'record_to_url: Request completed'
       .then cleanup
       .catch (error) ->
         logger.error "record_to_url: #{error}"
