@@ -15,6 +15,8 @@ Simple (white-box) tests for record and play
 
     fifo_dir = path.dirname module.filename
 
+    sec = 1000
+
 These tests validate the base functioning by `emulating` ESL.
 
 Record To URL
@@ -101,7 +103,7 @@ Create the web service
 Play From URL
 =============
 
-    describe 'White-box test of play_from_url', ->
+    describe.only 'White-box test of play_from_url', ->
 
       class PlaySocket
         write: (text) ->
@@ -111,10 +113,16 @@ Play From URL
           if headers['execute-app-name'] is 'play_and_get_digits'
             emits()
             filename = headers['execute-app-arg'].split(' ')[5]
-            console.log "*** PlaySocket.write: read stream #{filename} "
-            stream_as_promised fs.createReadStream filename
-            .then =>
+            console.log "*** PlaySocket.write: read stream #{filename}"
+            console.dir fs.statSync filename
+            s = fs.createReadStream filename
+            size = 0
+            s.on 'data', (chunk) ->
+              size += chunk.length
+            s.on 'end', =>
+              chai.expect(size).to.equal 8000/20*5
               @response.emit 'PLAYBACK_STOP'
+            s.resume()
 
           else if text.match /^sendmsg/
             emits()
@@ -142,14 +150,15 @@ Create the web service
         rec.app = zappa web.host, port, ->
 
           @get '/content.wav', ->
+            # Note that the request was received.
+            rec.requested = true
+            console.log "***** GET on port #{port} *******"
             @res.type 'audio/vnd.wave'
             @res.status 200
             # FIXME is this the proper way to stream out to the client?
             write_some_streaming_content @res
             # Or should I create a stream and pipe it to @res?
 
-            # Anyhow, note that the request was received.
-            rec.requested = true
 
         web.ref[port] = rec
 
@@ -158,29 +167,33 @@ Create the web service
           do (rec) -> rec.app.server.close()
 
       it 'should save the file', ->
+        @timeout 5*sec
         rec = server()
         socket = new PlaySocket()
         response = new Response socket
         # response.trace on
         socket.response = response
         fifo_path = path.join fifo_dir, 'play.some.file.wav'
-        play_from_url.call response, fifo_path, rec.url, false
+        Promise.delay 3*sec
         .then ->
-          # FIXME check!
-          rec.should.have.property('requested').true
+          play_from_url.call response, fifo_path, rec.url, false
+        .then ->
           fs.unlinkAsync fifo_path
             .catch -> yes
+          rec.should.have.property('requested').true
 
       it 'should pipe the file', ->
+        @timeout 5*sec
         rec = server()
         socket = new PlaySocket()
         response = new Response socket
         # response.trace on
         socket.response = response
         fifo_path = path.join fifo_dir, 'play.some.fifo.wav'
-        play_from_url.call response, fifo_path, rec.url, true
+        Promise.delay 3*sec
         .then ->
-          # FIXME check!
-          rec.should.have.property('requested').true
+          play_from_url.call response, fifo_path, rec.url, true
+        .then ->
           fs.unlinkAsync fifo_path
             .catch -> yes
+          rec.should.have.property('requested').true

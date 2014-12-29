@@ -35,20 +35,35 @@ When streaming, first start the proxy on the fifo
         return
 
       if streaming
-        it = mkfifo fifo_path
+        it =
+          mkfifo fifo_path
+          .then ->
+            create_stream()
 
 Download the file
 
       else
-        it = Promise.resolve()
+        it =
+          Promise.resolve()
+          .then ->
+            create_stream()
+            req
 
       it = it.bind this
 
+      the_result = null
+
       it
-      .then ->
-        create_stream()
       .then ->
 
 Play the file, expecting a single digit, storing the outcome in (FreeSwitch) variable `choice`.
 
         @command 'play_and_get_digits', "1 1 1 1000 # #{fifo_path} silence_stream://250 choice \\d 1000"
+
+      .then (res) ->
+        logger.info 'play_from_url: Playing command completed'
+        the_result = res
+      .catch (error) ->
+        logger.error "play_from_url: #{error}"
+      .then ->
+        the_result
