@@ -84,7 +84,7 @@ Create the web service
           fs.unlinkAsync fifo_path
             .catch -> yes
           rec.should.have.property('content_type').eql 'audio/vnd.wave'
-          rec.should.have.property('content').length 8000/20*5
+          rec.should.have.property('content').length 8000/(1000/20)*5
 
       it 'should pipe the file', ->
         rec = server()
@@ -98,7 +98,7 @@ Create the web service
           fs.unlinkAsync fifo_path
             .catch -> yes
           rec.should.have.property('content_type').eql 'audio/vnd.wave'
-          rec.should.have.property('content').length 8000/20*5
+          rec.should.have.property('content').length 8000/(1000/20)*5
 
 Play From URL
 =============
