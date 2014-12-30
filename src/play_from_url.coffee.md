@@ -47,7 +47,8 @@ Download the file
           Promise.resolve()
           .then ->
             create_stream()
-            req
+          .then ->
+            stream
 
       it = it.bind this
 

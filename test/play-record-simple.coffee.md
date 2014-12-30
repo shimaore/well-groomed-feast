@@ -103,15 +103,16 @@ Create the web service
 Play From URL
 =============
 
-    describe.only 'White-box test of play_from_url', ->
+    describe 'White-box test of play_from_url', ->
 
       class PlaySocket
         write: (text) ->
           {cmd,headers,body} = emulator.parse text
-          emits = => emulator.emits @response, headers
 
           if headers['execute-app-name'] is 'play_and_get_digits'
-            emits()
+
+By the time we get here, the file should be available, readable, etc.
+
             filename = headers['execute-app-arg'].split(' ')[5]
             console.log "*** PlaySocket.write: read stream #{filename}"
             console.dir fs.statSync filename
@@ -120,12 +121,13 @@ Play From URL
             s.on 'data', (chunk) ->
               size += chunk.length
             s.on 'end', =>
-              chai.expect(size).to.equal 8000/20*5
+              @read_size = size
               @response.emit 'PLAYBACK_STOP'
+              emulator.emits @response, headers
             s.resume()
 
           else if text.match /^sendmsg/
-            emits()
+            emulator.emits @response, headers
 
         end: ->
           # console.log '*** Socket.end()'
@@ -159,7 +161,6 @@ Create the web service
             write_some_streaming_content @res
             # Or should I create a stream and pipe it to @res?
 
-
         web.ref[port] = rec
 
       after ->
@@ -181,6 +182,7 @@ Create the web service
           fs.unlinkAsync fifo_path
             .catch -> yes
           rec.should.have.property('requested').true
+          socket.should.have.property('read_size').equal 8000/(1000/20)*5
 
       it 'should pipe the file', ->
         @timeout 5*sec
