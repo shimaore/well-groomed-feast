@@ -115,7 +115,7 @@ By the time we get here, the file should be available, readable, etc.
 
             filename = headers['execute-app-arg'].split(' ')[5]
             console.log "*** PlaySocket.write: read stream #{filename}"
-            console.dir fs.statSync filename
+            @file_size = (fs.statSync filename).size
             s = fs.createReadStream filename
             size = 0
             s.on 'data', (chunk) ->
@@ -175,14 +175,13 @@ Create the web service
         # response.trace on
         socket.response = response
         fifo_path = path.join fifo_dir, 'play.some.file.wav'
-        Promise.delay 3*sec
-        .then ->
-          play_from_url.call response, fifo_path, rec.url, false
+        play_from_url.call response, fifo_path, rec.url, false
         .then ->
           fs.unlinkAsync fifo_path
             .catch -> yes
           rec.should.have.property('requested').true
           socket.should.have.property('read_size').equal 8000/(1000/20)*5
+          socket.should.have.property('file_size').equal socket.read_size # file
 
       it 'should pipe the file', ->
         @timeout 5*sec
@@ -192,10 +191,10 @@ Create the web service
         # response.trace on
         socket.response = response
         fifo_path = path.join fifo_dir, 'play.some.fifo.wav'
-        Promise.delay 3*sec
-        .then ->
-          play_from_url.call response, fifo_path, rec.url, true
+        play_from_url.call response, fifo_path, rec.url, true
         .then ->
           fs.unlinkAsync fifo_path
             .catch -> yes
           rec.should.have.property('requested').true
+          socket.should.have.property('read_size').equal 8000/(1000/20)*5
+          socket.should.have.property('file_size').equal 0 # fifo
