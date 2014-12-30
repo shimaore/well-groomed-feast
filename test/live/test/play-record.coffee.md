@@ -67,7 +67,9 @@ Create a FreeSwitch image with our scripts
                 logger.info "FS.server: Calling record_to_url"
                 record_to_url.call this, fs.fifo_path, fs.url
               .then (res) ->
-                logger.info 'FS.server: Response after record_to_url', res
+                logger.info "FS.server: Response after record_to_url", ms:res.body.variable_record_ms, samples:res.body.variable_record_samples
+                fs.record_ms = res.body.variable_record_ms
+                fs.record_samples = res.body.variable_record_samples
             when 'play'
               @linger()
               .then ->
@@ -76,7 +78,9 @@ Create a FreeSwitch image with our scripts
                 logger.info "FS.server: Calling play_from_url"
                 play_from_url.call this, fs.fifo_path, fs.url
               .then (res) ->
-                logger.info 'FS.server: play_from_url', res
+                logger.info "FS.server: Response after play_from_url", ms:res.body.variable_playback_ms, samples:res.body.variable_playback_samples
+                fs.playback_ms = res.body.variable_playback_ms
+                fs.playback_samples = res.body.variable_playback_samples
         fs.server.listen fs.server_port
 
 and start it
@@ -95,7 +99,7 @@ and start it
           ###
           @api 'sofia status'
           .then ->
-            @api "originate sofia/test-sender/sip:record@#{fs.host}:#{fs.sip_port} &park"
+            @api "originate sofia/test-sender/sip:record@#{fs.host}:#{fs.sip_port} &gentones(%(10000,0,400))"
           .then (res) ->
             logger.info "FS.client: Recording"
             call_uuid = res.uuid
@@ -108,10 +112,48 @@ and start it
             web.should.have.property('content_type').equal 'audio/vnd.wave'
             logger.info "web.content.length = #{web.content.length}"
             web.should.have.property('content').with.length.gt 0
+            fs.should.have.property 'record_ms'
+            fs.should.have.property 'record_samples'
+            record_ms = parseInt fs.record_ms
+            record_samples = parseInt fs.record_samples
+            # File size = 44 (header) + 2 octets per sample
+            chai.expect(web.content.length).to.equal record_samples*2+44
+            # record_ms=9420, record_samples=75360, content.length = 150764
             done()
           .catch done
         fs.record_client.connect fs.event_port, fs.host
 
+      it 'should play a recording', (done) ->
+        logger.info "test play: Starting."
+        record_time = 10*seconds
+        wait_time = 4*seconds
+        @timeout record_time+wait_time+1*seconds
+        call_uuid = null
+
+        fs.play_client = FS.client ->
+          ###
+          @trace (o) ->
+            logger.info 'FS.client', o
+          ###
+          @api 'sofia status'
+          .then ->
+            @api "originate sofia/test-sender/sip:play@#{fs.host}:#{fs.sip_port} &park"
+          .then (res) ->
+            logger.info "FS.client: Playing #{JSON.stringify res}"
+            res.should.have.property('body')
+            call_uuid = res.uuid
+          .delay record_time
+          .then ->
+            @hangup_uuid call_uuid
+          .delay wait_time
+          .then ->
+            fs.play_client.end()
+            web.should.have.property('content_requested').equal true
+            fs.should.have.property('playback_samples').equal fs.record_samples
+            fs.should.have.property('playback_ms').equal fs.record_ms
+            done()
+          .catch done
+        fs.play_client.connect fs.event_port, fs.host
 
 Call the recording profile and record
 Call the playing profile and play
