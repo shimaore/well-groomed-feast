@@ -7,7 +7,13 @@
     @name = "#{pkg.name}:mwi_notifier"
     @config = ->
       cfg = @cfg
-      assert cfg.prov?, 'Missing `prov`'
+      @cfg.notifiers ?= []
+
+      assert @cfg.prov?, 'Missing prov'
+
+      unless @cfg.voicemail?.notifier_port?
+        debug 'Missing `voicemail.notifier_port`'
+        return
 
       socket = dgram.createSocket 'udp4'
 
@@ -66,7 +72,6 @@
         if r = content.match /^SUBSCRIBE sip:(\d+)@/
           send_notification_to r[1]
 
-      socket.bind config.voicemail.notifier_port ? 7124
+      socket.bind cfg.voicemail.notifier_port ? 7124
 
-      @cfg.notifiers ?= []
       @cfg.notifiers.push send_notification_to

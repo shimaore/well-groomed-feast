@@ -19,14 +19,14 @@
       unless @cfg.mailer?.SMTP?
         debug 'Missing `mailer.SMTP`'
         return
-      unless @cfg.voicemail?
-        debug 'Missing `voicemail`'
+      unless @cfg.voicemail?.sender?
+        debug 'Missing `voicemail.sender`'
         return
       unless @cfg.host?
         debug 'Missing `host`'
         return
 
-      transporter = smtpTransport config.mailer.SMTP
+      transporter = smtpTransport cfg.mailer.SMTP
       transport = mailer.createTransport transporter
       sendMail = Promise.promisify transport.sendMail
 
@@ -65,7 +65,7 @@ Get templates
 
 ### Templates in the server configuration
 
-          cfg.prov.getAttachment "host:#{config.host}", uri_name
+          cfg.prov.getAttachment "host:#{cfg.host}", uri_name
           .catch (error) ->
             null
           .then (data) ->
@@ -123,7 +123,7 @@ API wrapper
 
         cfg.prov.get "number:#{id}"
         .then (number_doc) ->
-          sender = number_doc.voicemail_sender ? config.voicemail.sender
+          sender = number_doc.voicemail_sender ? cfg.voicemail.sender
         .then ->
           user.db.get msg_id
         .then (msg) ->
