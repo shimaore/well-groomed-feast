@@ -7,16 +7,24 @@
 
     pkg = require '../package.json'
     debug = (require 'debug') "#{pkg.name}:email_notifier"
+    assert = require 'assert'
 
     @name = "#{pkg.name}:email_notifier"
     @config = ->
       cfg = @cfg
+      @cfg.notifiers ?= []
 
       assert @cfg.prov, 'Missing prov'
-      assert @cfg.mailer?, 'Missing `mailer`'
-      assert @cfg.mailer.SMTP?, 'Missing `mailer.SMTP`'
-      assert @cfg.voicemail?, 'Missing `voicemail`'
-      assert @cfg.host?, 'Missing `host`'
+
+      unless @cfg.mailer?.SMTP?
+        debug 'Missing `mailer.SMTP`'
+        return
+      unless @cfg.voicemail?
+        debug 'Missing `voicemail`'
+        return
+      unless @cfg.host?
+        debug 'Missing `host`'
+        return
 
       transporter = smtpTransport config.mailer.SMTP
       transport = mailer.createTransport transporter
@@ -133,5 +141,4 @@ API wrapper
               language: settings.language
               user: user
 
-      @cfg.notifiers ?= []
       @cfg.notifiers.push send_notification_to
