@@ -2,11 +2,12 @@
     Promise = require 'bluebird'
     dns = Promise.promisifyAll require 'dns'
     pkg = require '../package.json'
+    assert = require 'assert'
 
     @name = "#{pkg.name}:mwi_notifier"
     @config = ->
       cfg = @cfg
-      assert cfg.prov?, 'Missing prov'
+      assert cfg.prov?, 'Missing `prov`'
 
       socket = dgram.createSocket 'udp4'
 
