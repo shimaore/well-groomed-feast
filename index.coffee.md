@@ -16,7 +16,6 @@ Default `use` list for tough-rate.
       './middleware/mwi_notifier'
       './middleware/voicemail'
     ]
-    cfg.
 
     cfg.use = cfg.use.map (m) ->
       debug "Requiring #{m}"
@@ -30,9 +29,10 @@ Default FreeSwitch configuration
       'mod_httpapi'
     ]
     cfg.phrases = [
-      'bumpy_lawyer/en'
-      'bumpy_lawyer/fr'
+      # require 'bumpy-lawyer/en'
+      require 'bumpy-lawyer/fr'
     ]
+    cfg.profile_module = require './conf/profile'
 
     debug 'Loading thinkable-ducks'
     ducks = require 'thinkable-ducks'
