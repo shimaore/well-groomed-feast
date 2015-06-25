@@ -2,6 +2,8 @@
     Promise = require 'bluebird'
     dns = Promise.promisifyAll require 'dns'
     pkg = require '../package.json'
+    debug = (require 'debug') "#{pkg.name}:mwi_notifier"
+
     assert = require 'assert'
 
     @name = "#{pkg.name}:mwi_notifier"
