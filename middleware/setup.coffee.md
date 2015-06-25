@@ -2,6 +2,7 @@
     debug = (require 'debug') "#{pkg.name}:setup"
 
     Promise = require 'bluebird'
+    nimble = require 'nimble-direction'
 
     @name = "#{pkg.name}/middleware/setup"
     @web = ->
