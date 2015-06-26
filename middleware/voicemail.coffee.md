@@ -1,4 +1,3 @@
-#!/usr/bin/env coffee
 This is the ccnq4 voicemail server.
 
 `mod_httapi` is used to record or play
@@ -11,6 +10,10 @@ by FreeSwitch) which can then be transcoded.
 
     Messaging = require '../src/Messaging'
     seconds = 1000
+
+    pkg = require '../package.json'
+    debug = (require 'debug') "#{pkg.name}:voicemail"
+    @name = "#{pkg.name}/middleware/voicemail"
 
     @include = ->
 
