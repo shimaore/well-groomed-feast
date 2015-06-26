@@ -1,27 +1,27 @@
 {renderable} = require 'acoustic-line'
 
-module.exports = renderable (profile) ->
+module.exports = renderable (o) ->
   {profile,settings,param} = require 'acoustic-line'
-  profile name:"voicemail-#{profile.name}", ->
+  profile name:"voicemail-#{o.name}", ->
     settings ->
-      param name:'user-agent-string', value:"tough-rate-#{profile.name}-#{profile.sip_port}"
-      param name:'username', value:"tough-rate-#{profile.name}"
+      param name:'user-agent-string', value:"#{pkg.name} #{pkg.version} #{o.name} #{o.sip_port}"
+      param name:'username', value:"#{pkg.name}-#{o.name}"
       param name:'debug', value:2
       param name:'sip-trace', value:false
 
-      param name:'sip-port', value:profile.sip_port
+      param name:'sip-port', value:o.sip_port
       param name:'bind-params', value:'transport=udp,tcp'
 
       param name:'sip-ip', value:'0.0.0.0'
-      param name:'ext-sip-ip', value:profile.local_ip
+      param name:'ext-sip-ip', value:o.local_ip
 
       param name:'rtp-ip', value:'0.0.0.0'
-      param name:'ext-rtp-ip', value:profile.local_ip
+      param name:'ext-rtp-ip', value:o.local_ip
 
       param name:'apply-inbound-acl', value:'default'
 
       param name:'dialplan', value:'XML'
-      param name:'context', value:profile.context
+      param name:'context', value:o.context
       param name:'auth-calls', value:'false'
       param name:'auth-all-packets', value:'false'
       param name:'accept-blind-reg', value:'true'
@@ -74,7 +74,7 @@ module.exports = renderable (profile) ->
       param name:'stun-enabled', value:'false'
       param name:'stun-auto-disable', value:'true'
 
-      param name:'timer-T1', value:profile.timer_t1
-      param name:'timer-T1X64', value:profile.timer_t1x64
-      param name:'timer-T2', value:profile.timer_t2
-      param name:'timer-T4', value:profile.timer_t4
+      param name:'timer-T1', value:o.timer_t1
+      param name:'timer-T1X64', value:o.timer_t1x64
+      param name:'timer-T2', value:o.timer_t2
+      param name:'timer-T4', value:o.timer_t4
