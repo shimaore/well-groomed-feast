@@ -9,10 +9,7 @@
         @init_db()
 
       init_db: ->
-        FIXME: inject the proper view(s)
-
-      mention_error: ->
-        play 'The system encountered an internal error. Please hang up and try again. If this happens again, please call support.'
+        # FIXME: inject the proper view(s)
 
       uri: (p) ->
         if p?
@@ -27,17 +24,15 @@
 
         @db.get 'voicemail_settings'
         .catch (error) =>
-          logger.error "VM Box for #{@id} is not available from #{@db_uri}."
-          @ctx.action 'phrase', 'vm_say,sorry'
-          .then =>
 
 1. Debug un max
 
-            cuddly.csr "VM Box is not available", {user_id:@id}
+          debug "VM Box is not available", {user_id:@id}
+          cuddly.csr "VM Box is not available", {user_id:@id}
 
 2. Message qui dit d'appeler le support
 
-            @mention_error()
+          @ctx.error 'USR-41'
           return
         .then =>
           @vm_settings = vm_settings # Memoize
@@ -51,7 +46,7 @@ Convert a timestamp (ISO string) to a local timestamp (ISO string)
           try
             tz_mod = require "timezone/#{timezone}"
           catch e
-            logger.error "Error loading timezone/#{timezone}"
+            debug "Error loading timezone/#{timezone}"
             tz_mod = null
         if tz_mod?
           tz t, timezone, tz_mod, '%FT%T%z'
@@ -90,26 +85,24 @@ Default prompt
       authenticate: (attempts) ->
         attempts ?= 3
         if attempts <= 0
-          return goodbye()
+          return @ctx.goodbye()
+
+        vm_settings = null
 
         @voicemail_settings
-        .then (vm_settings) =>
-          wrap_cb = =>
-            if vm_settings.language?
-              call.command 'set',  "language=#{vm_settings.language}", (call) ->
-                call.command 'phrase', 'voicemail_hello', cb
-            else
-              call.command 'phrase', 'voicemail_hello', cb
-
+        .then (_settings) =>
+          vm_settings = _settings
+          @ctx.get_pin() if vm_settings.pin?
+        .then (pin) ->
           if vm_settings.pin?
-            @ctx.get_pin()
-            .then (pin) ->
-              if call.body.variable_pin is vm_settings.pin
-                do wrap_cb
-              else
-                @authenticate call, cb, attempts-1
-          else
-            do wrap_cb
+            if pin isnt vm_settings.pin
+              Promise.reject new Error "Wrong PIN"
+        .then =>
+          @ctx.action 'set', "language=#{vm_settings.language}" if vm_settings.language?
+        .then =>
+          @ctx.action 'phrase', 'voicemail_hello'
+        .catch (error) =>
+          @authenticate attempts-1
 
       new_messages: ->
         the_rows = null
@@ -124,10 +117,9 @@ Default prompt
       saved_messages: ->
         the_rows = null
         @db.view 'voicemail', 'saved_messages'
-        .bind call
         .then ({rows}) ->
           the_rows = rows
-          @command 'phrase', "voicemail_message_count,#{rows.length}:saved"
+          @action 'phrase', "voicemail_message_count,#{rows.length}:saved"
         .then ->
           the_rows
 
@@ -223,33 +215,36 @@ Default prompt
             when "3"
               @config_menu()
             when "4"
-              goodbye.apply call
+              @goodbye()
             else
-              @main_menu call
+              @main_menu()
         .catch =>
-          @main_menu call
+          @main_menu()
 
-      record_something: (that,phrase,call) ->
-        @db.rev 'voicemail_settings', (e,r,b) =>
-          if e?
-            @main_menu call
-          rev = b.rev
-
-          call.command 'phrase', phrase, (call) =>
-            tmp_file = User.voicemail_dir + '/' + that + Math.random() + '.' + message_format
-            upload_url = @db_uri + '/voicemail_settings/' + that + '.' + message_format + '?rev=' + rev
-            record_to_url call, tmp_file, upload_url, (error,call) =>
-              if error
-                @record_greeting call
-              else
-                @main_menu call
-
+      record_something: (that,phrase) ->
+        rev = null
+        @db
+        .get 'voicemail_settings'
+        .then (doc) =>
+          rev = doc._rev
+          @ctx.action 'phrase', phrase
+        .then =>
+          upload_url = @db_uri + '/voicemail_settings/' + that + '.' + message_format + '?rev=' + rev
+          @ctx.record upload_url
 
       record_greeting: ->
         @record_something 'prompt', 'voicemail_record_greeting'
+        .catch (error) =>
+          @record_greeting()
+        .then =>
+          @main_menu()
 
       record_name: ->
         @record_something 'name', 'voicemail_record_name'
+        .catch (error) =>
+          @record_greeting()
+        .then =>
+          @main_menu()
 
       change_password: ->
         @ctx.get_new_pin min:User.min_pin_length
@@ -274,7 +269,9 @@ Default prompt
 
     module.exports = User
     pkg = require '../package.json'
+    debug = (require 'debug') "#{pkg.name}:User"
     cuddly = (require 'cuddly') "#{pkg.name}:User"
 
     tz = require 'timezone'
     Promise = require 'bluebird'
+    PouchDB = require 'pouchdb'

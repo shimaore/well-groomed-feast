@@ -38,17 +38,17 @@ by FreeSwitch) which can then be transcoded.
             @action 'set', "language=#{@cfg.announcement_language}"
           .then ->
             messaging.locate_user()
-          .then (_user) ->
+          .then (_user) =>
             user = _user
-            msg = new Message call, user, db_uri
+            msg = new Message this, user, db_uri
             msg.create()
           .then ->
             user.play_prompt()
-          .then ->
+          .then =>
             if do_recording
-              msg.start_recording call
+              msg.start_recording()
             else
-              messaging.goodbye()
+              @goodbye()
 
         when 'inbox'
           user = null

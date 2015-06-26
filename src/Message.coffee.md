@@ -208,5 +208,6 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
     module.exports = Message
     pkg = require '../package.json'
     debug = (require 'debug') "#{pkg.name}:Message"
+    cuddly = (require 'cuddly') "#{pkg.name}:Message"
 
     timestamp = -> new Date().toJSON()

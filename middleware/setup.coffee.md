@@ -13,6 +13,7 @@
       debug "Configuring #{pkg.name} version #{pkg.version}.", cfg
       nimble cfg
       .then ->
+        assert cfg.prov?, 'Nimble did not inject cfg.prov'
         debug "Configured."
 
 Use `mod_httpapi` to support URLs.
@@ -141,3 +142,17 @@ Promise resolves into the new PIN or rejects.
         o.var_name ?= 'new_pin'
         o.invalid_file = 'silence_stream://250'
         ctx.get_pin o
+
+      ctx.goodbye = ->
+        debug 'goodbye'
+        ctx.action 'phrase', 'voicemail_goodbye'
+        .then =>
+          ctx.action 'hangup'
+
+      ctx.error = (id) ->
+        debug 'error', {id}
+        ctx.action 'phrase', "spell,#{id}"
+        .then =>
+          ctx.goodbye()
+
+      nimble ctx.cfg
