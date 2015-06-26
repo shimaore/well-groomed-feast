@@ -34,6 +34,8 @@ by FreeSwitch) which can then be transcoded.
             .then ->
               @exit()
             @action 'answer'
+          .then =>
+            @action 'set', "language=#{@cfg.announcement_language}"
           .then ->
             messaging.locate_user()
           .then (_user) ->
@@ -51,6 +53,8 @@ by FreeSwitch) which can then be transcoded.
         when 'inbox'
           user = null
           @action 'answer'
+          .then =>
+            @action 'set', "language=#{@cfg.announcement_language}"
           .then ->
             locate_user()
           .then (_user) ->
@@ -69,6 +73,8 @@ Go to the main menu after message navigation
         when 'main'
           user = null
           @action 'answer'
+          .then =>
+            @action 'set', "language=#{@cfg.announcement_language}"
           .then ->
             messaging.gather_user()
           .then (_user) ->
@@ -80,9 +86,9 @@ Present the main menu
 
         else
           # FIXME say something
-          @action 'set', "language=#{@cfg.announcement_language}"
+          @action 'pre_answer'
           .then =>
-            @action 'pre_answer'
+            @action 'set', "language=#{@cfg.announcement_language}"
           .then =>
             @action 'phrase', 'spell,KWAO-6812'
           .then =>

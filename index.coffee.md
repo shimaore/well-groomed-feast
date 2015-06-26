@@ -26,7 +26,9 @@ Default FreeSwitch configuration
     debug 'Loading conf/freeswitch'
     cfg.freeswitch = require 'docker.tough-rate/conf/freeswitch'
     cfg.modules = [
-      'mod_httpapi'
+      'mod_sndfile'
+      'mod_tone_stream'
+      'mod_httapi'
     ]
     cfg.phrases = [
       # require 'bumpy-lawyer/en'
