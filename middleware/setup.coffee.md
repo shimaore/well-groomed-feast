@@ -87,7 +87,7 @@ Promise resolves into an `esl` `Response` object.
         o.digit_timeout ?= 1000
         ctx.play_and_get_digits o
 
-`record`
+`get_choice`
 ========
 
 Play a file and optionnaly record a single digit.
@@ -96,7 +96,7 @@ Promise resolves into the selected digit or rejects.
       ctx.get_choice = (file,o={}) ->
         o.timeout ?= 15000
         o.digit_timeout ?= 3000
-        ctx.play o
+        ctx.play file, o
         .then ({body}) ->
           body[o.var_name] ? Promise.reject new Error "Missing #{o.var_name}"
 
@@ -114,7 +114,7 @@ Promise resolves into the number or rejects.
         o.var_name ?= 'number'
         o.regexp ?= '\\d+'
         o.digit_timeout ?= 3000
-        ctx.get_choice o
+        ctx.get_choice o.file, o
 
 `get_pin`
 =========
