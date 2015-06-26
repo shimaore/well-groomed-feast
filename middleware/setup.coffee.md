@@ -98,7 +98,9 @@ Promise resolves into the selected digit or rejects.
         o.digit_timeout ?= 3000
         ctx.play file, o
         .then ({body}) ->
-          body[o.var_name] ? Promise.reject new Error "Missing #{o.var_name}"
+          name = "variable_#{o.var_name}"
+          debug "Got #{body[name]}"
+          body[name] ? Promise.reject new Error "Missing #{o.var_name}"
 
 `get_number`
 ============
