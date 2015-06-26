@@ -17,22 +17,23 @@ by FreeSwitch) which can then be transcoded.
 
     @include = ->
 
-      messaging = new Messaging @
+      messaging = new Messaging this
+
+      debug "Routing incoming call to #{@destination}"
 
       switch @destination
 
         when 'record'
-          debug "Record for #{user}@#{number_domain}"
           msg = null
           user = null
           @linger()
-          .then ->
+          .then =>
             # Keep the call opened for a little while.
             @once 'esl_linger'
             .delay 20*seconds
             .then ->
               @exit()
-            @command 'answer'
+            @action 'answer'
           .then ->
             messaging.locate_user()
           .then (_user) ->
@@ -48,9 +49,8 @@ by FreeSwitch) which can then be transcoded.
               messaging.goodbye()
 
         when 'inbox'
-          debug "Inbox for #{user}@#{number_domain}"
           user = null
-          @command 'answer'
+          @action 'answer'
           .then ->
             locate_user()
           .then (_user) ->
@@ -67,9 +67,8 @@ Go to the main menu after message navigation
 
 
         when 'main'
-          debug "Main for #{user}@#{number_domain}"
           user = null
-          @command 'answer'
+          @action 'answer'
           .then ->
             messaging.gather_user()
           .then (_user) ->
@@ -81,4 +80,10 @@ Present the main menu
 
         else
           # FIXME say something
-          play 'The system had an internal error. Please hang up and try again. Error KWAO-6812'
+          @action 'set', "language=#{@cfg.announcement_language}"
+          .then =>
+            @action 'pre_answer'
+          .then =>
+            @action 'phrase', 'spell,KWAO-6812'
+          .then =>
+            @action 'phrase', 'spell,KWAO-6812'
