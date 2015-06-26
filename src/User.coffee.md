@@ -9,6 +9,7 @@
         @init_db()
 
       init_db: ->
+        debug 'init_db'
         # FIXME: inject the proper view(s)
 
       uri: (p) ->
@@ -18,6 +19,7 @@
           @db_uri
 
       voicemail_settings: ->
+        debug 'voicemail_settings'
         # Memoize
         if @vm_settings?
           return Promise.resolve @vm_settings
@@ -33,13 +35,13 @@
 2. Message qui dit d'appeler le support
 
           @ctx.error 'USR-41'
-          return
-        .then =>
-          @vm_settings = vm_settings # Memoize
+        .then (doc) =>
+          @vm_settings = doc # Memoize
 
 Convert a timestamp (ISO string) to a local timestamp (ISO string)
 
       time: (t) ->
+        debug 'time'
         timezone = @vm_settings.timezone ? User.default_timezone
         tz_mod = null
         if timezone?
@@ -54,7 +56,8 @@ Convert a timestamp (ISO string) to a local timestamp (ISO string)
           t
 
       play_prompt: ->
-        @voicemail_settings
+        debug 'play_prompt'
+        @voicemail_settings()
         .then (vm_settings) =>
 
 User-specified prompt
@@ -83,13 +86,14 @@ Default prompt
               true
 
       authenticate: (attempts) ->
+        debug 'authenticate', {attempts}
         attempts ?= 3
         if attempts <= 0
-          return @ctx.goodbye()
+          return @ctx.error()
 
         vm_settings = null
 
-        @voicemail_settings
+        @voicemail_settings()
         .then (_settings) =>
           vm_settings = _settings
           @ctx.get_pin() if vm_settings.pin?
@@ -105,18 +109,19 @@ Default prompt
           @authenticate attempts-1
 
       new_messages: ->
+        debug 'new_messages'
         the_rows = null
-        @db.view 'voicemail', 'new_messages'
-        .bind @ctx
-        .then ({rows}) ->
+        @db.query 'voicemail/new_messages'
+        .then ({rows}) =>
           the_rows = rows
           @ctx.action 'phrase', "voicemail_message_count,#{rows.length}:new"
         .then ->
           the_rows
 
       saved_messages: ->
+        debug 'saved_messages'
         the_rows = null
-        @db.view 'voicemail', 'saved_messages'
+        @db.query 'voicemail/saved_messages'
         .then ({rows}) ->
           the_rows = rows
           @action 'phrase', "voicemail_message_count,#{rows.length}:saved"
@@ -124,6 +129,7 @@ Default prompt
           the_rows
 
       navigate_messages: (rows,current) ->
+        debug 'navigate_messages', {rows,current}
         # Exit once we reach the end or there are no messages, etc.
         if current < 0 or not rows? or current >= rows.length
           return
@@ -158,7 +164,7 @@ Default prompt
                 @navigate_messages rows, current+1
 
             when "0"
-              Promise.resolve()
+              true
 
             else # including "1" meaning "listen"
               @navigate_messages rows, current
@@ -174,21 +180,29 @@ Default prompt
           @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3:4:5:6'"
         .then (choice) ->
           navigate choice
-        .catch ->
+        .catch (error) ->
+          debug "navigate_messages: #{error}"
           # Default navigation is: read next message
           @navigate_messages rows, current+1
 
 
       config_menu: ->
+        debug 'config_menu'
         @ctx.get_choice "phrase:'voicemail_config_menu:1:2:3:4:5'"
         .then (choice) =>
           switch choice
             when "1"
               @record_greeting()
+              .then =>
+                @config_menu()
             when "3"
               @record_name()
+              .then =>
+                @config_menu()
             when "4"
               @change_password()
+              .then =>
+                @config_menu()
             when "5"
               @main_menu()
             else
@@ -197,8 +211,10 @@ Default prompt
           @config_menu()
 
       main_menu: ->
+        debug 'main_menu'
         @ctx.get_choice "phrase:'voicemail_menu:1:2:3:4'"
-        .then (choice) ->
+        .then (choice) =>
+          debug 'main_menu', {choice}
           switch choice
             when "1"
               @new_messages()
@@ -215,16 +231,17 @@ Default prompt
             when "3"
               @config_menu()
             when "4"
-              @goodbye()
+              @ctx.goodbye()
             else
               @main_menu()
-        .catch =>
+        .catch (error) =>
+          debug "main_menu: #{error}"
           @main_menu()
 
       record_something: (that,phrase) ->
+        debug 'record_something', {that,phrase}
         rev = null
-        @db
-        .get 'voicemail_settings'
+        @db.get 'voicemail_settings'
         .then (doc) =>
           rev = doc._rev
           @ctx.action 'phrase', phrase
@@ -233,39 +250,42 @@ Default prompt
           @ctx.record upload_url
 
       record_greeting: ->
+        debug 'record_greeting'
         @record_something 'prompt', 'voicemail_record_greeting'
         .catch (error) =>
+          debug "record_greeting: #{error}"
           @record_greeting()
-        .then =>
-          @main_menu()
 
       record_name: ->
+        debug 'record_name'
         @record_something 'name', 'voicemail_record_name'
         .catch (error) =>
-          @record_greeting()
-        .then =>
-          @main_menu()
+          debug "record_name: #{error}"
+          @record_name()
 
       change_password: ->
+        debug 'change_password'
+        new_pin = null
+
         @ctx.get_new_pin min:User.min_pin_length
-        .then (res) ->
-          new_pin = res.body.variable_new_pin
-          if new_pin? and new_pin.length >= User.min_pin_length
-            @db.get 'voicemail_settings'
-            .then (vm_settings) =>
-              vm_settings.pin = new_pin
-              @db.put vm_settings
+        .then (pin) =>
+          new_pin = pin
+          unless new_pin? and new_pin.length >= User.min_pin_length
+            @ctx
+            .action 'phrase', 'vm_say,too short'
             .then =>
-              delete @vm_settings # remove memoized value
-              @ctx.action 'phrase', 'vm_say,thank you'
-            .catch =>
-              @change_password()
-            .then =>
-              @main_menu()
-          else
-            @ctx.action 'phrase', 'vm_say,too short'
-            .then =>
-              @change_password()
+              Promise.reject new Error 'Password too short'
+        .then =>
+          @db.get 'voicemail_settings'
+        .then (vm_settings) =>
+          vm_settings.pin = new_pin
+          @db.put vm_settings
+        .then =>
+          delete @vm_settings # remove memoized value
+          @ctx.action 'phrase', 'vm_say,thank you'
+        .catch (error) =>
+          debug "change_password: #{error}"
+          @change_password()
 
     module.exports = User
     pkg = require '../package.json'
@@ -275,3 +295,4 @@ Default prompt
     tz = require 'timezone'
     Promise = require 'bluebird'
     PouchDB = require 'pouchdb'
+    Message = require './Message'

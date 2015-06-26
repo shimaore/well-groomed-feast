@@ -33,6 +33,8 @@ by FreeSwitch) which can then be transcoded.
             .delay 20*seconds
             .then ->
               @exit()
+            .catch (error) ->
+              debug "linger: #{error}"
             @action 'answer'
           .then =>
             @action 'set', "language=#{@cfg.announcement_language}"
@@ -56,18 +58,18 @@ by FreeSwitch) which can then be transcoded.
           .then =>
             @action 'set', "language=#{@cfg.announcement_language}"
           .then ->
-            locate_user()
+            messaging.locate_user()
           .then (_user) ->
             user = _user
             user.authenticate()
           .then ->
-Enumerate messages
+            debug 'Enumerate messages'
             user.new_messages()
           .then (rows) ->
             user.navigate_messages rows, 0
           .then ->
-Go to the main menu after message navigation
-            user.main_menu call
+            debug 'Go to the main menu after message navigation'
+            user.main_menu()
 
 
         when 'main'
@@ -81,8 +83,8 @@ Go to the main menu after message navigation
             user = _user
             user.authenticate()
           .then ->
-Present the main menu
-            user.main_menu call
+            debug 'Present the main menu'
+            user.main_menu()
 
         else
           # FIXME say something

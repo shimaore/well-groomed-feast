@@ -9,7 +9,7 @@ new Message(ctx, User, id)
 - New message:
 
 ```
-new Message(ctx, User).create(call,cb)
+new Message(ctx, User).create()
 ```
 
 
@@ -31,7 +31,8 @@ new Message(ctx, User).create(call,cb)
           @user.uri @id
 
       has_part: (part = @part) ->
-        @db.get @id
+        debug 'has_part', part
+        @user.db.get @id
         .then (doc) ->
           doc._attachments["part#{part}.#{Message.format}"]?
 
@@ -41,7 +42,7 @@ Record the current part
       start_recording: ->
         debug 'start_recording', @id
         record_seconds = null
-        @db.get @id
+        @user.db.get @id
         .then (doc) =>
           upload_url = @msg_uri "part#{@part}.#{Message.format}?rev=#{doc._rev}"
           @record upload_url
@@ -53,6 +54,7 @@ Record the current part
         .then ->
           record_seconds
         .catch (error) =>
+          debug "start_recording: #{error}"
           # FIXME Remove the attachment from the database?
           # request.del upload_url
           @start_recording()
@@ -82,24 +84,24 @@ Otherwise return the user choice.
           choice
 
         .catch (error) =>
-           @play_recording this_part+1
+          debug "play_recordding: #{error}"
+          @play_recording this_part+1
 
 Delete parts
 ------------
 
       delete_parts: ->
         debug 'delete_parts', @id
-        @db.get @id
-        .then (doc) ->
+        @user.db.get @id
+        .then (doc) =>
           # Remove all attachments
           doc._attachments = {}
-          @db.put doc
+          @user.db.put doc
 
 Post-recording menu
 -------------------
 
       post_recording: ->
-
         debug 'post_recording', @id
 
 Check whether the attachment exists (it might be deleted if it doesn't match the minimum duration)
@@ -141,10 +143,10 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
       # Play the message enveloppe
       play_enveloppe: (index) ->
         debug 'play_enveloppe', @id
-        @db.get @id
-        .then (doc) ->
+        @user.db.get @id
+        .then (doc) =>
           user_timestamp = @user.time doc.timestamp
-          @ctx.play "phrase:'message received:#{index+1}:#{b.caller_id}:#{user_timestamp}'"
+          @ctx.play "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
         .then (res) ->
             res.body.variable_choice
 
@@ -163,16 +165,17 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
           recipient: @ctx.destination
 
         # If the user simply hungs up this is the only event we will receive.
-        call.on 'esl_disconnect_notice', =>
+        @ctx.call.on 'esl_disconnect_notice', =>
           @notify()
         # Wait for linger to finish.
-        call.on 'esl_disconnect', =>
+        @ctx.call.on 'esl_disconnect', =>
           @notify() # Was notify_via_email
 
         # Create new CDB record to hold the voicemail metadata
-        @db.put msg
+        @user.db.put msg
         .catch (e) =>
           debug "Could not create #{@msg_uri()}"
+          cuddly.csr "Could not create #{@msg_uri()}"
           @ctx.action 'phrase', 'vm_say,sorry'
           .then ->
             # FIXME what else should we do in this case?
@@ -185,10 +188,10 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
 
       remove: ->
         debug 'remove', @id
-        @db.get @id
+        @user.db.get @id
         .then (doc) =>
           doc.box = 'trash'
-          @db.put doc
+          @user.db.put doc
         .then =>
           @notify()
         .then =>
@@ -196,10 +199,10 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
 
       save: ->
         debug 'save', @id
-        @db.get @id
-        .then =>
-          b.box = 'saved'
-          @db.put doc
+        @user.db.get @id
+        .then (doc) =>
+          doc.box = 'saved'
+          @user.db.put doc
         .then =>
           @notify()
         .then =>

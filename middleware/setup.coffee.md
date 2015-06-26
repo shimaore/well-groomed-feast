@@ -146,13 +146,17 @@ Promise resolves into the new PIN or rejects.
       ctx.goodbye = ->
         debug 'goodbye'
         ctx.action 'phrase', 'voicemail_goodbye'
-        .then =>
+        .then ->
           ctx.action 'hangup'
 
       ctx.error = (id) ->
         debug 'error', {id}
-        ctx.action 'phrase', "spell,#{id}"
-        .then =>
+        Promise.resolve true
+        .then ->
+          ctx.action 'phrase', "spell,#{id}" if id?
+        .then ->
           ctx.goodbye()
+        .then ->
+          Promise.reject new Error "error #{id}"
 
       nimble ctx.cfg
