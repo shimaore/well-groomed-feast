@@ -1,4 +1,5 @@
 {renderable} = require 'acoustic-line'
+pkg = require '../package.json'
 
 module.exports = renderable (o) ->
   {profile,settings,param} = require 'acoustic-line'
