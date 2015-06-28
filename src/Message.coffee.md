@@ -24,19 +24,13 @@ new Message(ctx, User).create()
       constructor: (@ctx,@user,@id) ->
         @part = @the_first_part
 
-      msg_uri: (p,params) ->
-        base = if p?
-            [@msg_uri(),p].join '/'
-          else
-            @user.uri @id
-        if params?
-          [left,right] = base.split '://'
-          q = []
-          for own k,v of params
-            q.push "#{k}=#{v}"
-          "#{left}://(#{q.join ','})#{right}"
+      msg_uri: (name,rev) ->
+        host = @ctx.cfg.web.host ? '127.0.0.1'
+        port = @ctx.cfg.web.port
+        if rev?
+          "http://#{host}:#{port}/voicemail/#{@user.database}/#{@id}/#{rev}/#{name}"
         else
-          base
+          "http://(nohead=true)#{host}:#{port}/voicemail/#{@user.database}/#{@id}/#{name}"
 
       has_part: (part = @part) ->
         name = "part#{part}.#{@format}"
@@ -64,7 +58,7 @@ Might need to add parameters (`url_params`, between `()`) here; names are:
 e.g. 'http://(file=part#{@part}.wav,name=part#{@part}.wav)name:password@example.net/db/id/part#{@part.wav}?rev=#{rev}'
 
           name = "part#{@part}.#{@format}"
-          upload_url = @msg_uri "#{name}?rev=#{doc._rev}", name:name, file:name, nohead:true, method:'put'
+          upload_url = @msg_uri name, doc._rev
           @record upload_url, @max_duration
         .then (res) ->
           record_seconds = res.body.variable_record_seconds
@@ -92,7 +86,7 @@ Might need to add parameters (`url_params`, between `()`) here; names are:
 See `file_open` in mod_httapi.c.
 
         name = "part#{this_part}.#{@format}"
-        url = @msg_uri name, ext:@format, nohead:true
+        url = @msg_uri name
         @has_part this_part
         .then (it_does) =>
           debug 'play_recording', {it_does}

@@ -4,7 +4,7 @@
       default_timezone: process.env.DEFAULT_TIMEZONE ? null
       voicemail_dir: '/opt/freeswitch/messages'
 
-      constructor: (@ctx,@db_uri,@id) ->
+      constructor: (@ctx,@id,@database,@db_uri) ->
         @db = new PouchDB @db_uri
         @init_db()
 
@@ -178,7 +178,7 @@ Default prompt
           @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3'"
         .then (choice) =>
           navigate choice if choice?
-        .catch (error) ->
+        .catch (error) =>
           debug "navigate_messages: #{error}"
 
 Default navigation is: read next message

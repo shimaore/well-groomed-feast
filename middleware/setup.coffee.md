@@ -3,13 +3,17 @@
 
     Promise = require 'bluebird'
     nimble = require 'nimble-direction'
+    assert = require 'assert'
+    request = require 'request'
 
     @name = "#{pkg.name}/middleware/setup"
     @web = ->
       @cfg.versions[pkg.name] = pkg.version
 
     class ChoiceError extends Error
-      choice: true
+      constructor: (name) ->
+        @choice = true
+        super "Missing #{name}"
 
     @config = ->
       cfg = @cfg
@@ -93,7 +97,7 @@ Promise resolves into the selected digit or rejects.
         .then ({body}) ->
           name = "variable_#{o.var_name}"
           debug "Got #{body[name]} for #{name}"
-          body[name] ? Promise.reject new ChoiceError "Missing #{o.var_name}"
+          body[name] ? Promise.reject new ChoiceError o.var_name
 
 `get_choice`
 ========
@@ -165,3 +169,36 @@ Promise resolves into the new PIN or rejects.
           Promise.reject new Error "error #{id}"
 
       nimble ctx.cfg
+
+    @web = ->
+
+      @get '/voicemail/:db/:msg/:file', ->
+        proxy = request.get
+          baseUrl: @cfg.userdb_base_uri
+          uri: "/#{@params.db}/#{@params.msg}/#{@params.file}"
+          followRedirects: false
+          maxRedirects: 0
+
+        @request.pipe proxy
+        .on 'error', (error) =>
+          @next "Got #{error}"
+          return
+        proxy.pipe @response
+        return
+
+      @put '/voicemail/:db/:msg/:rev/:file', ->
+        proxy = request.get
+          baseUrl: @cfg.userdb_base_uri
+          uri: "#{@params.db}/#{@params.msg}/#{@params.file}"
+          qs:
+            rev: @params.rev
+          followRedirects: false
+          maxRedirects: 0
+          timeout: 120
+
+        @request.pipe proxy
+        .on 'error', (error) =>
+          @next "Got #{error}"
+          return
+        proxy.pipe @response
+        return

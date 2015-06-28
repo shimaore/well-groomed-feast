@@ -3,6 +3,7 @@ Standard `tough-rate`
 
     pkg = require './package.json'
     debug = (require 'debug') "#{pkg.name}:index"
+    url = require 'url'
 
     debug "Loading #{process.env.CONFIG}"
     cfg = require process.env.CONFIG

@@ -41,7 +41,7 @@ Gather a customer phone number.
           # So we got a user document. Let's locate their user database.
           # userdb_base_uri must contain authentication elements (e.g. "voicemail" user+pass)
           db_uri = @ctx.cfg.userdb_base_uri + '/' + doc.user_database
-          new User @ctx, db_uri, user_id
+          new User @ctx, user_id, doc.user_database, db_uri
         .catch (error) =>
           debug "Number #{user_id} not found (#{error}), trying again."
           @gather_user attempts
