@@ -171,20 +171,22 @@ Default prompt
 
         msg.play_enveloppe current
         .then (choice) =>
-          if choice?
-            return choice
+          return choice if choice?
           msg.play_recording()
         .then (choice) =>
-          if choice?
-            return choice
-          @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3:4:5:6'"
-        .then (choice) ->
-          navigate choice
+          return choice if choice?
+          @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3'"
+        .then (choice) =>
+          navigate choice if choice?
         .catch (error) ->
           debug "navigate_messages: #{error}"
-          # Default navigation is: read next message
-          @navigate_messages rows, current+1
 
+Default navigation is: read next message
+
+          if error.choice
+            @navigate_messages rows, current+1
+          else
+            throw error
 
       config_menu: ->
         debug 'config_menu'
@@ -207,8 +209,9 @@ Default prompt
               @main_menu()
             else
               @config_menu()
-        .catch =>
-          @config_menu()
+        .catch (error) =>
+          debug "config_menu: #{error}"
+          @ctx.error 'USR-211'
 
       main_menu: ->
         debug 'main_menu'
@@ -236,7 +239,7 @@ Default prompt
               @main_menu()
         .catch (error) =>
           debug "main_menu: #{error}"
-          @main_menu()
+          @ctx.error 'USR-238'
 
       record_something: (that,phrase) ->
         debug 'record_something', {that,phrase}

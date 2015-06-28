@@ -8,6 +8,9 @@
     @web = ->
       @cfg.versions[pkg.name] = pkg.version
 
+    class ChoiceError extends Error
+      choice: true
+
     @config = ->
       cfg = @cfg
       debug "Configuring #{pkg.name} version #{pkg.version}.", cfg
@@ -101,7 +104,7 @@ Promise resolves into the selected digit or rejects.
         .then ({body}) ->
           name = "variable_#{o.var_name}"
           debug "Got #{body[name]}"
-          body[name] ? Promise.reject new Error "Missing #{o.var_name}"
+          body[name] ? Promise.reject new ChoiceError "Missing #{o.var_name}"
 
 `get_number`
 ============

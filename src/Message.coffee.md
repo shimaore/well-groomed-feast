@@ -22,7 +22,7 @@ new Message(ctx, User).create()
       the_last_part: process.env.MAX_PARTS ? 1
 
       constructor: (@ctx,@user,@id) ->
-        @part = Message.the_first_part
+        @part = @the_first_part
 
       msg_uri: (p) ->
         if p?
@@ -34,7 +34,7 @@ new Message(ctx, User).create()
         debug 'has_part', part
         @user.db.get @id
         .then (doc) ->
-          doc._attachments["part#{part}.#{Message.format}"]?
+          doc._attachments["part#{part}.#{@format}"]?
 
 Record the current part
 -----------------------
@@ -44,11 +44,11 @@ Record the current part
         record_seconds = null
         @user.db.get @id
         .then (doc) =>
-          upload_url = @msg_uri "part#{@part}.#{Message.format}?rev=#{doc._rev}"
-          @record upload_url
+          upload_url = @msg_uri "part#{@part}.#{@format}?rev=#{doc._rev}"
+          @record upload_url, @max_duration
         .then (res) ->
           record_seconds = res.body.variable_record_seconds
-          if record_seconds < Message.min_duration
+          if record_seconds < @min_duration
             request.del upload_url
             record_seconds = 0
         .then ->
@@ -62,26 +62,16 @@ Record the current part
 Play a recording, optionally collect a digit
 ------------------------------------------------------------
 
-      play_recording: (this_part = Message.the_first_part) ->
+      play_recording: (this_part = @the_first_part) ->
         debug 'play_recording', @id, this_part
-        url = "#{@msg_uri()}/part#{this_part}.#{Message.format}"
+        return unless this_part <= @the_last_part
+        url = "#{@msg_uri()}/part#{this_part}.#{@format}"
         @has_part this_part
         .then (it_does) ->
-          return unless it_does
-
-          download_url = "#{@msg_uri()}/part#{this_part}.#{Message.format}"
-          @play download_url
-        .then (res) ->
-          choice = res.body.variable_choice
+          debug 'play_recording', {it_does}
+          @get_choice url if it_does
 
 Keep playing if no user interaction
-
-          unless choice?
-            return @play_recording this_part+1
-
-Otherwise return the user choice.
-
-          choice
 
         .catch (error) =>
           debug "play_recordding: #{error}"
@@ -124,14 +114,14 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
               when "3"
                 @delete_parts()
                 .then =>
-                  @part = Message.the_first_part
+                  @part = @the_first_part
                   @start_recording()
               when "1"
-                @play_recording Message.the_first_part
+                @play_recording @the_first_part
                 .then =>
                   @post_recording()
               when "2"
-                if @part < Message.the_last_part
+                if @part < @the_last_part
                   @part++
                   @start_recording()
                 else
@@ -146,10 +136,9 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
         @user.db.get @id
         .then (doc) =>
           user_timestamp = @user.time doc.timestamp
-          @ctx.play "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
-        .then (res) ->
-            res.body.variable_choice
-
+          @ctx.get_choice "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
+        .catch ->
+          null
 
       # Create a new voicemail record in the database
       create: ->
