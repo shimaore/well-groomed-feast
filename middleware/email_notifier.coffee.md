@@ -35,6 +35,7 @@ Template handling
 =================
 
       send_email_notification = (msg,opts) ->
+        debug 'send_email_notification', {msg,opts}
         file_name = if opts.attach
             'voicemail_notification_with_attachment'
           else if opts.do_not_record
@@ -118,10 +119,11 @@ API wrapper
 ===========
 
       send_notification_to = (user,msg_id) ->
+        debug 'send_notification_to', {user,msg_id}
         sender = null
         message = null
 
-        cfg.prov.get "number:#{id}"
+        cfg.prov.get "number:#{user.id}"
         .then (number_doc) ->
           sender = number_doc.voicemail_sender ? cfg.voicemail.sender
         .then ->

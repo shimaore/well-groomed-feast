@@ -20,8 +20,9 @@
       socket = dgram.createSocket 'udp4'
 
       send_notification_to = (user) ->
+        debug 'send_notification_to', user
 
-        cfg.prov.get "number:#{id}"
+        cfg.prov.get "number:#{user.id}"
         .then (doc) ->
           if not doc.user_database? then return
 

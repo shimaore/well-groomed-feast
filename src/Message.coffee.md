@@ -194,9 +194,11 @@ FIXME The default FreeSwitch prompts only allow for one-part messages, while we 
 
       notify: ->
         debug 'notify', @user.id
-        for notifier in @ctx.notifiers
+        return unless @ctx.cfg.notifiers?
+        for notifier in @ctx.cfg.notifiers
           do (notifier) =>
             notifier @user.id
+        return
 
       remove: ->
         debug 'remove', @id
@@ -207,7 +209,7 @@ FIXME The default FreeSwitch prompts only allow for one-part messages, while we 
         .then =>
           @notify()
         .then =>
-          @ctx.action 'phrase', 'voicemail_ack,deleted', cb
+          @ctx.action 'phrase', 'voicemail_ack,deleted'
 
       save: ->
         debug 'save', @id
@@ -218,7 +220,7 @@ FIXME The default FreeSwitch prompts only allow for one-part messages, while we 
         .then =>
           @notify()
         .then =>
-          @ctx.action 'phrase', 'voicemail_ack,saved', cb
+          @ctx.action 'phrase', 'voicemail_ack,saved'
 
     module.exports = Message
     pkg = require '../package.json'
