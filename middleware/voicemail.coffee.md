@@ -51,6 +51,8 @@ by FreeSwitch) which can then be transcoded.
               msg.start_recording()
             else
               @goodbye()
+          .catch (error) ->
+            debug "record: #{error}"
 
         when 'inbox'
           user = null
@@ -70,7 +72,8 @@ by FreeSwitch) which can then be transcoded.
           .then ->
             debug 'Go to the main menu after message navigation'
             user.main_menu()
-
+          .catch (error) ->
+            debug "inbox: #{error}"
 
         when 'main'
           user = null
@@ -85,6 +88,8 @@ by FreeSwitch) which can then be transcoded.
           .then ->
             debug 'Present the main menu'
             user.main_menu()
+          .catch (error) ->
+            debug "main: #{error}"
 
         else
           # FIXME say something
@@ -95,3 +100,5 @@ by FreeSwitch) which can then be transcoded.
             @action 'phrase', 'spell,KWAO-6812'
           .then =>
             @action 'phrase', 'spell,KWAO-6812'
+          .catch (error) ->
+            debug "voicemail: #{error}"

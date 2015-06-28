@@ -148,6 +148,8 @@ Promise resolves into the new PIN or rejects.
         ctx.action 'phrase', 'voicemail_goodbye'
         .then ->
           ctx.action 'hangup'
+        .catch (error) ->
+          debug "goodbye: #{error}"
 
       ctx.error = (id) ->
         debug 'error', {id}
