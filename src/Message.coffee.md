@@ -69,7 +69,7 @@ Play a recording, optionally collect a digit
         @has_part this_part
         .then (it_does) ->
           debug 'play_recording', {it_does}
-          @get_choice url if it_does
+          @ctx.play url if it_does
 
 Keep playing if no user interaction
 
@@ -107,7 +107,8 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
                 @start_recording()
             return it
 
-          # FIXME The default FreeSwitch prompts only allow for one-part messages, while we allow for multiple.
+FIXME The default FreeSwitch prompts only allow for one-part messages, while we allow for multiple.
+
           @ctx.get_choice 'phrase:voicemail_record_file_check:1:2:3'
           .then (choice) =>
             switch choice
@@ -136,7 +137,7 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
         @user.db.get @id
         .then (doc) =>
           user_timestamp = @user.time doc.timestamp
-          @ctx.get_choice "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
+          @ctx.play "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
         .catch ->
           null
 

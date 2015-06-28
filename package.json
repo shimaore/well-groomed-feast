@@ -24,7 +24,7 @@
   "dependencies": {
     "acoustic-line": "^1.4.0",
     "bluebird": "^2.3.11",
-    "bumpy-lawyer": "^1.0.6",
+    "bumpy-lawyer": "^1.0.7",
     "coffee-script": "^1.9.3",
     "cuddly": "^1.1.2",
     "debug": "^2.2.0",

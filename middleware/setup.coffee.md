@@ -79,7 +79,7 @@ https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_play_and_get_digits
 ======
 
 Play a file and optionnally record a single digit.
-Promise resolves into an `esl` `Response` object.
+Promise resolves into the selected digit or rejects.
 
       ctx.play = (file,o={}) ->
         o.file = file
@@ -90,6 +90,10 @@ Promise resolves into an `esl` `Response` object.
         o.regexp ?= '\\d'
         o.digit_timeout ?= 1000
         ctx.play_and_get_digits o
+        .then ({body}) ->
+          name = "variable_#{o.var_name}"
+          debug "Got #{body[name]}"
+          body[name] ? Promise.reject new ChoiceError "Missing #{o.var_name}"
 
 `get_choice`
 ========
@@ -101,10 +105,6 @@ Promise resolves into the selected digit or rejects.
         o.timeout ?= 15000
         o.digit_timeout ?= 3000
         ctx.play file, o
-        .then ({body}) ->
-          name = "variable_#{o.var_name}"
-          debug "Got #{body[name]}"
-          body[name] ? Promise.reject new ChoiceError "Missing #{o.var_name}"
 
 `get_number`
 ============
