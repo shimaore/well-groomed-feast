@@ -24,11 +24,19 @@ new Message(ctx, User).create()
       constructor: (@ctx,@user,@id) ->
         @part = @the_first_part
 
-      msg_uri: (p) ->
-        if p?
-          [@msg_uri(),p].join '/'
+      msg_uri: (p,params) ->
+        base = if p?
+            [@msg_uri(),p].join '/'
+          else
+            @user.uri @id
+        if params?
+          [left,right] = base.split '://'
+          q = []
+          for own k,v of params
+            q.push "#{k}=#{v}"
+          "#{left}://(#{q.join ','})#{right}"
         else
-          @user.uri @id
+          base
 
       has_part: (part = @part) ->
         name = "part#{part}.#{@format}"
@@ -46,7 +54,17 @@ Record the current part
         record_seconds = null
         @user.db.get @id
         .then (doc) =>
-          upload_url = @msg_uri "part#{@part}.#{@format}?rev=#{doc._rev}"
+
+Might need to add parameters (`url_params`, between `()`) here; names are:
+- file (partX.wav)
+- profile
+- method ("put")
+- name (partX.wav)
+- nohead
+e.g. 'http://(file=part#{@part}.wav,name=part#{@part}.wav)name:password@example.net/db/id/part#{@part.wav}?rev=#{rev}'
+
+          name = "part#{@part}.#{@format}"
+          upload_url = @msg_uri "#{name}?rev=#{doc._rev}", name:name, file:name, nohead:true, method:'put'
           @record upload_url, @max_duration
         .then (res) ->
           record_seconds = res.body.variable_record_seconds
@@ -67,7 +85,14 @@ Play a recording, optionally collect a digit
       play_recording: (this_part = @the_first_part) ->
         debug 'play_recording', @id, this_part
         return unless this_part <= @the_last_part
-        url = "#{@msg_uri()}/part#{this_part}.#{@format}"
+
+Might need to add parameters (`url_params`, between `()`) here; names are:
+- ext
+- nohead (skip querying with HEAD; this is used to cache files)
+See `file_open` in mod_httapi.c.
+
+        name = "part#{this_part}.#{@format}"
+        url = @msg_uri name, ext:@format, nohead:true
         @has_part this_part
         .then (it_does) =>
           debug 'play_recording', {it_does}

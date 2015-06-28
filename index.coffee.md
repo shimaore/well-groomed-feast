@@ -36,6 +36,11 @@ Default FreeSwitch configuration
     ]
     cfg.profile_module = require './conf/profile'
 
+    if cfg.userdb_base_uri?
+      {auth} = url.parse cfg.userdb_base_uri
+      if auth?
+        cfg.httapi_credentials ?= auth
+
     debug 'Loading thinkable-ducks'
     ducks = require 'thinkable-ducks'
     debug 'Starting'
