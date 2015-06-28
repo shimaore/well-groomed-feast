@@ -31,10 +31,12 @@ new Message(ctx, User).create()
           @user.uri @id
 
       has_part: (part = @part) ->
-        debug 'has_part', part
+        name = "part#{part}.#{@format}"
+        debug 'has_part', @id, part, @format, name
         @user.db.get @id
         .then (doc) ->
-          doc._attachments["part#{part}.#{@format}"]?
+          debug 'has_part', doc._attachments[name]
+          doc._attachments[name]?
 
 Record the current part
 -----------------------
@@ -67,7 +69,7 @@ Play a recording, optionally collect a digit
         return unless this_part <= @the_last_part
         url = "#{@msg_uri()}/part#{this_part}.#{@format}"
         @has_part this_part
-        .then (it_does) ->
+        .then (it_does) =>
           debug 'play_recording', {it_does}
           @ctx.play url if it_does
 
@@ -98,6 +100,7 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
 
         @has_part @part
         .then (it_does) =>
+          debug 'post_recording', {it_does}
           unless it_does
             it =
               cuddly.ops "Could not record message part", {message_id:@id,user_id:@user.id}

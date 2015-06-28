@@ -92,7 +92,7 @@ Promise resolves into the selected digit or rejects.
         ctx.play_and_get_digits o
         .then ({body}) ->
           name = "variable_#{o.var_name}"
-          debug "Got #{body[name]}"
+          debug "Got #{body[name]} for #{name}"
           body[name] ? Promise.reject new ChoiceError "Missing #{o.var_name}"
 
 `get_choice`
