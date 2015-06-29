@@ -7,13 +7,13 @@
     assert = require 'assert'
 
     @name = "#{pkg.name}:mwi_notifier"
-    @config = ->
-      cfg = @cfg
-      @cfg.notifiers ?= []
+    @include = (ctx) ->
+      cfg = ctx.cfg
+      cfg.notifiers ?= []
 
-      assert @cfg.prov?, 'Missing prov'
+      assert cfg.prov?, 'Missing prov'
 
-      unless @cfg.voicemail?.notifier_port?
+      unless cfg.voicemail?.notifier_port?
         debug 'Missing `voicemail.notifier_port`'
         return
 
@@ -77,4 +77,5 @@
 
       socket.bind cfg.voicemail.notifier_port ? 7124
 
-      @cfg.notifiers.push send_notification_to
+      cfg.notifiers.push send_notification_to
+      debug 'Configured.'

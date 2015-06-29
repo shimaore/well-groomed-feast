@@ -10,19 +10,19 @@
     assert = require 'assert'
 
     @name = "#{pkg.name}:email_notifier"
-    @config = ->
-      cfg = @cfg
-      @cfg.notifiers ?= []
+    @include = (ctx) ->
+      cfg = ctx.cfg
+      cfg.notifiers ?= []
 
-      assert @cfg.prov, 'Missing prov'
+      assert cfg.prov, 'Missing prov'
 
-      unless @cfg.mailer?.SMTP?
+      unless cfg.mailer?.SMTP?
         debug 'Missing `mailer.SMTP`'
         return
-      unless @cfg.voicemail?.sender?
+      unless cfg.voicemail?.sender?
         debug 'Missing `voicemail.sender`'
         return
-      unless @cfg.host?
+      unless cfg.host?
         debug 'Missing `host`'
         return
 
@@ -143,4 +143,5 @@ API wrapper
               language: settings.language
               user: user
 
-      @cfg.notifiers.push send_notification_to
+      cfg.notifiers.push send_notification_to
+      debug 'Configured.'
