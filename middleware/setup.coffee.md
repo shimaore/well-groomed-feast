@@ -5,6 +5,7 @@
     nimble = require 'nimble-direction'
     assert = require 'assert'
     request = require 'request'
+    qs = require 'querystring'
 
     @name = "#{pkg.name}/middleware/setup"
     @web = ->
@@ -187,13 +188,20 @@ Promise resolves into the new PIN or rejects.
 
 Provide a URI to access the web services (attachment upload/download) defined below.
 
-      ctx.uri = (user,id,name,rev) ->
+      ctx.uri = (user,id,name,rev,simple) ->
         host = ctx.cfg.web.host ? '127.0.0.1'
         port = ctx.cfg.web.port
+        db = qs.escape user.database
+        id = qs.escape id
+        name = qs.escape name
         if rev?
-          "http://#{host}:#{port}/voicemail/#{user.database}/#{id}/#{rev}/#{name}"
+          rev = qs.escape rev
+          "http://#{host}:#{port}/voicemail/#{db}/#{id}/#{rev}/#{name}"
         else
-          "http://(nohead=true)#{host}:#{port}/voicemail/#{user.database}/#{id}/#{name}"
+          if simple
+            "http://#{host}:#{port}/voicemail/#{db}/#{id}/#{name}"
+          else
+            "http://(nohead=true)#{host}:#{port}/voicemail/#{db}/#{id}/#{name}"
 
       nimble ctx.cfg
 

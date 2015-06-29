@@ -193,10 +193,7 @@ Save
           recipient: @ctx.destination
 
         # If the user simply hungs up this is the only event we will receive.
-        @ctx.call.on 'esl_disconnect_notice', =>
-          @notify()
-        # Wait for linger to finish.
-        @ctx.call.on 'esl_disconnect', =>
+        @ctx.call.on 'freeswitch_disconnect_notice', =>
           @notify()
 
         # Create new CDB record to hold the voicemail metadata
@@ -207,11 +204,11 @@ Save
           @ctx.error 'MSG-180'
 
       notify: ->
-        debug 'notify', @user.id
+        debug 'notify', @user.id, @id
         return unless @ctx.cfg.notifiers?
         for notifier in @ctx.cfg.notifiers
           do (notifier) =>
-            notifier @user.id
+            notifier @user, @id
         return
 
       remove: ->

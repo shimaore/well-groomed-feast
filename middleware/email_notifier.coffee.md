@@ -76,11 +76,12 @@ Send email out
 ==============
 
         .then ->
+          debug 'Ready to send.'
           email_options =
-            sender: sender ? opts.email
+            from: sender ? opts.email
             to: opts.email
             subject: Milk.render template.subject, msg
-            body: Milk.render template.body, msg
+            text: Milk.render template.body, msg
             html: Milk.render template.html, msg
             attachments: []
 
@@ -97,23 +98,21 @@ FIXME: Migrate to new `node_mailer` conventions.
 
                 email_options.attachments.push {
                   filename: name
-                  content: opts.user.db.request.get qs.escape(msg_id) + '/' + qs.escape(name)
+                  path: ctx.uri opts.user, msg._id, name, null, true
                   contentType: data.content_type
                 }
 
-          sendMail email_options
-          .catch (error) ->
-            debug "sendMail: #{error}", email_options
-            throw error
+          debug 'sendMail', email_options
+          sendMail.call transport, email_options
           .then (info) ->
+            debug 'sendMail', info
 
 Delete record once all data has been emailed.
 
             if (opts.attach or opts.do_not_record) and opts.send_then_delete
-              userdb.remove msg
+              user.db.remove msg
           .catch (error) ->
-            debug "userdb.remove: #{error}", msg
-            throw error
+            debug "sendMail: #{error}", msg
 
 API wrapper
 ===========
@@ -134,7 +133,7 @@ API wrapper
           user.db.get 'voicemail_settings'
         .then (settings) ->
           return unless settings.email_notifications
-          for email, params of settings.email_notifications
+          notifications = for email, params of settings.email_notifications
             send_email_notification message,
               email: email
               do_not_record: settings.do_not_record
@@ -142,6 +141,11 @@ API wrapper
               attach: params.attach_message
               language: settings.language
               user: user
+          Promise.all notifications
+        .then ->
+          debug 'send_notification: done'
+        .catch (error) ->
+          debug "send_notification: #{error}"
 
       cfg.notifiers.push send_notification_to
       debug 'Configured.'
