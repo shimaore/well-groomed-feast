@@ -4,6 +4,9 @@ Standard `tough-rate`
     pkg = require './package.json'
     debug = (require 'debug') "#{pkg.name}:index"
     url = require 'url'
+    assert = require 'assert'
+
+    assert process.env.CONFIG?, 'Missing CONFIG environment variable'
 
     debug "Loading #{process.env.CONFIG}"
     cfg = require process.env.CONFIG
