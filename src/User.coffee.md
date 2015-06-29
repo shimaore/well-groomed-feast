@@ -12,11 +12,8 @@
         debug 'init_db'
         # FIXME: inject the proper view(s)
 
-      uri: (p) ->
-        if p?
-          [@db_uri,p].join '/'
-        else
-          @db_uri
+      uri: (name,rev) ->
+        @ctx.uri this, 'voicemail_settings', name, rev
 
       voicemail_settings: ->
         debug 'voicemail_settings'
@@ -42,7 +39,7 @@ Convert a timestamp (ISO string) to a local timestamp (ISO string)
 
       time: (t) ->
         debug 'time'
-        timezone = @vm_settings.timezone ? User.default_timezone
+        timezone = @vm_settings.timezone ? @default_timezone
         tz_mod = null
         if timezone?
           try
@@ -62,13 +59,17 @@ Convert a timestamp (ISO string) to a local timestamp (ISO string)
 
 User-specified prompt
 
-          if vm_settings._attachments?["prompt.#{message_format}"]
-            @play @db_uri + "/voicemail_settings/prompt.#{message_format}"
+          if vm_settings._attachments?["prompt.#{Message::format}"]
+            @ctx.play @uri "prompt.#{Message::format}"
+            .catch ->
+              null
 
 User-specified name
 
-          else if vm_settings._attachments?["name.#{message_format}"]
-            @play @db_uri + "/voicemail_settings/name.#{message_format}"
+          else if vm_settings._attachments?["name.#{Message::format}"]
+            @ctx.play @uri "name.#{Message::format}"
+            .catch ->
+              null
             .then =>
               @ctx.action 'phrase', 'voicemail_unavailable', next
 
@@ -78,7 +79,7 @@ Default prompt
             @ctx.action 'phrase', "voicemail_play_greeting,#{@id}", next
 
         .then =>
-          if vm_settings.do_not_record
+          if @vm_settings.do_not_record
             false
           else
             @ctx.action 'phrase', 'voicemail_record_message'
@@ -122,9 +123,9 @@ Default prompt
         debug 'saved_messages'
         the_rows = null
         @db.query 'voicemail/saved_messages'
-        .then ({rows}) ->
+        .then ({rows}) =>
           the_rows = rows
-          @action 'phrase', "voicemail_message_count,#{rows.length}:saved"
+          @ctx.action 'phrase', "voicemail_message_count,#{rows.length}:saved"
         .then ->
           the_rows
 
@@ -249,35 +250,42 @@ Default navigation is: read next message
           rev = doc._rev
           @ctx.action 'phrase', phrase
         .then =>
-          upload_url = @db_uri + '/voicemail_settings/' + that + '.' + message_format + '?rev=' + rev
+          upload_url = @uri "#{that}.#{Message::format}", rev
           @ctx.record upload_url
+        .then (recorded) =>
+          if recorded < 3
+            @record_something that,phrase
 
       record_greeting: ->
         debug 'record_greeting'
         @record_something 'prompt', 'voicemail_record_greeting'
         .catch (error) =>
           debug "record_greeting: #{error}"
-          @record_greeting()
+          @ctx.error 'USR-263'
 
       record_name: ->
         debug 'record_name'
         @record_something 'name', 'voicemail_record_name'
         .catch (error) =>
           debug "record_name: #{error}"
-          @record_name()
+          @ctx.error 'USR-270'
 
       change_password: ->
         debug 'change_password'
         new_pin = null
 
-        @ctx.get_new_pin min:User.min_pin_length
-        .then (pin) =>
-          new_pin = pin
-          unless new_pin? and new_pin.length >= User.min_pin_length
+        get_pin = =>
+          @ctx.get_new_pin min:@min_pin_length
+          .then (pin) =>
+            new_pin = pin
+            debug 'change_password', {new_pin}
+            return if new_pin?.length >= @min_pin_length
             @ctx
             .action 'phrase', 'vm_say,too short'
             .then =>
-              Promise.reject new Error 'Password too short'
+              get_pin()
+
+        get_pin()
         .then =>
           @db.get 'voicemail_settings'
         .then (vm_settings) =>
@@ -288,7 +296,6 @@ Default navigation is: read next message
           @ctx.action 'phrase', 'vm_say,thank you'
         .catch (error) =>
           debug "change_password: #{error}"
-          @change_password()
 
     module.exports = User
     pkg = require '../package.json'

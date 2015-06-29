@@ -24,13 +24,8 @@ new Message(ctx, User).create()
       constructor: (@ctx,@user,@id) ->
         @part = @the_first_part
 
-      msg_uri: (name,rev) ->
-        host = @ctx.cfg.web.host ? '127.0.0.1'
-        port = @ctx.cfg.web.port
-        if rev?
-          "http://#{host}:#{port}/voicemail/#{@user.database}/#{@id}/#{rev}/#{name}"
-        else
-          "http://(nohead=true)#{host}:#{port}/voicemail/#{@user.database}/#{@id}/#{name}"
+      uri: (name,rev) ->
+        @ctx.uri @user,@id,name,rev
 
       has_part: (part = @part) ->
         name = "part#{part}.#{@format}"
@@ -49,29 +44,25 @@ Record the current part
         @user.db.get @id
         .then (doc) =>
 
-Might need to add parameters (`url_params`, between `()`) here; names are:
-- file (partX.wav)
-- profile
-- method ("put")
-- name (partX.wav)
-- nohead
-e.g. 'http://(file=part#{@part}.wav,name=part#{@part}.wav)name:password@example.net/db/id/part#{@part.wav}?rev=#{rev}'
+FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
 
           name = "part#{@part}.#{@format}"
-          upload_url = @msg_uri name, doc._rev
-          @record upload_url, @max_duration
-        .then (res) ->
-          record_seconds = res.body.variable_record_seconds
+          upload_url = @uri name, doc._rev
+          @ctx.record upload_url, @max_duration
+        .then (record_seconds) =>
           if record_seconds < @min_duration
-            request.del upload_url
-            record_seconds = 0
-        .then ->
-          record_seconds
+            @delete_single_part @part
+            .then ->
+              0
+          else
+            record_seconds
         .catch (error) =>
           debug "start_recording: #{error}"
-          # FIXME Remove the attachment from the database?
-          # request.del upload_url
-          @start_recording()
+
+Only restart the recording if there was a genuine error.
+
+          unless error.choice
+            @start_recording()
 
 Play a recording, optionally collect a digit
 ------------------------------------------------------------
@@ -86,7 +77,7 @@ Might need to add parameters (`url_params`, between `()`) here; names are:
 See `file_open` in mod_httapi.c.
 
         name = "part#{this_part}.#{@format}"
-        url = @msg_uri name
+        url = @uri name
         @has_part this_part
         .then (it_does) =>
           debug 'play_recording', {it_does}
@@ -101,13 +92,20 @@ Keep playing if no user interaction
 Delete parts
 ------------
 
-      delete_parts: ->
-        debug 'delete_parts', @id
+      delete_all_parts: ->
+        debug 'delete_all_parts', @id
         @user.db.get @id
         .then (doc) =>
           # Remove all attachments
           doc._attachments = {}
           @user.db.put doc
+
+      delete_single_part: (this_part) ->
+        debug 'delete_single_part', this_part
+        @user.db.get @id
+        .then (doc) =>
+          name = "part#{this_part}.#{@format}"
+          @user.db.removeAttachment @id, name, doc.rev
 
 Post-recording menu
 -------------------
@@ -134,24 +132,42 @@ FIXME The default FreeSwitch prompts only allow for one-part messages, while we 
           @ctx.get_choice 'phrase:voicemail_record_file_check:1:2:3'
           .then (choice) =>
             switch choice
-              when "3"
-                @delete_parts()
-                .then =>
-                  @part = @the_first_part
-                  @start_recording()
+
+Play
+
               when "1"
                 @play_recording @the_first_part
                 .then =>
                   @post_recording()
-              when "2"
+
+Delete
+
+              when "3"
+                @delete_all_parts()
+                .then =>
+                  @part = @the_first_part
+                  @start_recording()
+                  .then =>
+                    @post_recording()
+
+Append
+
+              when "4" # Keep recording
                 if @part < @the_last_part
                   @part++
                   @start_recording()
                 else
                   # FIXME: notify that the last part has been recorded
                   @post_recording()
+
+Save
+
+              when "2"
+                return
+
           .catch =>
-            @post_recording()
+            if error.choice
+              @post_recording()
 
       # Play the message enveloppe
       play_enveloppe: (index) ->
@@ -166,7 +182,7 @@ FIXME The default FreeSwitch prompts only allow for one-part messages, while we 
       # Create a new voicemail record in the database
       create: ->
         id_timestamp = timestamp()
-        @id = 'voicemail:' + id_timestamp + res.body.variable_uuid
+        @id = 'voicemail:' + id_timestamp + @ctx.data.variable_uuid
         debug 'create', @id
         msg =
           type: "voicemail"
@@ -181,16 +197,14 @@ FIXME The default FreeSwitch prompts only allow for one-part messages, while we 
           @notify()
         # Wait for linger to finish.
         @ctx.call.on 'esl_disconnect', =>
-          @notify() # Was notify_via_email
+          @notify()
 
         # Create new CDB record to hold the voicemail metadata
         @user.db.put msg
         .catch (e) =>
-          debug "Could not create #{@msg_uri()}"
-          cuddly.csr "Could not create #{@msg_uri()}"
-          @ctx.action 'phrase', 'vm_say,sorry'
-          .then ->
-            # FIXME what else should we do in this case?
+          debug "Could not create message: #{e}."
+          cuddly.csr "Could not create message: #{e}"
+          @ctx.error 'MSG-180'
 
       notify: ->
         debug 'notify', @user.id

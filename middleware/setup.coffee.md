@@ -36,15 +36,29 @@ Record using the given file or uri.
 https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_record
 
       ctx.record = (file,time_limit = 300) ->
-        debug "record", {file,time_limit}
+        debug 'record', {file,time_limit}
         silence_thresh = 20
         silence_hits = 3
-        ctx.call.command 'record', [
-          file
-          time_limit
-          silence_thresh
-          silence_hits
-        ].join ' '
+        ctx.action 'set', 'playback_terminators=any'
+        .then ->
+          ctx.action 'gentones', '%(500,0,800)'
+        .then ->
+          ctx.action 'record', [
+            file
+            time_limit
+            silence_thresh
+            silence_hits
+          ].join ' '
+        .then ({body}) ->
+
+The documentation says:
+- record_ms
+- record_samples
+- playback_terminator_used
+
+          duration = body.variable_record_seconds
+          debug 'record', {duration}
+          duration
 
 `play_and_get_digits`
 =====================
@@ -168,7 +182,23 @@ Promise resolves into the new PIN or rejects.
         .then ->
           Promise.reject new Error "error #{id}"
 
+`uri`
+-----
+
+Provide a URI to access the web services (attachment upload/download) defined below.
+
+      ctx.uri = (user,id,name,rev) ->
+        host = ctx.cfg.web.host ? '127.0.0.1'
+        port = ctx.cfg.web.port
+        if rev?
+          "http://#{host}:#{port}/voicemail/#{user.database}/#{id}/#{rev}/#{name}"
+        else
+          "http://(nohead=true)#{host}:#{port}/voicemail/#{user.database}/#{id}/#{name}"
+
       nimble ctx.cfg
+
+Attachment upload/download
+==========================
 
     @web = ->
 
@@ -187,7 +217,7 @@ Promise resolves into the new PIN or rejects.
         return
 
       @put '/voicemail/:db/:msg/:rev/:file', ->
-        proxy = request.get
+        proxy = request.put
           baseUrl: @cfg.userdb_base_uri
           uri: "#{@params.db}/#{@params.msg}/#{@params.file}"
           qs:

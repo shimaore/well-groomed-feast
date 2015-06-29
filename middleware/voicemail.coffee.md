@@ -9,6 +9,7 @@ by FreeSwitch) which can then be transcoded.
 (RIFF (little-endian) data, WAVE audio, Microsoft PCM, 16 bit, mono 8000 Hz)
 
     Messaging = require '../src/Messaging'
+    Message = require '../src/Message'
     seconds = 1000
 
     pkg = require '../package.json'
@@ -23,44 +24,13 @@ by FreeSwitch) which can then be transcoded.
 
       switch @destination
 
-        when 'record'
-          msg = null
-          user = null
-          @linger()
-          .then =>
-            # Keep the call opened for a little while.
-            @once 'esl_linger'
-            .delay 20*seconds
-            .then ->
-              @exit()
-            .catch (error) ->
-              debug "linger: #{error}"
-            @action 'answer'
-          .then =>
-            @action 'set', "language=#{@cfg.announcement_language}"
-          .then ->
-            messaging.locate_user()
-          .then (_user) =>
-            user = _user
-            msg = new Message this, user, db_uri
-            msg.create()
-          .then ->
-            user.play_prompt()
-          .then =>
-            if do_recording
-              msg.start_recording()
-            else
-              @goodbye()
-          .catch (error) ->
-            debug "record: #{error}"
-
         when 'inbox'
           user = null
           @action 'answer'
           .then =>
             @action 'set', "language=#{@cfg.announcement_language}"
-          .then ->
-            messaging.locate_user()
+          .then =>
+            messaging.locate_user @source
           .then (_user) ->
             user = _user
             user.authenticate()
@@ -92,13 +62,37 @@ by FreeSwitch) which can then be transcoded.
             debug "main: #{error}"
 
         else
-          # FIXME say something
-          @action 'pre_answer'
+          msg = null
+          user = null
+
+Keep the call opened for a little while.
+
+          @call.once 'freeswitch_linger'
+          .delay 20*seconds
+          .then ->
+            @exit()
+          .catch (error) ->
+            debug "linger: #{error}"
+
+          @call.linger()
+          .then =>
+            @action 'answer'
           .then =>
             @action 'set', "language=#{@cfg.announcement_language}"
           .then =>
-            @action 'phrase', 'spell,KWAO-6812'
+            messaging.locate_user @destination
+          .then (_user) =>
+            user = _user
+            msg = new Message this, user
+            msg.create()
+          .then ->
+            user.play_prompt()
+          .then (do_recording) =>
+            if do_recording
+              msg.start_recording()
+              .then =>
+                msg.post_recording()
           .then =>
-            @action 'phrase', 'spell,KWAO-6812'
+            @goodbye()
           .catch (error) ->
-            debug "voicemail: #{error}"
+            debug "record: #{error}"
