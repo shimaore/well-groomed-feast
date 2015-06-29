@@ -240,7 +240,10 @@ Default navigation is: read next message
               @main_menu()
         .catch (error) =>
           debug "main_menu: #{error}"
-          @ctx.error 'USR-238'
+          if error.choice
+            @goodbye()
+          else
+            @ctx.error 'USR-238'
 
       record_something: (that,phrase) ->
         debug 'record_something', {that,phrase}
@@ -255,6 +258,8 @@ Default navigation is: read next message
         .then (recorded) =>
           if recorded < 3
             @record_something that,phrase
+        .then =>
+          @ctx.action 'phrase', 'vm_say,thank you'
 
       record_greeting: ->
         debug 'record_greeting'
