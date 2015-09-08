@@ -121,9 +121,18 @@ API wrapper
       send_notification_to = seem (user,msg_id) ->
         debug 'send_notification_to', {user,msg_id}
 
+We can only send emails about a specific message.
+
+        return unless msg_id?
+
         number_doc = yield cfg.prov.get "number:#{user.id}"
         sender = number_doc.voicemail_sender ? cfg.voicemail.sender
         message = yield user.db.get msg_id
+
+We should only email about new messages.
+
+        return unless message.box is 'new'
+
         settings = yield user.db.get 'voicemail_settings'
         return unless settings.email_notifications
         notifications = for email, params of settings.email_notifications
