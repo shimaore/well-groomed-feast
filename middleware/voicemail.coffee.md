@@ -15,8 +15,9 @@ by FreeSwitch) which can then be transcoded.
     pkg = require '../package.json'
     debug = (require 'debug') "#{pkg.name}:voicemail"
     @name = "#{pkg.name}/middleware/voicemail"
+    seem = require 'seem'
 
-    @include = ->
+    @include = seem ->
 
       messaging = new Messaging this
 
@@ -25,45 +26,26 @@ by FreeSwitch) which can then be transcoded.
       switch @destination
 
         when 'inbox'
-          user = null
-          @action 'answer'
-          .then =>
-            @action 'set', "language=#{@cfg.announcement_language}"
-          .then =>
-            messaging.locate_user @source
-          .then (_user) ->
-            user = _user
-            user.authenticate()
-          .then ->
-            debug 'Enumerate messages'
-            user.new_messages()
-          .then (rows) ->
-            user.navigate_messages rows, 0
-          .then ->
-            debug 'Go to the main menu after message navigation'
-            user.main_menu()
-          .catch (error) ->
-            debug "inbox: #{error}"
+          yield @action 'answer'
+          yield @action 'set', "language=#{@cfg.announcement_language}"
+          user = yield messaging.locate_user @source
+          debug 'Authenticating', user
+          yield user.authenticate()
+          debug 'Enumerate messages'
+          rows = yield user.new_messages()
+          yield user.navigate_messages rows, 0
+          debug 'Go to the main menu after message navigation'
+          user.main_menu()
 
         when 'main'
-          user = null
-          @action 'answer'
-          .then =>
-            @action 'set', "language=#{@cfg.announcement_language}"
-          .then ->
-            messaging.gather_user()
-          .then (_user) ->
-            user = _user
-            user.authenticate()
-          .then ->
-            debug 'Present the main menu'
-            user.main_menu()
-          .catch (error) ->
-            debug "main: #{error}"
+          yield @action 'answer'
+          yield @action 'set', "language=#{@cfg.announcement_language}"
+          user = yield messaging.gather_user()
+          yield user.authenticate()
+          debug 'Present the main menu'
+          user.main_menu()
 
         else
-          msg = null
-          user = null
 
 Keep the call opened for a little while.
 
@@ -74,25 +56,14 @@ Keep the call opened for a little while.
           .catch (error) ->
             debug "linger: #{error}"
 
-          @call.linger()
-          .then =>
-            @action 'answer'
-          .then =>
-            @action 'set', "language=#{@cfg.announcement_language}"
-          .then =>
-            messaging.locate_user @destination
-          .then (_user) =>
-            user = _user
-            msg = new Message this, user
-            msg.create()
-          .then ->
-            user.play_prompt()
-          .then (do_recording) =>
-            if do_recording
-              msg.start_recording()
-              .then =>
-                msg.post_recording()
-          .then =>
-            @goodbye()
-          .catch (error) ->
-            debug "record: #{error}"
+          yield @call.linger()
+          yield @action 'answer'
+          yield @action 'set', "language=#{@cfg.announcement_language}"
+          user = yield messaging.locate_user @destination
+          msg = new Message this, user
+          yield msg.create()
+          do_recording = yield user.play_prompt()
+          if do_recording
+            yield msg.start_recording()
+            yield msg.post_recording()
+          @goodbye()
