@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   build-essential \
   ca-certificates \
   curl \
+  g++ \
   git \
   make \
   supervisor
@@ -27,7 +28,7 @@ USER freeswitch
 RUN mkdir -p \
   conf \
   log
-RUN npm install && \
+RUN npm install && npm cache clean && \
   cp node_modules/thinkable-ducks/supervisord.conf .
 
 CMD ["supervisord","-n"]
