@@ -3,13 +3,13 @@
     seem = require 'seem'
     dns = Promise.promisifyAll require 'dns'
     pkg = require '../package.json'
-    debug = (require 'debug') "#{pkg.name}:mwi_notifier"
+    @name = "#{pkg.name}:mwi_notifier"
+    debug = (require 'debug') @name
 
     assert = require 'assert'
 
-    @name = "#{pkg.name}:mwi_notifier"
-    @include = (ctx) ->
-      cfg = ctx.cfg
+    @include = ->
+      cfg = @cfg
       cfg.notifiers ?= []
 
       assert cfg.prov?, 'Missing prov'

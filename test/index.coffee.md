@@ -12,13 +12,13 @@
         m = require '../middleware/email_notifier'
         cfg =
           prov:true
-        m.config.apply {cfg}
+        m.include.apply {cfg}
 
       it 'mwi_notifier', ->
         m = require '../middleware/mwi_notifier'
         cfg =
           prov:true
-        m.config.apply {cfg}
+        m.include.apply {cfg}
 
       it 'setup', ->
         m = require '../middleware/setup'

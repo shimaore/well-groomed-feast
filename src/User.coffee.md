@@ -1,3 +1,5 @@
+    seem = require 'seem'
+
     class User
 
       min_pin_length: process.env.MIN_PIN_LENGTH ? 6
@@ -306,7 +308,6 @@ Default navigation is: read next message
     pkg = require '../package.json'
     debug = (require 'debug') "#{pkg.name}:User"
     cuddly = (require 'cuddly') "#{pkg.name}:User"
-    seem = require 'seem'
 
     tz = require 'timezone'
     Promise = require 'bluebird'

@@ -7,12 +7,12 @@
     smtpTransport = require 'nodemailer-smtp-transport'
 
     pkg = require '../package.json'
-    debug = (require 'debug') "#{pkg.name}:email_notifier"
+    @name = "#{pkg.name}:email_notifier"
+    debug = (require 'debug') @name
     assert = require 'assert'
 
-    @name = "#{pkg.name}:email_notifier"
-    @include = (ctx) ->
-      cfg = ctx.cfg
+    @include = ->
+      cfg = @cfg
       cfg.notifiers ?= []
 
       assert cfg.prov, 'Missing prov'
