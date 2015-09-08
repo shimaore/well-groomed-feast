@@ -8,9 +8,12 @@
         @db = new PouchDB @db_uri
         @init_db()
 
-      init_db: ->
+Inject the views into the database.
+Note: this requires the application to be database admin, which is OK.
+
+      init_db: seem ->
         debug 'init_db'
-        # FIXME: inject the proper view(s)
+        yield update @db, couchapp
 
       uri: (name,rev) ->
         @ctx.uri this, 'voicemail_settings', name, rev
@@ -306,8 +309,12 @@ Default navigation is: read next message
     pkg = require '../package.json'
     debug = (require 'debug') "#{pkg.name}:User"
     cuddly = (require 'cuddly') "#{pkg.name}:User"
+    seem = require 'seem'
 
     tz = require 'timezone'
     Promise = require 'bluebird'
     PouchDB = require 'pouchdb'
     Message = require './Message'
+
+    couchapp = require './couchapp'
+    update = require 'nimble-direction/update'
