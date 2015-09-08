@@ -27,12 +27,12 @@ Note: this requires the application to be database admin, which is OK.
         @db.get 'voicemail_settings'
         .catch (error) =>
 
-1. Debug un max
+Debug as much as we can.
 
           debug "VM Box is not available", {user_id:@id}
           cuddly.csr "VM Box is not available", {user_id:@id}
 
-2. Message qui dit d'appeler le support
+Tell the user to call support.
 
           @ctx.error 'USR-41'
         .then (doc) =>
