@@ -1,6 +1,3 @@
-Standard `tough-rate`
----------------------
-
     pkg = require './package.json'
     debug = (require 'debug') "#{pkg.name}:index"
     url = require 'url'
@@ -10,8 +7,6 @@ Standard `tough-rate`
 
     debug "Loading #{process.env.CONFIG}"
     cfg = require process.env.CONFIG
-
-Default `use` list for tough-rate.
 
     debug 'cfg.use'
     cfg.use = [
@@ -28,16 +23,7 @@ Default `use` list for tough-rate.
 Default FreeSwitch configuration
 
     debug 'Loading conf/freeswitch'
-    cfg.freeswitch = require 'docker.tough-rate/conf/freeswitch'
-    cfg.modules = [
-      'mod_sndfile'
-      'mod_tone_stream'
-      'mod_httapi'
-    ]
-    cfg.phrases = [
-      # require 'bumpy-lawyer/en'
-      require 'bumpy-lawyer/fr'
-    ]
+    cfg.freeswitch = require 'huge-play/conf/freeswitch'
     cfg.profile_module = require './conf/profile'
 
     if cfg.userdb_base_uri?
