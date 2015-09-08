@@ -15,7 +15,7 @@ RUN git clone https://github.com/tj/n.git
 WORKDIR n
 RUN make install
 WORKDIR ..
-RUN n io 2.3.1
+RUN n io 2.5.0
 ENV NODE_ENV production
 
 ENV install_dir /opt/well-groomed-feast
