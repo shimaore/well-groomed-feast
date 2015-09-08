@@ -3,6 +3,7 @@
     qs = require 'querystring'
     path = require 'path'
     Promise = require 'bluebird'
+    seem = require 'seem'
     smtpTransport = require 'nodemailer-smtp-transport'
 
     pkg = require '../package.json'
@@ -117,35 +118,24 @@ Delete record once all data has been emailed.
 API wrapper
 ===========
 
-      send_notification_to = (user,msg_id) ->
+      send_notification_to = seem (user,msg_id) ->
         debug 'send_notification_to', {user,msg_id}
-        sender = null
-        message = null
 
-        cfg.prov.get "number:#{user.id}"
-        .then (number_doc) ->
-          sender = number_doc.voicemail_sender ? cfg.voicemail.sender
-        .then ->
-          user.db.get msg_id
-        .then (msg) ->
-          message = msg
-        .then ->
-          user.db.get 'voicemail_settings'
-        .then (settings) ->
-          return unless settings.email_notifications
-          notifications = for email, params of settings.email_notifications
-            send_email_notification message,
-              email: email
-              do_not_record: settings.do_not_record
-              send_then_delete: settings.send_then_delete
-              attach: params.attach_message
-              language: settings.language
-              user: user
-          Promise.all notifications
-        .then ->
-          debug 'send_notification: done'
-        .catch (error) ->
-          debug "send_notification: #{error}"
+        number_doc = yield cfg.prov.get "number:#{user.id}"
+        sender = number_doc.voicemail_sender ? cfg.voicemail.sender
+        message = yield user.db.get msg_id
+        settings = yield user.db.get 'voicemail_settings'
+        return unless settings.email_notifications
+        notifications = for email, params of settings.email_notifications
+          send_email_notification message,
+            email: email
+            do_not_record: settings.do_not_record
+            send_then_delete: settings.send_then_delete
+            attach: params.attach_message
+            language: settings.language
+            user: user
+        yield Promise.all notifications
+        debug 'send_notification: done'
 
       cfg.notifiers.push send_notification_to
       debug 'Configured.'

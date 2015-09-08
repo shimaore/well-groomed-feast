@@ -209,6 +209,9 @@ Save
         for notifier in @ctx.cfg.notifiers
           do (notifier) =>
             notifier @user, @id
+            .catch (error) ->
+              debug "Notifier error: #{error}"
+              cuddly.csr "Notifier error: #{error}"
         return
 
       remove: ->
