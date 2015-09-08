@@ -248,20 +248,17 @@ Default navigation is: read next message
           else
             @ctx.error 'USR-238'
 
-      record_something: (that,phrase) ->
+      record_something: seem (that,phrase) ->
         debug 'record_something', {that,phrase}
-        rev = null
-        @db.get 'voicemail_settings'
-        .then (doc) =>
-          rev = doc._rev
-          @ctx.action 'phrase', phrase
-        .then =>
-          upload_url = @uri "#{that}.#{Message::format}", rev
-          @ctx.record upload_url
-        .then (recorded) =>
-          if recorded < 3
-            @record_something that,phrase
-        .then =>
+        doc = yield @db.get 'voicemail_settings'
+        rev = doc._rev
+        yield @ctx.action 'phrase', phrase
+        upload_url = @uri "#{that}.#{Message::format}", rev
+        recorded = yield @ctx.record upload_url
+        if recorded < 3
+          @ctx.action 'phrase', 'vm_say,too short'
+          yield @record_something that,phrase
+        else
           @ctx.action 'phrase', 'vm_say,thank you'
 
       record_greeting: ->
