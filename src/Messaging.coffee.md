@@ -23,7 +23,7 @@ Gather a customer phone number.
 
         number_domain = @ctx.req.header 'X-CCNQ3-Number-Domain'
         if not number_domain?
-          number_domain = @cfg.voicemail.number_domain ? 'local'
+          number_domain = @ctx.cfg.voicemail.number_domain ? 'local'
           cuddly.csr "No user_domain specified, using configured #{number_domain} instead." # FIXME add number
 
         user_id = "#{number}@#{number_domain}"
