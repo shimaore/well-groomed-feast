@@ -24,7 +24,6 @@ Default FreeSwitch configuration
 
     debug 'Loading conf/freeswitch'
     cfg.freeswitch = require 'huge-play/conf/freeswitch'
-    cfg.profile_module = require './conf/profile'
 
     if cfg.userdb_base_uri?
       {auth} = url.parse cfg.userdb_base_uri
