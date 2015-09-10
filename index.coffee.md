@@ -34,4 +34,10 @@ Default FreeSwitch configuration
     ducks = require 'thinkable-ducks'
     debug 'Starting'
     ducks cfg
+
+    debug 'Loading monitor'
+    monitor = require './monitor'
+    debug 'Starting monitor'
+    monitor cfg
+
     debug 'Ready'
