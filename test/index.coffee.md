@@ -25,3 +25,15 @@
 
       it 'voicemail', ->
         m = require '../middleware/voicemail'
+
+    describe 'Classes', ->
+      it 'User', ->
+        m = require '../src/User'
+      it 'Message', ->
+        m = require '../src/Message'
+      it 'Messaging', ->
+        m = require '../src/Messaging'
+
+    describe 'Other', ->
+      it 'couchapp', ->
+        m = require '../src/couchapp'
