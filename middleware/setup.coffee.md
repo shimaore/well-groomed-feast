@@ -1,13 +1,14 @@
     pkg = require '../package.json'
-    debug = (require 'debug') "#{pkg.name}:setup"
+    @name = "#{pkg.name}/middleware/setup"
+    debug = (require 'debug') @name
 
     Promise = require 'bluebird'
     nimble = require 'nimble-direction'
     assert = require 'assert'
     request = require 'request'
     qs = require 'querystring'
+    seem = require 'seem'
 
-    @name = "#{pkg.name}/middleware/setup"
     @web = ->
       @cfg.versions[pkg.name] = pkg.version
 
@@ -16,13 +17,12 @@
         @choice = true
         super "Missing #{name}"
 
-    @config = ->
+    @config = seem ->
       cfg = @cfg
       debug "Configuring #{pkg.name} version #{pkg.version}.", cfg
-      nimble cfg
-      .then ->
-        assert cfg.prov?, 'Nimble did not inject cfg.prov'
-        debug "Configured."
+      yield nimble cfg
+      assert cfg.prov?, 'Nimble did not inject cfg.prov'
+      debug "Configured."
 
 Use `mod_httpapi` to support URLs.
 
