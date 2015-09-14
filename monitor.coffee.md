@@ -134,6 +134,8 @@ If the voicemail-settings document exist, use the default voicemail settings for
 
 
     module.exports = run = seem (cfg) ->
+      return if process.env.MODE is 'test'
+
       yield config cfg
 
       cfg.prov.changes
