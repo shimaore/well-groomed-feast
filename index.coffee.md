@@ -10,6 +10,7 @@
 
     debug 'cfg.use'
     cfg.use = [
+      'huge-play/middleware/setup'
       './middleware/setup'
       './middleware/email_notifier'
       './middleware/mwi_notifier'

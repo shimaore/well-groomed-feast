@@ -17,13 +17,6 @@
         @choice = true
         super "Missing #{name}"
 
-    @config = seem ->
-      cfg = @cfg
-      debug "Configuring #{pkg.name} version #{pkg.version}.", cfg
-      yield nimble cfg
-      assert cfg.prov?, 'Nimble did not inject cfg.prov'
-      debug "Configured."
-
 Use `mod_httpapi` to support URLs.
 
     @include = (ctx) ->
@@ -202,8 +195,6 @@ Provide a URI to access the web services (attachment upload/download) defined be
             "http://#{host}:#{port}/voicemail/#{db}/#{id}/#{name}"
           else
             "http://(nohead=true)#{host}:#{port}/voicemail/#{db}/#{id}/#{name}"
-
-      nimble ctx.cfg
 
 Attachment upload/download
 ==========================
