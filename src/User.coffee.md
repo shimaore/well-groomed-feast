@@ -76,12 +76,12 @@ User-specified name
             .catch ->
               null
             .then =>
-              @ctx.action 'phrase', 'voicemail_unavailable', next
+              @ctx.action 'phrase', 'voicemail_unavailable'
 
 Default prompt
 
           else
-            @ctx.action 'phrase', "voicemail_play_greeting,#{@id}", next
+            @ctx.action 'phrase', "voicemail_play_greeting,#{@id}"
 
         .then =>
           if @vm_settings.do_not_record
