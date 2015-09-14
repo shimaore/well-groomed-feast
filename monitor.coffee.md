@@ -9,6 +9,8 @@
     PouchDB = require 'pouchdb'
     uuid = require 'uuid'
 
+    Nimble = require 'nimble-direction'
+
     id = "#{@name}-#{pkg.version}"
     couchapp =
       _id: "_design/#{id}"
@@ -27,6 +29,8 @@ Initial configuration
 ---------------------
 
     config = seem (cfg) ->
+
+      yield Nimble cfg
 
 Install the couchapp in the (local) provisioning database.
 
