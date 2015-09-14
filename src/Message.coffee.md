@@ -56,13 +56,6 @@ FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
               0
           else
             record_seconds
-        .catch (error) =>
-          debug "start_recording: #{error}"
-
-Only restart the recording if there was a genuine error.
-
-          unless error.choice
-            @start_recording()
 
 Play a recording, optionally collect a digit
 ------------------------------------------------------------
