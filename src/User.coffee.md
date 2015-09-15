@@ -323,6 +323,7 @@ Default navigation is: read next message
     pkg = require '../package.json'
     debug = (require 'debug') "#{pkg.name}:User"
     cuddly = (require 'cuddly') "#{pkg.name}:User"
+    assert = require 'assert'
 
     tz = require 'timezone'
     Promise = require 'bluebird'
