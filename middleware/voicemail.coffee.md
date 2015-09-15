@@ -28,20 +28,30 @@ by FreeSwitch) which can then be transcoded.
         when 'inbox'
           yield @action 'answer'
           yield @action 'set', "language=#{@cfg.announcement_language}"
+
+          debug 'Locate user'
           user = yield messaging.locate_user @source
-          debug 'Authenticating', user
+
+          debug 'Authenticate', user
           yield user.authenticate()
+
           debug 'Enumerate messages'
           rows = yield user.new_messages()
           yield user.navigate_messages rows, 0
+
           debug 'Go to the main menu after message navigation'
           user.main_menu()
 
         when 'main'
           yield @action 'answer'
           yield @action 'set', "language=#{@cfg.announcement_language}"
+
+          debug 'Retrieve and locate user'
           user = yield messaging.gather_user()
+
+          debug 'Authenticate', user
           yield user.authenticate()
+
           debug 'Present the main menu'
           user.main_menu()
 
@@ -57,13 +67,18 @@ Keep the call opened for a little while.
             debug "linger: #{error}"
 
           yield @call.linger()
+
           yield @action 'answer'
           yield @action 'set', "language=#{@cfg.announcement_language}"
+
           user = yield messaging.locate_user @destination
+
           msg = new Message this, user
           yield msg.create()
+
           do_recording = yield user.play_prompt()
           if do_recording
             yield msg.start_recording()
             yield msg.post_recording()
+
           @goodbye()

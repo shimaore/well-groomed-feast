@@ -4,7 +4,7 @@
         assert @ctx.cfg.prov?, 'Missing @ctx.cfg.prov'
         assert @ctx.cfg.userdb_base_uri?, 'Missing @ctx.cfg.userdb_base_uri'
 
-Gather a customer phone number.
+Gather a customer phone number and locate that record.
 
       gather_user: (attempts = 3) ->
         debug 'gather_user', {attempts}
