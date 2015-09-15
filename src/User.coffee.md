@@ -91,27 +91,42 @@ Default prompt
             .then ->
               true
 
-      authenticate: (attempts) ->
+      authenticate: seem (attempts) ->
         debug 'authenticate', {attempts}
+
+As long as we went through `locate_user` these should be provided.
+
+        assert @session.number_data?, 'Missing session number data'
+        assert @session.endpoint_data?, 'Missing session endpoint data'
+
         attempts ?= 3
         if attempts <= 0
           return @ctx.error()
 
-        vm_settings = null
+        vm_settings = yield @voicemail_settings()
 
-        @voicemail_settings()
-        .then (_settings) =>
-          vm_settings = _settings
-          @ctx.get_pin() if vm_settings.pin?
-        .then (pin) ->
+        authenticated = false
+
+If the user requested not to be queried for a PIN, we authenticate using the endpoint.
+
+        if vm_settings.ask_pin is false
+
+... however let's make sure we don't compare `null` with `null`.
+
+          if @session.endpoint_data.endpoint?
+            authenticated = @session.number_data.endpoint is @session.endpoint_data.endpoint
+
+Otherwise, authentication can only happen with the PIN.
+
+        if not authenticated
           if vm_settings.pin?
-            if pin isnt vm_settings.pin
-              Promise.reject new Error "Wrong PIN"
-        .then =>
-          @ctx.action 'set', "language=#{vm_settings.language}" if vm_settings.language?
-        .then =>
-          @ctx.action 'phrase', 'voicemail_hello'
-        .catch (error) =>
+            pin = yield @ctx.get_pin()
+            authenticated = pin is vm_settings.pin
+
+        if authenticated
+          yield @ctx.action 'set', "language=#{vm_settings.language}" if vm_settings.language?
+          yield @ctx.action 'phrase', 'voicemail_hello'
+        else
           @authenticate attempts-1
 
       new_messages: ->
