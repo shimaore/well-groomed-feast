@@ -74,8 +74,8 @@ If the record was found but no user-database is specified, either the line has n
 Now that we have a user/local-number document, let's locate the associated user database.
 Note: `userdb_base_uri` must contain authentication elements (e.g. "voicemail" user+pass)
 
-        db_uri = @ctx.cfg.userdb_base_uri + '/' + doc.user_database
-        new User @ctx, user_id, doc.user_database, db_uri
+        db_uri = @ctx.cfg.userdb_base_uri + '/' + user_database
+        new User @ctx, user_id, user_database, db_uri
 
     module.exports = Messaging
     pkg = require '../package.json'
