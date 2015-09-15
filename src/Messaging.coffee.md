@@ -31,7 +31,7 @@ Try to use the number-domain associated with the endpoint.
 
         @ctx.session.endpoint_data = {}
         if endpoint?
-          {number_domain} = @ctx.session.endpoint_data =  yield @cfx.cfg.prov
+          {number_domain} = @ctx.session.endpoint_data =  yield @ctx.cfg.prov
             .get "endpoint:#{endpoint}"
             .catch (error) ->
               debug "Endpoint #{endpoint} not found, #{error}."
