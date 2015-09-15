@@ -29,9 +29,9 @@ Try to use the number-domain associated with the endpoint.
 
         endpoint = @ctx.req.header 'X-CCNQ3-Endpoint'
 
-        @session.endpoint_data = {}
+        @ctx.session.endpoint_data = {}
         if endpoint?
-          {number_domain} = @session.endpoint_data =  yield @cfx.cfg.prov
+          {number_domain} = @ctx.session.endpoint_data =  yield @cfx.cfg.prov
             .get "endpoint:#{endpoint}"
             .catch (error) ->
               debug "Endpoint #{endpoint} not found, #{error}."
