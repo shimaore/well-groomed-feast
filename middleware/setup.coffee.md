@@ -158,13 +158,11 @@ Promise resolves into the new PIN or rejects.
         o.invalid_file = 'silence_stream://250'
         ctx.get_pin o
 
-      ctx.goodbye = ->
+      ctx.goodbye = seem ->
         debug 'goodbye'
-        ctx.action 'phrase', 'voicemail_goodbye'
-        .then ->
-          ctx.action 'hangup'
-        .catch (error) ->
-          debug "goodbye: #{error}"
+        yield ctx.action 'phrase', 'voicemail_goodbye'
+        yield ctx.action 'hangup'
+        debug 'goodbye done'
 
       ctx.error = (id) ->
         debug 'error', {id}

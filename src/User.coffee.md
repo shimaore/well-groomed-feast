@@ -261,7 +261,7 @@ Default navigation is: read next message
         .catch (error) =>
           debug "main_menu: #{error}"
           if error.choice
-            @goodbye()
+            @ctx.goodbye()
           else
             @ctx.error 'USR-238'
 
