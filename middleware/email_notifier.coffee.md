@@ -126,6 +126,7 @@ We can only send emails about a specific message.
         return unless msg_id?
 
         number_doc = yield cfg.prov.get "number:#{user.id}"
+        return if number_doc.disabled
         sender = number_doc.voicemail_sender ? cfg.voicemail.sender
         message = yield user.db.get msg_id
 

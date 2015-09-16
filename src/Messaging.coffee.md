@@ -37,6 +37,9 @@ Try to use the number-domain associated with the endpoint.
               debug "Endpoint #{endpoint} not found, #{error}."
               {}
 
+        if @ctx.session.endpoint_data.disabled
+          {number_domain} = @ctx.session.endpoint_data = {}
+
 Fallback to the one specified in the headers.
 
         number_domain ?= @ctx.req.header 'X-CCNQ3-Number-Domain'
@@ -58,6 +61,9 @@ Attempt to locate the local-number record.
           .catch (error) ->
             debug "Number #{user_id} not found, #{error}."
             {}
+
+        if @ctx.session.number_data.disabled
+          {user_database,_id} = @ctx.session.number_data = {}
 
 If the record was not found, this might be due to the user mistyping their number when using `gather_user`, so give them another opportunity to do so.
 
