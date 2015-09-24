@@ -19,6 +19,8 @@ by FreeSwitch) which can then be transcoded.
 
     @include = seem ->
 
+      return unless @session.direction is 'voicemail'
+
       messaging = new Messaging this
 
       debug "Routing incoming call to #{@destination}"
@@ -27,7 +29,7 @@ by FreeSwitch) which can then be transcoded.
 
         when 'inbox'
           yield @action 'answer'
-          yield @action 'set', "language=#{@cfg.announcement_language}"
+          yield @action 'set', "language=#{@session.language ? @cfg.announcement_language}"
 
           debug 'Locate user'
           user = yield messaging.locate_user @source
@@ -44,7 +46,7 @@ by FreeSwitch) which can then be transcoded.
 
         when 'main'
           yield @action 'answer'
-          yield @action 'set', "language=#{@cfg.announcement_language}"
+          yield @action 'set', "language=#{@session.language ? @cfg.announcement_language}"
 
           debug 'Retrieve and locate user'
           user = yield messaging.gather_user()
@@ -57,19 +59,8 @@ by FreeSwitch) which can then be transcoded.
 
         else
 
-Keep the call opened for a little while.
-
-          @call.once 'freeswitch_linger'
-          .delay 20*seconds
-          .then ->
-            @exit()
-          .catch (error) ->
-            debug "linger: #{error}"
-
-          yield @call.linger()
-
           yield @action 'answer'
-          yield @action 'set', "language=#{@cfg.announcement_language}"
+          yield @action 'set', "language=#{@session.language ? @cfg.announcement_language}"
 
           user = yield messaging.locate_user @destination
 

@@ -1,11 +1,3 @@
-    describe 'The module', ->
-      @timeout 3000
-      it 'should load', ->
-        process.env.CONFIG = './local/config.json'
-        process.env.MODE = 'test'
-        require '../index'
-        return
-
     describe 'Middlewares', ->
 
       it 'email_notifier', ->
