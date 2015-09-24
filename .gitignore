@@ -1,3 +1,5 @@
 node_modules/
 test/live/src.tar
 local/
+*.js
+*.js.map
