@@ -18,10 +18,12 @@
         if auth?
           @cfg.httapi_credentials ?= auth
 
-    @web = ->
-      @cfg.versions[pkg.name] = pkg.version
+    @server_pre = ->
       monitor @cfg
       return
+
+    @web = ->
+      @cfg.versions[pkg.name] = pkg.version
 
     class ChoiceError extends Error
       constructor: (name) ->
