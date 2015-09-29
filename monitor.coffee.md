@@ -136,6 +136,8 @@ If the voicemail-settings document exist, use the default voicemail settings for
     module.exports = run = seem (cfg) ->
       return if process.env.MODE is 'test'
 
+      debug 'Starting monitor.'
+
       yield config cfg
 
       cfg.prov.changes
@@ -147,3 +149,5 @@ If the voicemail-settings document exist, use the default voicemail settings for
         monitored cfg, doc
       .on 'error', (err) ->
         run cfg
+
+      return

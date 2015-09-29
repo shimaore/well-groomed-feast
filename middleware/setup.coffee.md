@@ -10,6 +10,8 @@
     qs = require 'querystring'
     seem = require 'seem'
 
+    monitor = require '../monitor'
+
     @config = ->
       if @cfg.userdb_base_uri?
         {auth} = url.parse @cfg.userdb_base_uri
@@ -18,6 +20,8 @@
 
     @web = ->
       @cfg.versions[pkg.name] = pkg.version
+      monitor @cfg
+      return
 
     class ChoiceError extends Error
       constructor: (name) ->
