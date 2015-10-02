@@ -15,8 +15,7 @@ Note: this requires the application to be database admin, which is OK.
 
       init_db: seem ->
         debug 'init_db'
-        yield update(@db, couchapp).catch -> null
-        null
+        yield @db.put(couchapp).catch -> true
 
       uri: (name,rev) ->
         @ctx.uri this, 'voicemail_settings', name, rev
@@ -337,4 +336,3 @@ Default navigation is: read next message
     Message = require './Message'
 
     couchapp = require './couchapp'
-    update = require 'nimble-direction/update'
