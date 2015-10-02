@@ -123,6 +123,7 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
 FIXME The default FreeSwitch prompts only allow for one-part messages, while we allow for multiple.
 
           @ctx.get_choice 'phrase:voicemail_record_file_check:1:2:3'
+          .catch -> null
           .then (choice) =>
             switch choice
 

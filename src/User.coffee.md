@@ -121,7 +121,7 @@ Otherwise, authentication can only happen with the PIN.
 
         if not authenticated
           if vm_settings.pin?
-            pin = yield @ctx.get_pin()
+            pin = yield @ctx.get_pin().catch -> null
             authenticated = pin is vm_settings.pin
 
         if authenticated
@@ -198,6 +198,7 @@ Otherwise, authentication can only happen with the PIN.
         .then (choice) =>
           return choice if choice?
           @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3'"
+          .catch -> null
         .then (choice) =>
           navigate choice if choice?
         .catch (error) =>
@@ -213,6 +214,7 @@ Default navigation is: read next message
       config_menu: ->
         debug 'config_menu'
         @ctx.get_choice "phrase:'voicemail_config_menu:1:2:3:4:5'"
+        .catch null
         .then (choice) =>
           switch choice
             when "1"
@@ -238,6 +240,7 @@ Default navigation is: read next message
       main_menu: ->
         debug 'main_menu'
         @ctx.get_choice "phrase:'voicemail_menu:1:2:3:4'"
+        .catch -> null
         .then (choice) =>
           debug 'main_menu', {choice}
           switch choice
@@ -299,6 +302,8 @@ Default navigation is: read next message
 
         get_pin = =>
           @ctx.get_new_pin min:@min_pin_length
+          .catch ->
+            get_pin()
           .then (pin) =>
             new_pin = pin
             debug 'change_password', {new_pin}
