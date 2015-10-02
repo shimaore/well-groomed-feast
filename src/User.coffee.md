@@ -15,7 +15,8 @@ Note: this requires the application to be database admin, which is OK.
 
       init_db: seem ->
         debug 'init_db'
-        yield update @db, couchapp
+        yield update(@db, couchapp).catch -> null
+        null
 
       uri: (name,rev) ->
         @ctx.uri this, 'voicemail_settings', name, rev
