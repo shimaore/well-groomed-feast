@@ -153,7 +153,7 @@ Otherwise, authentication can only happen with the PIN.
         debug 'navigate_messages', {rows,current}
         # Exit once we reach the end or there are no messages, etc.
         if current < 0 or not rows? or current >= rows.length
-          return
+          return Promise.resolve()
 
         msg = new Message @ctx, @, rows[current].id
         navigate = (key) =>
