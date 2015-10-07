@@ -34,7 +34,7 @@
     "nodemailer-smtp-transport": "^1.0.3",
     "pouchdb": "^4.0.3",
     "request": "^2.63.0",
-    "seem": "^1.0.0",
+    "seem": "^1.1.0",
     "superagent": "^1.4.0",
     "superagent-as-promised": "^3.2.0",
     "timezone": "0.0.43",
