@@ -210,7 +210,7 @@ Default navigation is: read next message
           else
             throw error
 
-      config_menu: ->
+      config_menu: (attempt = 3) ->
         debug 'config_menu'
         @ctx.get_choice "phrase:'voicemail_config_menu:1:2:3:4:5'"
         .catch null
@@ -231,12 +231,15 @@ Default navigation is: read next message
             when "5"
               @main_menu()
             else
-              @config_menu()
+              if attempt > 0
+                @config_menu attempt-1
+              else
+                @main_menu()
         .catch (error) =>
           debug "config_menu: #{error}"
           @ctx.error 'USR-211'
 
-      main_menu: ->
+      main_menu: (attempt = 7) ->
         debug 'main_menu'
         @ctx.get_choice "phrase:'voicemail_menu:1:2:3:4'"
         .catch -> null
@@ -260,7 +263,10 @@ Default navigation is: read next message
             when "4"
               @ctx.goodbye()
             else
-              @main_menu()
+              if attempt > 0
+                @main_menu attempt-1
+              else
+                @ctx.goodbye()
         .catch (error) =>
           debug "main_menu: #{error}"
           if error.choice
