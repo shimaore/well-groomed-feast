@@ -13,6 +13,7 @@
 
     @include = ->
       cfg = @cfg
+      ctx = @
       cfg.notifiers ?= {}
       return if cfg.notifiers.email?
 
