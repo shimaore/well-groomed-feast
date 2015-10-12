@@ -72,7 +72,7 @@ Get templates
           .catch (error) ->
             null
           .then (data) ->
-            template[part] = data ? default_templates[part]
+            template[part] = data?.toString() ? default_templates[part]
 
 Send email out
 ==============
