@@ -126,6 +126,10 @@ We can only send emails about a specific message.
 
         return unless msg_id?
 
+FIXME: Sadly enough we don't have yet a way to be notified when the attachment might be available (it is pushed by HTTAPI through our proxy). If we do the retrieval too early, we might miss it. So let's pause for an arbitrary delay and hope the attachment gets uploaded in the time between, therefor allowing us to provide a proper notification.
+
+        yield Promise.delay 7*1000
+
         number_doc = yield cfg.prov.get "number:#{user.id}"
         return if number_doc.disabled
         sender = number_doc.voicemail_sender ? cfg.voicemail.sender
