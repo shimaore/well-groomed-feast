@@ -200,12 +200,12 @@ Save
       notify: ->
         debug 'notify', @user.id, @id
         return unless @ctx.cfg.notifiers?
-        for notifier in @ctx.cfg.notifiers
-          do (notifier) =>
+        for name, notifier of @ctx.cfg.notifiers
+          do (name,notifier) =>
             notifier @user, @id
             .catch (error) ->
-              debug "Notifier error: #{error}"
-              cuddly.csr "Notifier error: #{error}"
+              debug "Notifier #{name} error: #{error}"
+              cuddly.csr "Notifier #{name} error: #{error}"
         return
 
       remove: ->

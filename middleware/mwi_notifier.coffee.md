@@ -10,7 +10,8 @@
 
     @include = ->
       cfg = @cfg
-      cfg.notifiers ?= []
+      cfg.notifiers ?= {}
+      return if cfg.notifiers.mwi?
 
       assert cfg.prov?, 'Missing prov'
 
@@ -75,5 +76,5 @@
 
       socket.bind cfg.voicemail.notifier_port ? 7124
 
-      cfg.notifiers.push send_notification_to
+      cfg.notifiers.mwi ?= send_notification_to
       debug 'Configured.'

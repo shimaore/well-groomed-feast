@@ -13,7 +13,8 @@
 
     @include = ->
       cfg = @cfg
-      cfg.notifiers ?= []
+      cfg.notifiers ?= {}
+      return if cfg.notifiers.email?
 
       assert cfg.prov, 'Missing prov'
 
@@ -147,5 +148,5 @@ We should only email about new messages.
         yield Promise.all notifications
         debug 'send_notification: done'
 
-      cfg.notifiers.push send_notification_to
+      cfg.notifiers.email ?= send_notification_to
       debug 'Configured.'
