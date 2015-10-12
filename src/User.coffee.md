@@ -212,6 +212,7 @@ Default navigation is: read next message
 
       config_menu: (attempt = 3) ->
         debug 'config_menu'
+        return if @ctx.call.closed
         @ctx.get_choice "phrase:'voicemail_config_menu:1:2:3:4:5'"
         .catch null
         .then (choice) =>
@@ -241,6 +242,7 @@ Default navigation is: read next message
 
       main_menu: (attempt = 7) ->
         debug 'main_menu'
+        return if @ctx.call.closed
         @ctx.get_choice "phrase:'voicemail_menu:1:2:3:4'"
         .catch -> null
         .then (choice) =>
