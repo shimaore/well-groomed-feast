@@ -14,10 +14,11 @@ Gather a customer phone number and locate that record.
           return @ctx.error()
 
         @ctx.get_number()
-        .catch (error) =>
-          @gather_user attempts-1
         .then (number) =>
-          @locate_user number, attempts-1
+          if number?
+            @locate_user number, attempts-1
+          else
+            @gather_user attempts-1
 
       locate_user: seem (number,attempts = 3) ->
         assert number?, 'locate_user: number must be defined'

@@ -66,15 +66,11 @@ User-specified prompt
 
           if vm_settings._attachments?["prompt.#{Message::format}"]
             @ctx.play @uri "prompt.#{Message::format}"
-            .catch ->
-              null
 
 User-specified name
 
           else if vm_settings._attachments?["name.#{Message::format}"]
             @ctx.play @uri "name.#{Message::format}"
-            .catch ->
-              null
             .then =>
               @ctx.action 'phrase', 'voicemail_unavailable'
 
@@ -120,7 +116,7 @@ Otherwise, authentication can only happen with the PIN.
 
         if not authenticated
           if vm_settings.pin?
-            pin = yield @ctx.get_pin().catch -> null
+            pin = yield @ctx.get_pin()
             authenticated = pin is vm_settings.pin
 
         if authenticated
@@ -197,7 +193,6 @@ Otherwise, authentication can only happen with the PIN.
         .then (choice) =>
           return choice if choice?
           @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3'"
-          .catch -> null
         .then (choice) =>
           navigate choice if choice?
         .catch (error) =>
@@ -214,7 +209,6 @@ Default navigation is: read next message
         debug 'config_menu'
         return if @ctx.call.closed
         @ctx.get_choice "phrase:'voicemail_config_menu:1:2:3:4:5'"
-        .catch null
         .then (choice) =>
           switch choice
             when "1"
@@ -244,7 +238,6 @@ Default navigation is: read next message
         debug 'main_menu'
         return if @ctx.call.closed
         @ctx.get_choice "phrase:'voicemail_menu:1:2:3:4'"
-        .catch -> null
         .then (choice) =>
           debug 'main_menu', {choice}
           switch choice
@@ -309,9 +302,8 @@ Default navigation is: read next message
 
         get_pin = =>
           @ctx.get_new_pin min:@min_pin_length
-          .catch ->
-            get_pin()
           .then (pin) =>
+            return get_pin() unless pin?
             new_pin = pin
             debug 'change_password', {new_pin}
             return if new_pin?.length >= @min_pin_length

@@ -104,7 +104,7 @@ https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_play_and_get_digits
 ======
 
 Play a file and optionnally record a single digit.
-Promise resolves into the selected digit or rejects.
+Promise resolves into the selected digit or `null`.
 
       ctx.play = (file,o={}) ->
         o.file = file
@@ -118,13 +118,13 @@ Promise resolves into the selected digit or rejects.
         .then ({body}) ->
           name = "variable_#{o.var_name}"
           debug "Got #{body[name]} for #{name}"
-          body[name] ? Promise.reject new ChoiceError o.var_name
+          body[name] ? null
 
 `get_choice`
 ========
 
 Play a file and optionnaly record a single digit.
-Promise resolves into the selected digit or rejects.
+Promise resolves into the selected digit or `null`.
 
       ctx.get_choice = (file,o={}) ->
         o.timeout ?= 15000
@@ -135,7 +135,7 @@ Promise resolves into the selected digit or rejects.
 ============
 
 Asks for a number.
-Promise resolves into the number or rejects.
+Promise resolves into the number or `null`.
 
       ctx.get_number = (o={}) ->
         o.file ?= 'phrase:voicemail_enter_id:#'
@@ -151,7 +151,7 @@ Promise resolves into the number or rejects.
 =========
 
 Asks for a PIN.
-Promise resolves into the PIN or rejects.
+Promise resolves into the PIN or `null`.
 
       ctx.get_pin = (o={}) ->
         o.file ?= 'phrase:voicemail_enter_pass:#'
@@ -164,7 +164,7 @@ Promise resolves into the PIN or rejects.
 =============
 
 Asks for a new PIN.
-Promise resolves into the new PIN or rejects.
+Promise resolves into the new PIN or `null`.
 
       ctx.get_new_pin = (o={}) ->
         o.var_name ?= 'new_pin'

@@ -78,9 +78,9 @@ See `file_open` in mod_httapi.c.
 
 Keep playing if no user interaction
 
-        .catch (error) =>
-          debug "play_recordding: #{error}"
-          @play_recording this_part+1
+        .then (choice) =>
+          @play_recording this_part+1 if not choice?
+          choice
 
 Delete parts
 ------------
@@ -123,7 +123,6 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
 FIXME The default FreeSwitch prompts only allow for one-part messages, while we allow for multiple.
 
           @ctx.get_choice 'phrase:voicemail_record_file_check:1:2:3'
-          .catch -> null
           .then (choice) =>
             switch choice
 
@@ -159,9 +158,8 @@ Save
               when "2"
                 return
 
-          .catch =>
-            if error.choice
-              @post_recording()
+              else
+                @post_recording()
 
       # Play the message enveloppe
       play_enveloppe: (index) ->
@@ -170,8 +168,6 @@ Save
         .then (doc) =>
           user_timestamp = @user.time doc.timestamp
           @ctx.play "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
-        .catch ->
-          null
 
       # Create a new voicemail record in the database
       create: ->
