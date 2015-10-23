@@ -48,7 +48,9 @@ Individual user database changes
 If no user-database is specified (but a set of default voicemail settings is present), we create a new database.
 
       if not user_database?
-        assert default_voicemail_settings?, 'Error in the filter.'
+        unless 'object' is typeof default_voicemail_settings
+          debug "Invalid default_voicemail_settings: #{typeof default_voicemail_settings}"
+          return
         user_database = "u#{uuid.v4()}"
         doc.user_database = user_database
         yield cfg.prov.put doc
