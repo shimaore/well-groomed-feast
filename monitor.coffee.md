@@ -90,7 +90,7 @@ Collect the list of users for this database
 
 Make sure the users can access it.
 
-      security_uri [target_db_uri,'_security']
+      security_uri = [target_db_uri,'_security'].join '/'
       security = yield request
         .get security_uri
         .accept 'json'
