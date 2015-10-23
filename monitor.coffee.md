@@ -53,7 +53,7 @@ If no user-database is specified (but a set of default voicemail settings is pre
           return
         user_database = "u#{uuid.v4()}"
         doc.user_database = user_database
-        yield cfg.prov.put doc
+        yield cfg.master_push doc
 
 We exit at this point because updating the document will trigger a new `change` event.
 
