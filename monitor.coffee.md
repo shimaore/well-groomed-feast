@@ -53,6 +53,7 @@ If no user-database is specified (but a set of default voicemail settings is pre
           return
         user_database = "u#{uuid.v4()}"
         doc.user_database = user_database
+        debug 'Setting user_database', doc
         yield cfg.master_push doc
 
 We exit at this point because updating the document will trigger a new `change` event.
@@ -75,6 +76,8 @@ At this point we expect to have a valid user database name.
 Create / access the user database.
 
       target_db = new PouchDB target_db_uri
+      debug 'Creating target database', target_db_uri
+      yield target_db.info()
 
 It's OK if the database already exists.
 
@@ -96,6 +99,7 @@ Make sure the users can access it.
       security.readers.names = readers_names
       security.readers.roles = [ 'update:user_db:']
 
+      debug 'Setting security', {security_uri,security}
       yield request
         .put security_uri
         .send security
@@ -103,6 +107,8 @@ Make sure the users can access it.
 ### Limit number of documents revisions
 
 Restrict number of available past revisions
+
+      debug 'Restrict number of available past revisions'
 
       yield request
         .put [target_db_uri,'_revs_limit'].join '/'
@@ -129,11 +135,13 @@ If the voicemail-settings document does not exist, create one based on the defau
 If the voicemail-settings document exist, use the default voicemail settings for any non-existent field.
 
       else
-        vm_settings[k] ?= v for own k,v of vm when not k.match /^_/
+        vm_settings[k] ?= v for own k,v of default_voicemail_settings ? {} when not k.match /^_/
 
+      debug 'Update voicemail settings', vm_settings
       yield target_db
         .put vm_settings
 
+      return
 
     module.exports = run = seem (cfg) ->
       return if process.env.MODE is 'test'
