@@ -51,6 +51,12 @@ Fallback to the default one configured.
           number_domain = @ctx.cfg.voicemail.number_domain ? 'local'
           cuddly.csr "No user_domain specified for #{number}, using configured #{number_domain} instead."
 
+Pass through any translation that the application may suggest.
+
+        if @ctx.translate_local_number?
+          new_number = yield @ctx.translate_local_number number, number_domain
+          number = new_number if new_number?
+
 Attempt to locate the local-number record.
 
         user_id = "#{number}@#{number_domain}"
