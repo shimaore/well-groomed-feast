@@ -1,10 +1,15 @@
     {p_fun} = require 'coffeescript-helpers'
     pkg = require '../package.json'
-    id = "#{pkg.name}-#{pkg.version}-voicemail"
+
+DO NOT change the ID, it is used by other (external) applications
+Also: some of the code here also assumes it's called "voicemail".
+
+    id = "voicemail"
 
     ddoc =
       _id: "_design/#{id}"
       id: id
+      version: "#{pkg.name}-#{pkg.version}"
       language: 'javascript'
       views: {}
 

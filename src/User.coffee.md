@@ -15,7 +15,9 @@ Note: this requires the application to be database admin, which is OK.
 
       init_db: seem ->
         debug 'init_db'
-        yield @db.put(couchapp).catch -> true
+        doc = yield @db.get(couchapp._id).catch -> {}
+        doc[k] = v for own k,v of couchapp
+        yield @db.put(doc).catch -> true
 
       uri: (name,rev) ->
         @ctx.uri this, 'voicemail_settings', name, rev
