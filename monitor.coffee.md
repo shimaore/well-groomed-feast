@@ -54,7 +54,9 @@ If no user-database is specified (but a set of default voicemail settings is pre
         user_database = "u#{uuid.v4()}"
         doc.user_database = user_database
         debug 'Setting user_database', doc
-        yield cfg.master_push doc
+        yield cfg.master_push(doc).catch (error) ->
+          return if error.status is 409
+          debug "monitored: setting user_database: #{error}"
 
 We exit at this point because updating the document will trigger a new `change` event.
 
