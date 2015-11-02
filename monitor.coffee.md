@@ -93,10 +93,11 @@ Collect the list of users for this database
 Make sure the users can access it.
 
       security_uri = [target_db_uri,'_security'].join '/'
-      security = yield request
+      {body} = yield request
         .get security_uri
         .accept 'json'
 
+      security = body
       security.readers ?= {}
       security.readers.names = readers_names
       security.readers.roles = [ 'update:user_db:']
