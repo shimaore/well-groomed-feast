@@ -87,11 +87,13 @@ It's OK if the database already exists.
 
 Collect the list of users for this database
 
+      debug 'Collect users', {user_database}
       {rows} = yield cfg.prov.query "#{couchapp.id}/userdb", key: user_database
       readers_names = (row.value for row in rows)
 
 Make sure the users can access it.
 
+      debug 'Retrieve security object', {target_db_uri}
       security_uri = [target_db_uri,'_security'].join '/'
       {body} = yield request
         .get security_uri
