@@ -11,6 +11,8 @@
 
     Nimble = require 'nimble-direction'
 
+The couchapp used in the (local) provisioning database to monitor changes.
+
     id = "#{@name}-#{pkg.version}"
     couchapp =
       _id: "_design/#{id}"
@@ -24,6 +26,10 @@
         numbers: p_fun (doc,req) ->
           return false unless doc.type is 'number'
           doc.default_voicemail_settings? or doc.user_database?
+
+The couchapp inserted in the user's database, contains the views used by the voicemail application.
+
+    user_app = require './couchapp'
 
 Initial configuration
 ---------------------
@@ -119,7 +125,18 @@ Restrict number of available past revisions
         .put [target_db_uri,'_revs_limit'].join '/'
         .send '10'
 
-We don't do usercode, it is deployed by src/User.
+### Install the usercode
+
+This is also done in `src/User`, but doing it here ensures the design document is available to outside applications (e.g. a web-based user panel).
+
+      debug 'Insert user application'
+      app = yield target_db
+        .get user_app._id
+        .catch -> {}
+      app[k] = v for own k,v of user_app
+      yield target_db
+        .put app
+        .catch -> true
 
 ### Install the voicemail settings
 
