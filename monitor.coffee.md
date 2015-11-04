@@ -95,7 +95,7 @@ Collect the list of users for this database
 
       debug 'Collect users', {user_database}
       {rows} = yield cfg.prov.query "#{couchapp.id}/userdb", key: user_database
-      readers_names = (row.value for row in rows)
+      members_names = (row.value for row in rows)
 
 Make sure the users can access it.
 
@@ -106,9 +106,9 @@ Make sure the users can access it.
         .accept 'json'
 
       security = body
-      security.readers ?= {}
-      security.readers.names = readers_names
-      security.readers.roles = [ 'update:user_db:']
+      security.members ?= {}
+      security.members.names = members_names
+      security.members.roles = [ 'update:user_db:']
 
       debug 'Setting security', {security_uri,security}
       yield request
