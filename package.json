@@ -45,5 +45,8 @@
     "chai-as-promised": "^5.1.0",
     "coffee-script": "^1.10.0",
     "mocha": "^2.3.3"
+  },
+  "publishConfig": {
+    "tag": "development"
   }
 }
