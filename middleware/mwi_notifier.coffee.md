@@ -21,53 +21,27 @@
 
       socket = dgram.createSocket 'udp4'
 
+Send notification to a user
+===========================
+
       send_notification_to = seem (user) ->
         debug 'send_notification_to', user
 
         doc = yield cfg.prov.get "number:#{user.id}"
         if not doc.user_database? then return
 
-        send_sip_notification = seem (target_port,target_name)->
-          {total_rows} = yield user.db.query 'voicemail/new_messages'
-
-          body = new Buffer """
-            Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
-          """
-
-          # FIXME no tag, etc.
-          headers = new Buffer """
-            NOTIFY sip:#{endpoint} SIP/2.0
-            Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
-            Max-Forwards: 2
-            To: <sip:#{endpoint}>
-            From: <sip:#{endpoint}>
-            Call-ID: #{Math.random()}
-            CSeq: 1 NOTIFY
-            Event: message-summary
-            Subscription-State: active
-            Content-Type: application/simple-message-summary
-            Content-Length: #{body.length}
-            \n
-          """.replace /\n/g, "\r\n"
-
-          message = new Buffer headers.length + body.length
-          headers.copy message
-          body.copy message, headers.length
-
-          socket.send message, 0, message.length, target_port, target_name
+Dumb notify: use the endpoint name
 
         endpoint = doc.endpoint
-        d = endpoint.match /^([^@]+)@([^@]+)$/
-        if d
-          domain_name = d[2]
-          addresses = yield dns.resolveSrv '_sip._udp.' + domain_name
-          for address in addresses
-            do (address) ->
-              send_sip_notification address.port, address.name
+        if endpoint.match /^([^@]+)@([^@]+)$/
+          notify_aor endpoint
         else
-          # Currently no MWI to static endpoints
-          return
+          debug 'Currently no MWI to static endpoints'
 
+Handle SUBSCRIBE messages
+=========================
+
+Note: I believe these are currently not forwarded by ccnq4-opensips.
 
       socket.on 'message', (msg,rinfo) ->
         content = msg.toString 'ascii'
@@ -78,3 +52,47 @@
 
       cfg.notifiers.mwi ?= send_notification_to
       debug 'Configured.'
+
+Toolbox
+=======
+
+Send notification to an AOR at a given address and port
+-------------------------------------------------------
+
+      send_sip_notification = seem (aor,target_port,target_name)->
+        {total_rows} = yield user.db.query 'voicemail/new_messages'
+
+        body = new Buffer """
+          Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
+        """
+
+        # FIXME no tag, etc.
+        headers = new Buffer """
+          NOTIFY sip:#{aor} SIP/2.0
+          Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
+          Max-Forwards: 2
+          To: <sip:#{aor}>
+          From: <sip:#{aor}>
+          Call-ID: #{Math.random()}
+          CSeq: 1 NOTIFY
+          Event: message-summary
+          Subscription-State: active
+          Content-Type: application/simple-message-summary
+          Content-Length: #{body.length}
+          \n
+        """.replace /\n/g, "\r\n"
+
+        message = new Buffer headers.length + body.length
+        headers.copy message
+        body.copy message, headers.length
+
+        socket.send message, 0, message.length, target_port, target_name
+
+      notify_aor = seem (aor) ->
+        d = aor.match /^([^@]+)@([^@]+)$/
+        if d
+          domain_name = d[2]
+          addresses = yield dns.resolveSrv '_sip._udp.' + domain_name
+          for address in addresses
+            do (address) ->
+              send_sip_notification aor, address.port, address.name
