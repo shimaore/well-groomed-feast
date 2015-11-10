@@ -33,7 +33,6 @@
       transport = mailer.createTransport transporter
       sendMail = Promise.promisify transport.sendMail
 
-
 Template handling
 =================
 
@@ -81,7 +80,7 @@ Send email out
         .then ->
           debug 'Ready to send.'
           email_options =
-            from: sender ? opts.email
+            from: opts.sender ? opts.email
             to: opts.email
             subject: Milk.render template.subject, msg
             text: Milk.render template.body, msg
@@ -150,6 +149,7 @@ We should only email about new messages.
             attach: params.attach_message
             language: settings.language
             user: user
+            sender: sender
         yield Promise.all notifications
         debug 'send_notification: done'
 
