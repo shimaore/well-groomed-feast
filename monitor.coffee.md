@@ -104,6 +104,7 @@ Make sure the users can access it.
       {body} = yield request
         .get security_uri
         .accept 'json'
+        .catch -> body:{}
 
       security = body
       security.members ?= {}
@@ -114,6 +115,9 @@ Make sure the users can access it.
       yield request
         .put security_uri
         .send security
+        .catch (error) ->
+          debug "Security: #{error}"
+          true
 
 ### Limit number of documents revisions
 
@@ -124,6 +128,9 @@ Restrict number of available past revisions
       yield request
         .put [target_db_uri,'_revs_limit'].join '/'
         .send '10'
+        .catch (error) ->
+          debug "Revs limit: #{error}"
+          true
 
 ### Install the usercode
 
