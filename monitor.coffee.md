@@ -8,6 +8,7 @@
     request = (require 'superagent-as-promised') require 'superagent'
     PouchDB = require 'pouchdb'
     uuid = require 'uuid'
+    Promise = require 'bluebird'
 
     Nimble = require 'nimble-direction'
 
@@ -175,6 +176,9 @@ If the voicemail-settings document exist, use the default voicemail settings for
     module.exports = run = seem (cfg) ->
       return if process.env.MODE is 'test'
 
+      if cfg.voicemail?.monitoring is false
+        return
+
       debug 'Starting monitor.'
 
       yield config cfg
@@ -184,7 +188,9 @@ If the voicemail-settings document exist, use the default voicemail settings for
         filter: "#{couchapp.id}/numbers"
         include_docs: true
         since: 'now'
-      .on 'change', ({doc}) ->
+      .on 'change', seem ({doc}) ->
+        if typeof cfg.voicemail?.monitoring is 'number'
+          yield Promise.delay cfg.voicemail?.monitoring
         monitored cfg, doc
       .on 'error', (err) ->
         run cfg
