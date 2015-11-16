@@ -37,10 +37,12 @@ Initial configuration
 
     config = seem (cfg) ->
 
+      debug "config: Nimble"
       yield Nimble cfg
 
 Install the couchapp in the (local) provisioning database.
 
+      debug "config: push couchapp"
       yield cfg.push couchapp
 
 Individual user database changes
@@ -183,6 +185,8 @@ If the voicemail-settings document exist, use the default voicemail settings for
 
       yield config cfg
 
+      debug 'Starting changes listener'
+
       cfg.prov.changes
         live: true
         filter: "#{couchapp.id}/numbers"
@@ -194,5 +198,7 @@ If the voicemail-settings document exist, use the default voicemail settings for
         monitored cfg, doc
       .on 'error', (err) ->
         run cfg
+
+      debug 'Ready'
 
       return
