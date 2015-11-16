@@ -29,7 +29,7 @@
     "cuddly": "^1.1.4",
     "debug": "^2.2.0",
     "milk": "^1.2.0",
-    "nimble-direction": "^3.0.1",
+    "nimble-direction": "^4.0.0",
     "nodemailer": "^1.9.0",
     "nodemailer-smtp-transport": "^1.0.4",
     "pouchdb": "^5.1.0",
