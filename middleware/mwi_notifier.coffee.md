@@ -5,6 +5,7 @@
     pkg = require '../package.json'
     @name = "#{pkg.name}:mwi_notifier"
     debug = (require 'debug') @name
+    User = require '../src/User'
 
     assert = require 'assert'
 
@@ -21,23 +22,6 @@
 
       socket = dgram.createSocket 'udp4'
 
-Send notification to a user
-===========================
-
-      send_notification_to = seem (user) ->
-        debug 'send_notification_to', user
-
-        doc = yield cfg.prov.get "number:#{user.id}"
-        if not doc.user_database? then return
-
-Dumb notify: use the endpoint name
-
-        endpoint = doc.endpoint
-        if endpoint.match /^([^@]+)@([^@]+)$/
-          notify_aor endpoint
-        else
-          debug 'Currently no MWI to static endpoints'
-
 Handle SUBSCRIBE messages
 =========================
 
@@ -45,12 +29,71 @@ Note: I believe these are currently not forwarded by ccnq4-opensips.
 
       socket.on 'message', (msg,rinfo) ->
         content = msg.toString 'ascii'
-        if r = content.match /^SUBSCRIBE sip:(\d+)@/
-          send_notification_to r[1]
+
+Try to recover the number and the endpoint from the message
+
+        return unless r = content.match /^SUBSCRIBE sip:(\S+)@.*\nX-CCNQ3-Endpoint: (\S+)\n/
+
+        number = r[1]
+        endpoint = r[2]
+
+Recover the number-domain from the endpoint.
+
+        {number_domain} = yield cfg.prov.get "endpoint:#{endpoint}"
+        user_id = "#{number}@#{number_domain}"
+
+Recover the local-number's user-database.
+
+        {user_database} = yield cfg.prov.get "number:#{user_id}"
+        db_uri = cfg.userdb_base_uri + '/' + user_database
+
+Create a User object and use it to send the notification.
+
+        send_notification_to new User {cfg}, user_id, user_database, db_uri
+
+Send notification to a user
+===========================
+
+      send_notification_to = seem (user) ->
+        debug 'send_notification_to', {user}
+
+Collect the number of messages from the user's database.
+
+        {total_rows} = yield user.db.query 'voicemail/new_messages'
+
+Collect the endpoint/via fields from the local number.
+
+        number_doc = yield cfg.prov.get "number:#{user.id}"
+        return if number_doc.disabled
+
+        via = number_doc.endpoint_via
+
+Use the endpoint name and via to route the packet.
+
+        endpoint = number_doc.endpoint
+        if endpoint.match /^([^@]+)@([^@]+)$/
+          debug 'Notifying endpoint', endpoint
+          notify_aor endpoint, via, total_rows
+        else
+          if via?
+            notify_aor endpoint, via, total_rows
+          else
+            debug 'No `via` for static endpoint, skipping.'
+
+        return
+
+Start socket
+============
 
       socket.bind cfg.voicemail.notifier_port ? 7124
 
+Unsollicited NOTIFY
+===================
+
+By default we issue "Unsollicited NOTIFY" messages.
+
       cfg.notifiers.mwi ?= send_notification_to
+
       debug 'Configured.'
 
 Toolbox
@@ -59,8 +102,8 @@ Toolbox
 Send notification to an AOR at a given address and port
 -------------------------------------------------------
 
-      send_sip_notification = seem (aor,target_port,target_name)->
-        {total_rows} = yield user.db.query 'voicemail/new_messages'
+      send_sip_notification = seem (aor,total_rows,target_port,target_name)->
+        debug 'Send SIP notification', {aor,target_port,target_name}
 
         body = new Buffer """
           Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
@@ -88,11 +131,17 @@ Send notification to an AOR at a given address and port
 
         socket.send message, 0, message.length, target_port, target_name
 
-      notify_aor = seem (aor) ->
-        d = aor.match /^([^@]+)@([^@]+)$/
-        if d
-          domain_name = d[2]
-          addresses = yield dns.resolveSrv '_sip._udp.' + domain_name
-          for address in addresses
-            do (address) ->
-              send_sip_notification aor, address.port, address.name
+      notify_aor = seem (aor,via,total_rows) ->
+
+If the `via` field is not present use the domain from the aor.
+
+        via ?= aor.match(/^([^@]+)@([^@]+)$/)?[2]
+
+        return unless via?
+
+        addresses = yield dns.resolveSrv '_sip._udp.' + via
+        for address in addresses
+          do (address) ->
+            send_sip_notification aor, total_rows, address.port, address.name
+
+      return
