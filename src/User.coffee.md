@@ -22,7 +22,7 @@ Note: this requires the application to be database admin, which is OK.
       uri: (name,rev) ->
         @ctx.uri this, 'voicemail_settings', name, rev
 
-      voicemail_settings: ->
+      voicemail_settings: (no_error = false) ->
         debug 'voicemail_settings'
         # Memoize
         if @vm_settings?
@@ -38,6 +38,7 @@ Debug as much as we can.
 
 Tell the user to call support.
 
+          return {} if no_error
           @ctx.error 'USR-41'
         .then (doc) =>
           @vm_settings = doc # Memoize
