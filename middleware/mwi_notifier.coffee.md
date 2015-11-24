@@ -9,21 +9,13 @@
 
     assert = require 'assert'
 
-    @include = ->
-      cfg = @cfg
-      cfg.notifiers ?= {}
-      return if cfg.notifiers.mwi?
-
-      assert cfg.prov?, 'Missing prov'
-
-      unless cfg.voicemail?.notifier_port?
-        debug 'Missing `voicemail.notifier_port`'
-        return
-
-      socket = dgram.createSocket 'udp4'
-
 Handle SUBSCRIBE messages
 =========================
+
+    @init = (cfg) ->
+      assert cfg.prov?, 'Missing prov'
+
+      socket = dgram.createSocket 'udp4'
 
 Note: I believe these are currently not forwarded by ccnq4-opensips.
 
@@ -51,97 +43,105 @@ Create a User object and use it to send the notification.
 
         send_notification_to new User {cfg}, user_id, user_database, db_uri
 
-Send notification to a user
-===========================
-
-      send_notification_to = seem (user) ->
-        debug 'send_notification_to', {user}
-
-Collect the number of messages from the user's database.
-
-        {total_rows} = yield user.db.query 'voicemail/new_messages'
-
-Collect the endpoint/via fields from the local number.
-
-        number_doc = yield cfg.prov.get "number:#{user.id}"
-        return if number_doc.disabled
-
-        via = number_doc.endpoint_via
-
-Use the endpoint name and via to route the packet.
-
-        endpoint = number_doc.endpoint
-        if endpoint.match /^([^@]+)@([^@]+)$/
-          debug 'Notifying endpoint', endpoint
-          notify_aor endpoint, via, total_rows
-        else
-          if via?
-            notify_aor endpoint, via, total_rows
-          else
-            debug 'No `via` for static endpoint, skipping.'
-
-        return
-
 Start socket
-============
+------------
 
-      socket.bind cfg.voicemail.notifier_port ? 7124
+      socket.bind cfg.voicemail?.notifier_port ? 7124
+
+      cfg.mwi_socket = socket
 
 Unsollicited NOTIFY
 ===================
 
+    @include = ->
+      @cfg.notifiers ?= {}
+      return if @cfg.notifiers.mwi?
+
 By default we issue "Unsollicited NOTIFY" messages.
 
-      cfg.notifiers.mwi ?= send_notification_to
+      @cfg.notifiers.mwi ?= send_notification_to
 
       debug 'Configured.'
 
-Toolbox
-=======
+Notifier Callback: Send notification to a user
+==============================================
 
-Send notification to an AOR at a given address and port
--------------------------------------------------------
+    send_notification_to = seem (user) ->
+      debug 'send_notification_to', {user}
+      cfg = user.ctx.cfg
 
-      send_sip_notification = seem (aor,total_rows,target_port,target_name)->
-        debug 'Send SIP notification', {aor,target_port,target_name}
+Collect the number of messages from the user's database.
 
-        body = new Buffer """
-          Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
-        """
+      {total_rows} = yield user.db.query 'voicemail/new_messages'
 
-        # FIXME no tag, etc.
-        headers = new Buffer """
-          NOTIFY sip:#{aor} SIP/2.0
-          Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
-          Max-Forwards: 2
-          To: <sip:#{aor}>
-          From: <sip:#{aor}>
-          Call-ID: #{Math.random()}
-          CSeq: 1 NOTIFY
-          Event: message-summary
-          Subscription-State: active
-          Content-Type: application/simple-message-summary
-          Content-Length: #{body.length}
-          \n
-        """.replace /\n/g, "\r\n"
+Collect the endpoint/via fields from the local number.
 
-        message = new Buffer headers.length + body.length
-        headers.copy message
-        body.copy message, headers.length
+      number_doc = yield cfg.prov.get "number:#{user.id}"
+      return if number_doc.disabled
 
-        socket.send message, 0, message.length, target_port, target_name
+      via = number_doc.endpoint_via
 
-      notify_aor = seem (aor,via,total_rows) ->
+Use the endpoint name and via to route the packet.
+
+      endpoint = number_doc.endpoint
+      if endpoint.match /^([^@]+)@([^@]+)$/
+        debug 'Notifying endpoint', endpoint
+        notify_aor cfg.mwi_socket, endpoint, via, total_rows
+      else
+        if via?
+          notify_aor cfg.mwi_socket, endpoint, via, total_rows
+        else
+          debug 'No `via` for static endpoint, skipping.'
+
+      return
+
+Notify a specific AOR
+=====================
+
+    notify_aor = seem (socket,aor,via,total_rows) ->
 
 If the `via` field is not present use the domain from the aor.
 
-        via ?= aor.match(/^([^@]+)@([^@]+)$/)?[2]
+      via ?= aor.match(/^([^@]+)@([^@]+)$/)?[2]
 
-        return unless via?
+      return unless via?
 
-        addresses = yield dns.resolveSrv '_sip._udp.' + via
-        for address in addresses
-          do (address) ->
-            send_sip_notification aor, total_rows, address.port, address.name
+      addresses = yield dns.resolveSrv '_sip._udp.' + via
+      for address in addresses
+        do (address) ->
+          send_sip_notification socket, aor, total_rows, address.port, address.name
 
+    return
+
+Send notification packet to an AOR at a given address and port
+==============================================================
+
+    send_sip_notification = seem (socket,aor,total_rows,target_port,target_name)->
+      debug 'Send SIP notification', {aor,target_port,target_name}
+
+      body = new Buffer """
+        Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
+      """
+
+      # FIXME no tag, etc.
+      headers = new Buffer """
+        NOTIFY sip:#{aor} SIP/2.0
+        Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
+        Max-Forwards: 2
+        To: <sip:#{aor}>
+        From: <sip:#{aor}>
+        Call-ID: #{Math.random()}
+        CSeq: 1 NOTIFY
+        Event: message-summary
+        Subscription-State: active
+        Content-Type: application/simple-message-summary
+        Content-Length: #{body.length}
+        \n
+      """.replace /\n/g, "\r\n"
+
+      message = new Buffer headers.length + body.length
+      headers.copy message
+      body.copy message, headers.length
+
+      socket.send message, 0, message.length, target_port, target_name
       return
