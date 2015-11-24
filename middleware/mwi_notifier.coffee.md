@@ -13,8 +13,6 @@ Handle SUBSCRIBE messages
 =========================
 
     @init = (cfg) ->
-      assert cfg.prov?, 'Missing prov'
-
       socket = dgram.createSocket 'udp4'
 
 Note: I believe these are currently not forwarded by ccnq4-opensips.
