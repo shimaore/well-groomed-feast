@@ -118,7 +118,7 @@ If the `via` field is not present use the domain from the aor.
 Send notification packet to an AOR at a given address and port
 ==============================================================
 
-    send_sip_notification = seem (aor,total_rows,target_port,target_name) ->
+    send_sip_notification = (aor,total_rows,target_port,target_name) ->
       debug 'Send SIP notification', {aor,target_port,target_name}
 
       body = new Buffer """
@@ -146,4 +146,5 @@ Send notification packet to an AOR at a given address and port
       body.copy message, headers.length
 
       socket.send message, 0, message.length, target_port, target_name
+      debug 'Sent SIP notification'
       return
