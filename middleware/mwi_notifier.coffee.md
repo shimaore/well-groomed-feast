@@ -97,6 +97,7 @@ Notify a specific AOR
 =====================
 
     notify_aor = seem (socket,aor,via,total_rows) ->
+      debug 'notify_aor', {aor,via,total_rows}
 
 If the `via` field is not present use the domain from the aor.
 
@@ -104,7 +105,7 @@ If the `via` field is not present use the domain from the aor.
 
       return unless via?
 
-      addresses = yield dns.resolveSrv '_sip._udp.' + via
+      addresses = yield dns.resolveSrvAsync '_sip._udp.' + via
       for address in addresses
         do (address) ->
           send_sip_notification socket, aor, total_rows, address.port, address.name
