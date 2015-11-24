@@ -14,6 +14,9 @@ Handle SUBSCRIBE messages
 
     socket = dgram.createSocket 'udp4'
 
+    socket.on 'error', (error) ->
+      debug "Socket error: #{error}"
+
     @server_pre = (cfg) ->
 
 Note: I believe these are currently not forwarded by ccnq4-opensips.
@@ -105,6 +108,7 @@ If the `via` field is not present use the domain from the aor.
       return unless via?
 
       addresses = yield dns.resolveSrvAsync '_sip._udp.' + via
+      debug 'Addresses', addresses
       for address in addresses
         do (address) ->
           send_sip_notification aor, total_rows, address.port, address.name
