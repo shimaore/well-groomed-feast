@@ -12,8 +12,9 @@
 Handle SUBSCRIBE messages
 =========================
 
-    @init = (cfg) ->
-      socket = dgram.createSocket 'udp4'
+    socket = dgram.createSocket 'udp4'
+
+    @server_pre = (cfg) ->
 
 Note: I believe these are currently not forwarded by ccnq4-opensips.
 
@@ -45,8 +46,6 @@ Start socket
 ------------
 
       socket.bind cfg.voicemail?.notifier_port ? 7124
-
-      cfg.mwi_socket = socket
 
 Unsollicited NOTIFY
 ===================
@@ -84,10 +83,10 @@ Use the endpoint name and via to route the packet.
       endpoint = number_doc.endpoint
       if endpoint.match /^([^@]+)@([^@]+)$/
         debug 'Notifying endpoint', endpoint
-        notify_aor cfg.mwi_socket, endpoint, via, total_rows
+        notify_aor endpoint, via, total_rows
       else
         if via?
-          notify_aor cfg.mwi_socket, endpoint, via, total_rows
+          notify_aor endpoint, via, total_rows
         else
           debug 'No `via` for static endpoint, skipping.'
 
@@ -96,7 +95,7 @@ Use the endpoint name and via to route the packet.
 Notify a specific AOR
 =====================
 
-    notify_aor = seem (socket,aor,via,total_rows) ->
+    notify_aor = seem (aor,via,total_rows) ->
       debug 'notify_aor', {aor,via,total_rows}
 
 If the `via` field is not present use the domain from the aor.
@@ -108,14 +107,14 @@ If the `via` field is not present use the domain from the aor.
       addresses = yield dns.resolveSrvAsync '_sip._udp.' + via
       for address in addresses
         do (address) ->
-          send_sip_notification socket, aor, total_rows, address.port, address.name
+          send_sip_notification aor, total_rows, address.port, address.name
 
       return
 
 Send notification packet to an AOR at a given address and port
 ==============================================================
 
-    send_sip_notification = seem (socket,aor,total_rows,target_port,target_name) ->
+    send_sip_notification = seem (aor,total_rows,target_port,target_name) ->
       debug 'Send SIP notification', {aor,target_port,target_name}
 
       body = new Buffer """
