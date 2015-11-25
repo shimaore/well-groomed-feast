@@ -94,7 +94,7 @@ Registered endpoint
         else
           uri = endpoint
         debug 'Notifying endpoint', {endpoint,uri,to}
-        notify_aor uri, to, total_rows
+        notify uri, to, total_rows
 
 Static endpoint
 
@@ -103,7 +103,7 @@ Static endpoint
           to = [user.id,endpoint].join '@'
           uri = [user.id,via].join '@'
           debug 'Notifying endpoint', {endpoint,uri,to}
-          notify_aor uri, to, total_rows
+          notify uri, to, total_rows
         else
           debug 'No `via` for static endpoint, skipping.'
 
@@ -114,8 +114,8 @@ Notify a specific URI
 
 We route based on the URI domain, as per RFC.
 
-    notify_aor = seem (uri,to,total_rows) ->
-      debug 'notify_aor', {uri,to,total_rows}
+    notify = seem (uri,to,total_rows) ->
+      debug 'notify', {uri,to,total_rows}
 
 URI = username@host:port
 
@@ -146,11 +146,11 @@ FIXME: this probably should only happen if `addresses` is empty?
       debug 'Invalid URI', {uri}
       return
 
-Send notification packet to an AOR at a given address and port
+Send notification packet to an URI at a given address and port
 ==============================================================
 
     send_sip_notification = (uri,to,total_rows,target_port,target_name) ->
-      debug 'Send SIP notification', {aor,target_port,target_name}
+      debug 'Send SIP notification', {uri,target_port,target_name}
 
       body = new Buffer """
         Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
