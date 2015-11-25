@@ -185,7 +185,7 @@ Save
         # If the user simply hungs up this is the only event we will receive.
         @ctx.call.on 'freeswitch_disconnect_notice', =>
           debug 'Disconnect Notice', @id
-          @notify()
+          @notify 'create'
 
         # Create new CDB record to hold the voicemail metadata
         @user.db.put msg
@@ -194,12 +194,12 @@ Save
           cuddly.csr "Could not create message: #{e}"
           @ctx.error 'MSG-180'
 
-      notify: ->
+      notify: (flag) ->
         debug 'notify', @user.id, @id
         return unless @ctx.cfg.notifiers?
         for name, notifier of @ctx.cfg.notifiers
           do (name,notifier) =>
-            notifier @user, @id
+            notifier @user, @id, flag
             .catch (error) ->
               debug "Notifier #{name} error: #{error}"
               cuddly.csr "Notifier #{name} error: #{error}"
@@ -212,7 +212,7 @@ Save
           doc.box = 'trash'
           @user.db.put doc
         .then =>
-          @notify()
+          @notify 'remove'
         .then =>
           @ctx.action 'phrase', 'voicemail_ack,deleted'
 
@@ -223,7 +223,7 @@ Save
           doc.box = 'saved'
           @user.db.put doc
         .then =>
-          @notify()
+          @notify 'save'
         .then =>
           @ctx.action 'phrase', 'voicemail_ack,saved'
 

@@ -66,7 +66,7 @@ By default we issue "Unsollicited NOTIFY" messages.
 Notifier Callback: Send notification to a user
 ==============================================
 
-    send_notification_to = seem (user,id) ->
+    send_notification_to = seem (user,id,flag) ->
       debug 'send_notification_to', {user}
       cfg = user.ctx.cfg
 
@@ -76,7 +76,7 @@ Collect the number of messages from the user's database.
 
 When a new message is posted we might come too soon (for CouchDB) and get an invalid `total_rows` value.
 
-      total_rows = 1 if id and total_rows is 0
+      total_rows = 1 if flag is 'create' and total_rows is 0
 
 Collect the endpoint/via fields from the local number.
 
