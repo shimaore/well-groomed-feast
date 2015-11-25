@@ -84,41 +84,72 @@ Collect the endpoint/via fields from the local number.
 Use the endpoint name and via to route the packet.
 
       endpoint = number_doc.endpoint
-      if endpoint.match /^([^@]+)@([^@]+)$/
-        debug 'Notifying endpoint', endpoint
-        notify_aor endpoint, via, total_rows
+
+Registered endpoint
+
+      if m = endpoint.match /^([^@]+)@([^@]+)$/
+        to = endpoint
+        if via?
+          uri = [m[1],via].join '@'
+        else
+          uri = endpoint
+        debug 'Notifying endpoint', {endpoint,uri,to}
+        notify_aor uri, to, total_rows
+
+Static endpoint
+
       else
         if via?
-          notify_aor endpoint, via, total_rows
+          to = [user.id,endpoint].join '@'
+          uri = [user.id,via].join '@'
+          debug 'Notifying endpoint', {endpoint,uri,to}
+          notify_aor uri, to, total_rows
         else
           debug 'No `via` for static endpoint, skipping.'
 
       return
 
-Notify a specific AOR
+Notify a specific URI
 =====================
 
-    notify_aor = seem (aor,via,total_rows) ->
-      debug 'notify_aor', {aor,via,total_rows}
+We route based on the URI domain, as per RFC.
 
-If the `via` field is not present use the domain from the aor.
+    notify_aor = seem (uri,to,total_rows) ->
+      debug 'notify_aor', {uri,to,total_rows}
 
-      via ?= aor.match(/^([^@]+)@([^@]+)$/)?[2]
+URI = username@host:port
 
-      return unless via?
+      if m = uri.match /^([^@]+)@(^[@:]+):(\d+)$/
+        name = m[2]
+        port = m[3]
+        debug 'Address', {name,port}
+        send_sip_notification uri, to, total_rows, port, name
+        return
 
-      addresses = yield dns.resolveSrvAsync '_sip._udp.' + via
-      debug 'Addresses', addresses
-      for address in addresses
-        do (address) ->
-          send_sip_notification aor, total_rows, address.port, address.name
+URI = username@domain
 
+      if m = uri.match /^([^@]+)@([^@:]+)$/
+        domain = m[2]
+
+        addresses = yield dns.resolveSrvAsync '_sip._udp.' + domain
+        debug 'Addresses', addresses
+        for address in addresses
+          do (address) ->
+            send_sip_notification uri, to, total_rows, address.port, address.name
+
+Also send to username@domain:5060
+FIXME: this probably should only happen if `addresses` is empty?
+
+        send_sip_notification uri, to, total_rows, 5060, domain
+        return
+
+      debug 'Invalid URI', {uri}
       return
 
 Send notification packet to an AOR at a given address and port
 ==============================================================
 
-    send_sip_notification = (aor,total_rows,target_port,target_name) ->
+    send_sip_notification = (uri,to,total_rows,target_port,target_name) ->
       debug 'Send SIP notification', {aor,target_port,target_name}
 
       body = new Buffer """
@@ -127,12 +158,12 @@ Send notification packet to an AOR at a given address and port
 
       # FIXME no tag, etc.
       headers = new Buffer """
-        NOTIFY sip:#{aor} SIP/2.0
+        NOTIFY sip:#{uri} SIP/2.0
         Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
         Max-Forwards: 2
-        To: <sip:#{aor}>
-        From: <sip:#{aor}>
-        Call-ID: #{Math.random()}
+        To: <sip:#{to}>
+        From: <sip:#{to}>
+        Call-ID: #{pkg.name}-#{Math.random()}
         CSeq: 1 NOTIFY
         Event: message-summary
         Subscription-State: active
