@@ -12,6 +12,7 @@ new Message(ctx, User, id)
 new Message(ctx, User).create()
 ```
 
+    seem = require 'seem'
 
     class Message
 
@@ -27,40 +28,36 @@ new Message(ctx, User).create()
       uri: (name,rev) ->
         @ctx.uri @user,@id,name,rev
 
-      has_part: (part = @part) ->
+      has_part: seem (part = @part) ->
         name = "part#{part}.#{@format}"
         debug 'has_part', @id, part, @format, name
-        @user.db.get @id
-        .then (doc) ->
-          debug 'has_part', doc._attachments[name]
-          doc._attachments[name]?
+        doc = yield @user.db.get @id
+        debug 'has_part', doc._attachments[name]
+        doc._attachments[name]?
 
 Record the current part
 -----------------------
 
-      start_recording: ->
+      start_recording: seem ->
         debug 'start_recording', @id
         record_seconds = null
-        @user.db.get @id
-        .then (doc) =>
+        doc = yield @user.db.get @id
 
 FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
 
-          name = "part#{@part}.#{@format}"
-          upload_url = @uri name, doc._rev
-          @ctx.record upload_url, @max_duration
-        .then (record_seconds) =>
-          if record_seconds < @min_duration
-            @delete_single_part @part
-            .then ->
-              0
-          else
-            record_seconds
+        name = "part#{@part}.#{@format}"
+        upload_url = @uri name, doc._rev
+        record_seconds = yield @ctx.record upload_url, @max_duration
+        if record_seconds < @min_duration
+          yield @delete_single_part @part
+          0
+        else
+          record_seconds
 
 Play a recording, optionally collect a digit
 ------------------------------------------------------------
 
-      play_recording: (this_part = @the_first_part) ->
+      play_recording: seem (this_part = @the_first_part) ->
         debug 'play_recording', @id, this_part
         return unless this_part <= @the_last_part
 
@@ -71,103 +68,90 @@ See `file_open` in mod_httapi.c.
 
         name = "part#{this_part}.#{@format}"
         url = @uri name
-        @has_part this_part
-        .then (it_does) =>
-          debug 'play_recording', {it_does}
-          @ctx.play url if it_does
+        it_does = yield @has_part this_part
+        debug 'play_recording', {it_does}
+        choice = yield @ctx.play url if it_does
 
 Keep playing if no user interaction
 
-        .then (choice) =>
-          @play_recording this_part+1 if not choice?
-          choice
+        @play_recording this_part+1 if not choice?
+        choice
 
 Delete parts
 ------------
 
-      delete_all_parts: ->
+      delete_all_parts: seem ->
         debug 'delete_all_parts', @id
-        @user.db.get @id
-        .then (doc) =>
-          # Remove all attachments
-          doc._attachments = {}
-          @user.db.put doc
+        doc = @user.db.get @id
+        # Remove all attachments
+        doc._attachments = {}
+        @user.db.put doc
 
-      delete_single_part: (this_part) ->
+      delete_single_part: seem (this_part) ->
         debug 'delete_single_part', this_part
-        @user.db.get @id
-        .then (doc) =>
-          name = "part#{this_part}.#{@format}"
-          @user.db.removeAttachment @id, name, doc.rev
+        doc = yield @user.db.get @id
+        name = "part#{this_part}.#{@format}"
+        @user.db.removeAttachment @id, name, doc.rev
 
 Post-recording menu
 -------------------
 
-      post_recording: ->
+      post_recording: seem ->
         debug 'post_recording', @id
 
 Check whether the attachment exists (it might be deleted if it doesn't match the minimum duration)
 
-        @has_part @part
-        .then (it_does) =>
-          debug 'post_recording', {it_does}
-          unless it_does
-            it =
-              cuddly.ops "Could not record message part", {message_id:@id,user_id:@user.id}
-              .then ->
-                @ctx.action 'phrase', "could not record please try again"
-              .then =>
-                @start_recording()
-            return it
+        it_does = @has_part @part
+        debug 'post_recording', {it_does}
+        unless it_does
+          yield cuddly.ops "Could not record message part", {message_id:@id,user_id:@user.id}
+          yield @ctx.action 'phrase', "could not record please try again"
+          yield @start_recording()
+          return
 
 FIXME The default FreeSwitch prompts only allow for one-part messages, while we allow for multiple.
 
-          @ctx.get_choice 'phrase:voicemail_record_file_check:1:2:3'
-          .then (choice) =>
-            switch choice
+        choice = yield @ctx.get_choice 'phrase:voicemail_record_file_check:1:2:3'
+        switch choice
 
 Play
 
-              when "1"
-                @play_recording @the_first_part
-                .then =>
-                  @post_recording()
+          when "1"
+            yield @play_recording @the_first_part
+            @post_recording()
 
 Delete
 
-              when "3"
-                @delete_all_parts()
-                .then =>
-                  @part = @the_first_part
-                  @start_recording()
-                  .then =>
-                    @post_recording()
+          when "3"
+            yield @delete_all_parts()
+            @part = @the_first_part
+            yield @start_recording()
+            @post_recording()
 
 Append
 
-              when "4" # Keep recording
-                if @part < @the_last_part
-                  @part++
-                  @start_recording()
-                else
-                  # FIXME: notify that the last part has been recorded
-                  @post_recording()
+          when "4" # Keep recording
+            if @part < @the_last_part
+              @part++
+              yield @start_recording()
+            else
+              # FIXME: notify that the last part has been recorded
+              @post_recording()
 
 Save
 
-              when "2"
-                return
+          when "2"
+            return
 
-              else
-                @post_recording()
+          else
+            @post_recording()
 
       # Play the message enveloppe
-      play_enveloppe: (index) ->
+      play_enveloppe: seem (index) ->
         debug 'play_enveloppe', @id
-        @user.db.get @id
-        .then (doc) =>
-          user_timestamp = @user.time doc.timestamp
-          @ctx.play "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
+        doc = yield @user.db.get @id
+        user_timestamp = @user.time doc.timestamp
+        @ctx.play "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
 
       # Create a new voicemail record in the database
       create: ->
@@ -205,27 +189,21 @@ Save
               cuddly.csr "Notifier #{name} error: #{error}"
         return
 
-      remove: ->
+      remove: seem ->
         debug 'remove', @id
-        @user.db.get @id
-        .then (doc) =>
-          doc.box = 'trash'
-          @user.db.put doc
-        .then =>
-          @notify 'remove'
-        .then =>
-          @ctx.action 'phrase', 'voicemail_ack,deleted'
+        doc = yield @user.db.get @id
+        doc.box = 'trash'
+        yield @user.db.put doc
+        yield @notify 'remove'
+        @ctx.action 'phrase', 'voicemail_ack,deleted'
 
-      save: ->
+      save: seem ->
         debug 'save', @id
-        @user.db.get @id
-        .then (doc) =>
-          doc.box = 'saved'
-          @user.db.put doc
-        .then =>
-          @notify 'save'
-        .then =>
-          @ctx.action 'phrase', 'voicemail_ack,saved'
+        doc = yield @user.db.get @id
+        doc.box = 'saved'
+        yield @user.db.put doc
+        yield @notify 'save'
+        @ctx.action 'phrase', 'voicemail_ack,saved'
 
     module.exports = Message
     pkg = require '../package.json'
