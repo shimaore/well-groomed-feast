@@ -194,7 +194,7 @@ Save
         doc = yield @user.db.get @id
         doc.box = 'trash'
         yield @user.db.put doc
-        yield @notify 'remove'
+        @notify 'remove'
         @ctx.action 'phrase', 'voicemail_ack,deleted'
 
       save: seem ->
@@ -202,7 +202,7 @@ Save
         doc = yield @user.db.get @id
         doc.box = 'saved'
         yield @user.db.put doc
-        yield @notify 'save'
+        @notify 'save'
         @ctx.action 'phrase', 'voicemail_ack,saved'
 
     module.exports = Message
