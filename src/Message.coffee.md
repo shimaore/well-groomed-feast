@@ -47,8 +47,8 @@ FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
 
         name = "part#{@part}.#{@format}"
         upload_url = @uri name, doc._rev
-        record_seconds = yield @ctx.record upload_url, @max_duration
-        if record_seconds < @min_duration
+        record_seconds = parseInt yield @ctx.record upload_url, @max_duration
+        if (isNaN record_seconds) or record_seconds < @min_duration
           yield @delete_single_part @part
           0
         else
@@ -92,6 +92,10 @@ Delete parts
         doc = yield @user.db.get @id
         name = "part#{this_part}.#{@format}"
         @user.db.removeAttachment @id, name, doc.rev
+        @user.db
+          .removeAttachment @id, name, doc.rev
+          .catch (error) ->
+            debug "remove attachment: #{error}", {@id,name,doc.rev}
 
 Post-recording menu
 -------------------
