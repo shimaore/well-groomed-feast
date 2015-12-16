@@ -25,9 +25,6 @@
       unless cfg.voicemail?.sender?
         debug 'Missing `voicemail.sender`'
         return
-      unless cfg.host?
-        debug 'Missing `host`'
-        return
 
       transporter = smtpTransport cfg.mailer.SMTP
       transport = mailer.createTransport transporter
@@ -68,7 +65,7 @@ Get templates
 
 ### Templates in the server configuration
 
-          cfg.prov.getAttachment "host:#{cfg.host}", uri_name
+          cfg.prov.getAttachment "config:voicemail", uri_name
           .catch (error) ->
             null
           .then (data) ->
