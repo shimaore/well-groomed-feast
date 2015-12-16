@@ -52,6 +52,9 @@ FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
           yield @delete_single_part @part
           0
         else
+          doc = yield @user.db.get @id
+          doc.durations[name] = record_seconds
+          yield @user.db.put doc
           record_seconds
 
 Play a recording, optionally collect a digit
@@ -85,17 +88,20 @@ Delete parts
         doc = @user.db.get @id
         # Remove all attachments
         doc._attachments = {}
+        doc.durations = {}
         @user.db.put doc
 
       delete_single_part: seem (this_part) ->
         debug 'delete_single_part', this_part
         doc = yield @user.db.get @id
+        doc.durations ?= {}
         name = "part#{this_part}.#{@format}"
-        @user.db.removeAttachment @id, name, doc.rev
+        delete doc.durations[name] if name of doc.durations
+        {rev} = @user.db.put doc
         @user.db
-          .removeAttachment @id, name, doc.rev
+          .removeAttachment @id, name, rev
           .catch (error) ->
-            debug "remove attachment: #{error}", {@id,name,doc.rev}
+            debug "remove attachment: #{error}", {@id,name,rev}
 
 Post-recording menu
 -------------------
