@@ -13,6 +13,15 @@ new Message(ctx, User).create()
 ```
 
     seem = require 'seem'
+    assert = require 'assert'
+
+    sum_of = (a) ->
+      (v for k,v of a).reduce ((x,y) -> x+y), 0
+
+    assert.equal 0, sum_of {}
+    assert.equal 0, sum_of {a:0}
+    assert.equal 0, sum_of {a:-3,b:3}
+    assert.equal 10, sum_of {a:4,b:3,c:2,d:1}
 
     class Message
 
@@ -42,6 +51,7 @@ Record the current part
         debug 'start_recording', @id
         record_seconds = null
         doc = yield @user.db.get @id
+        doc.durations ?= {}
 
 FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
 
@@ -54,6 +64,7 @@ FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
         else
           doc = yield @user.db.get @id
           doc.durations[name] = record_seconds
+          doc.duration = sum_of doc.durations
           yield @user.db.put doc
           record_seconds
 
@@ -89,6 +100,7 @@ Delete parts
         # Remove all attachments
         doc._attachments = {}
         doc.durations = {}
+        doc.duration = 0
         @user.db.put doc
 
       delete_single_part: seem (this_part) ->
@@ -97,6 +109,7 @@ Delete parts
         doc.durations ?= {}
         name = "part#{this_part}.#{@format}"
         delete doc.durations[name] if name of doc.durations
+        doc.duration = sum_of doc.durations
         {rev} = @user.db.put doc
         @user.db
           .removeAttachment @id, name, rev
