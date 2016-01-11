@@ -125,7 +125,7 @@ Post-recording menu
 
 Check whether the attachment exists (it might be deleted if it doesn't match the minimum duration)
 
-        it_does = @has_part @part
+        it_does = yield @has_part @part
         debug 'post_recording', {it_does}
         unless it_does
           yield cuddly.ops "Could not record message part", {message_id:@id,user_id:@user.id}
