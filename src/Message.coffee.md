@@ -64,6 +64,7 @@ FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
           0
         else
           doc = yield @user.db.get @id
+          doc.durations ?= {}
           doc.durations[name] = record_seconds
           doc.duration = sum_of doc.durations
           yield @user.db.put doc
