@@ -144,7 +144,7 @@ URI = username@domain
 Also send to username@domain:5060
 FIXME: this probably should only happen if `addresses` is empty?
 
-        send_sip_notification uri, to, total_rows, 5060, domain
+        try send_sip_notification uri, to, total_rows, 5060, domain
         return
 
       debug 'Invalid URI', {uri}
