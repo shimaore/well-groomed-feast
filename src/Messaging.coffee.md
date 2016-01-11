@@ -27,9 +27,11 @@ Gather a customer phone number and locate that record.
 Locate endpoint-data (`User` will also need it, so store it in the session).
 In most cases `session.endpoint` is already provided.
 
+* session.endpoint_name Name of the endpoint used for locating the number-domain.
 
         @ctx.session.endpoint_name ?= @ctx.req.header 'X-CCNQ3-Endpoint'
 
+* session.endpoint Data of the endpoint used for locating the number-domain.
 
         @ctx.session.endpoint ?= yield @ctx.cfg.prov
           .get "endpoint:#{@ctx.session.endpoint_name}"
@@ -62,6 +64,8 @@ Fallback to the one specified in the headers.
 
 Fallback to the default one configured.
 
+* cfg.voicemail.number_domain The default number-domain used for voicemail, if none is found in session.number_domain, session.endpoint.number_domain, or hdr.X-CCNQ3-Number-Domain
+
         if not number_domain?
           number_domain = @ctx.cfg.voicemail.number_domain ? 'local'
           cuddly.csr "No user_domain specified for #{number}, using configured #{number_domain} instead."
@@ -77,6 +81,10 @@ Attempt to locate the local-number record.
         user_id = "#{number}@#{number_domain}"
 
         debug 'locate_user >', user_id
+
+* session.number Data record of the local number for which we are handling voicemail.
+* doc.local_number.user_database Name of the user's database.
+* session.number.user_database Name of the user's database, see doc.local_number.user_database
 
         @ctx.session.number ?= yield @ctx.cfg.prov
           .get "number:#{user_id}"
@@ -110,6 +118,8 @@ If the record was found but no user-database is specified, either the line has n
 
 Now that we have a user/local-number document, let's locate the associated user database.
 Note: `userdb_base_uri` must contain authentication elements (e.g. "voicemail" user+pass)
+
+* cfg.userdb_base_uri The base URI concatenated with a doc.local_number.user_database name to access the user's database. It must contain any required authentication elements.
 
         db_uri = @ctx.cfg.userdb_base_uri + '/' + user_database
         new User @ctx, user_id, user_database, db_uri

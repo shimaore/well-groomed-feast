@@ -45,6 +45,8 @@ Tell the user to call support.
 
 Convert a timestamp (ISO string) to a local timestamp (ISO string)
 
+* doc.voicemail_settings.timezone Timezone for voicemail.
+
       time: (t) ->
         debug 'time'
         timezone = @vm_settings.timezone ? @default_timezone
@@ -67,10 +69,14 @@ Convert a timestamp (ISO string) to a local timestamp (ISO string)
 
 User-specified prompt
 
+* doc.voicemail_settings._attachments.prompt (prompt.wav) User-specified voicemail prompt. Used if present.
+
           if vm_settings._attachments?["prompt.#{Message::format}"]
             @ctx.play @uri "prompt.#{Message::format}"
 
 User-specified name
+
+* doc.voicemail_settings._attachments.name (name.wav) User-specified voicemail name. Used if the prompt is not present.
 
           else if vm_settings._attachments?["name.#{Message::format}"]
             @ctx.play @uri "name.#{Message::format}"
@@ -81,6 +87,8 @@ Default prompt
 
           else
             @ctx.action 'phrase', "voicemail_play_greeting,#{@id}"
+
+* doc.voicemail_settings.do_not_record If true, do not record voicemail messages.
 
         .then =>
           if @vm_settings.do_not_record
@@ -102,11 +110,15 @@ As long as we went through `locate_user` these should be provided.
         if attempts <= 0
           return @ctx.error()
 
+* doc.voicemail_settings Document found in the user database. Contains parameters for that user's voicemail box.
+
         vm_settings = yield @voicemail_settings()
 
         authenticated = false
 
 If the user requested not to be queried for a PIN, we authenticate using the endpoint.
+
+* doc.voicemail_settings.ask_pin If false, bypass authentication by PIN and validate access using the endpoint.
 
         if vm_settings.ask_pin is false
 
@@ -117,10 +129,14 @@ If the user requested not to be queried for a PIN, we authenticate using the end
 
 Otherwise, authentication can only happen with the PIN.
 
+* doc.voicemail_settings.pin The (numeric) PIN to access voicemail.
+
         if not authenticated
           if vm_settings.pin?
             pin = yield @ctx.get_pin()
             authenticated = pin is vm_settings.pin
+
+* doc.voicemail_settings.language Language used inside voicemail.
 
         if authenticated
           yield @ctx.action 'set', "language=#{vm_settings.language}" if vm_settings.language?
@@ -271,6 +287,8 @@ Default navigation is: read next message
             @ctx.goodbye()
           else
             @ctx.error 'USR-238'
+
+* doc.voicemail_settings._attachments Contains prompts for the user's voicemail.
 
       record_something: seem (that,phrase) ->
         debug 'record_something', {that,phrase}
