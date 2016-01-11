@@ -41,8 +41,8 @@ new Message(ctx, User).create()
         name = "part#{part}.#{@format}"
         debug 'has_part', @id, part, @format, name
         doc = yield @user.db.get @id
-        debug 'has_part', doc._attachments[name]
-        doc._attachments[name]?
+        debug 'has_part', doc._attachments?[name]
+        doc._attachments?[name]?
 
 Record the current part
 -----------------------
