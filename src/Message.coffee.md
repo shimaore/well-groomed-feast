@@ -96,12 +96,12 @@ Delete parts
 
       delete_all_parts: seem ->
         debug 'delete_all_parts', @id
-        doc = @user.db.get @id
+        doc = yield @user.db.get @id
         # Remove all attachments
         doc._attachments = {}
         doc.durations = {}
         doc.duration = 0
-        @user.db.put doc
+        yield @user.db.put doc
 
       delete_single_part: seem (this_part) ->
         debug 'delete_single_part', this_part
