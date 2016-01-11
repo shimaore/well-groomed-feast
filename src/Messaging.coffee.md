@@ -24,22 +24,37 @@ Gather a customer phone number and locate that record.
         assert number?, 'locate_user: number must be defined'
         debug 'locate_user', number, attempts
 
-        number_domain = null
+Locate endpoint-data (`User` will also need it, so store it in the session).
+In most cases `session.endpoint` is already provided.
 
-Try to use the number-domain associated with the endpoint.
 
-        endpoint = @ctx.req.header 'X-CCNQ3-Endpoint'
+        @ctx.session.endpoint_name ?= @ctx.req.header 'X-CCNQ3-Endpoint'
 
-        @ctx.session.endpoint_data = {}
-        if endpoint?
-          {number_domain} = @ctx.session.endpoint_data =  yield @ctx.cfg.prov
-            .get "endpoint:#{endpoint}"
-            .catch (error) ->
-              debug "Endpoint #{endpoint} not found, #{error}."
-              {}
 
-        if @ctx.session.endpoint_data.disabled
-          {number_domain} = @ctx.session.endpoint_data = {}
+        @ctx.session.endpoint ?= yield @ctx.cfg.prov
+          .get "endpoint:#{@ctx.session.endpoint_name}"
+          .catch (error) ->
+            debug "Endpoint #{@ctx.session.endpoint_name} not found, #{error}."
+            null
+          .then (data) ->
+            if data?.disabled then {} else data
+
+Internal consistency
+
+        if not @ctx.session.endpoint?
+          cuddly.dev "Missing session.endpoint for #{@ctx.session.endpoint_name}"
+        assert @ctx.session.endpoint?, "Missing session.endpoint for #{@ctx.session.endpoint_name}"
+
+Number-domain selection
+-----------------------
+
+In most cases we will already have a proper `number_domain` selected in the session.
+
+        number_domain = @ctx.session.number_domain ? null
+
+Fallback to the number-domain associated with the endpoint, if any.
+
+        number_domain ?= @ctx.session.endpoint.number_domain
 
 Fallback to the one specified in the headers.
 
@@ -63,14 +78,23 @@ Attempt to locate the local-number record.
 
         debug 'locate_user >', user_id
 
-        {user_database,_id} = @ctx.session.number_data = yield @ctx.cfg.prov
+        @ctx.session.number ?= yield @ctx.cfg.prov
           .get "number:#{user_id}"
           .catch (error) ->
             debug "Number #{user_id} not found, #{error}."
             {}
+          .then (data) ->
+            if data?.disabled then {} else data
 
-        if @ctx.session.number_data.disabled
-          {user_database,_id} = @ctx.session.number_data = {}
+Internal consistency
+
+        if not @ctx.session.number?
+          cuddly.dev "Missing session.number for #{user_id}"
+        assert @ctx.session.number?, "Missing session.number for #{user_id}"
+
+Use data from local-number
+
+        {user_database,_id} = @ctx.session.number
 
 If the record was not found, this might be due to the user mistyping their number when using `gather_user`, so give them another opportunity to do so.
 
