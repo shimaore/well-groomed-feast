@@ -192,7 +192,7 @@ Save
           recipient: @ctx.destination
 
         # If the user simply hungs up this is the only event we will receive.
-        @ctx.call.on 'freeswitch_disconnect_notice', =>
+        @ctx.call.on 'cleanup_linger', =>
           debug 'Disconnect Notice', @id
           @notify 'create'
 
