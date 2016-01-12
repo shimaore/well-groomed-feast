@@ -175,14 +175,18 @@ Save
           else
             @post_recording()
 
-      # Play the message enveloppe
+Play the message enveloppe
+--------------------------
+
       play_enveloppe: seem (index) ->
         debug 'play_enveloppe', @id
         doc = yield @user.db.get @id
         user_timestamp = @user.time doc.timestamp
         @ctx.play "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
 
-      # Create a new voicemail record in the database
+Create a new voicemail record in the database
+---------------------------------------------
+
       create: ->
         id_timestamp = timestamp()
         @id = 'voicemail:' + id_timestamp + @ctx.data.variable_uuid
@@ -195,12 +199,15 @@ Save
           caller_id: @ctx.source
           recipient: @ctx.destination
 
-        # If the user simply hungs up this is the only event we will receive.
+If the user simply hungs up this is the only event we will receive.
+Note: now that we process `linger` properly this might be moved into `post_recording`, but the added complexity is probably not worth it.
+
         @ctx.call.on 'cleanup_linger', =>
           debug 'Disconnect Notice', @id
           @notify 'create'
 
-        # Create new CDB record to hold the voicemail metadata
+Create new CDB record to hold the voicemail metadata
+
         @user.db.put msg
         .catch (e) =>
           debug "Could not create message: #{e}.", @id
