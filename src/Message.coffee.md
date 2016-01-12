@@ -142,12 +142,14 @@ FIXME The default FreeSwitch prompts only allow for one-part messages, while we 
 Play
 
           when "1"
+            debug 'post_recording: play'
             yield @play_recording @the_first_part
             @post_recording()
 
 Delete
 
           when "3"
+            debug 'post_recording: delete'
             yield @delete_all_parts()
             @part = @the_first_part
             yield @start_recording()
@@ -156,6 +158,7 @@ Delete
 Append
 
           when "4" # Keep recording
+            debug 'post_recording: append'
             if @part < @the_last_part
               @part++
               yield @start_recording()
@@ -166,6 +169,7 @@ Append
 Save
 
           when "2"
+            debug 'post_recording: save'
             return
 
           else
@@ -204,7 +208,7 @@ Save
           @ctx.error 'MSG-180'
 
       notify: (flag) ->
-        debug 'notify', @user.id, @id
+        debug 'notify', flag, @user.id, @id
         return unless @ctx.cfg.notifiers?
         for name, notifier of @ctx.cfg.notifiers
           do (name,notifier) =>
