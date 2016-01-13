@@ -2,7 +2,7 @@
 
     class User
 
-      min_pin_length: process.env.MIN_PIN_LENGTH ? 6
+      min_pin_length: parseInt process.env.MIN_PIN_LENGTH ? 6
       default_timezone: process.env.DEFAULT_TIMEZONE ? null
       voicemail_dir: '/opt/freeswitch/messages'
 

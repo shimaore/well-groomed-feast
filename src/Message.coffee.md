@@ -26,10 +26,10 @@ new Message(ctx, User).create()
     class Message
 
       format: 'wav'
-      min_duration: process.env.MESSAGE_MIN_DURATION ? 5
-      max_duration: process.env.MESSAGE_MAX_DURATION ? 300
+      min_duration: parseInt process.env.MESSAGE_MIN_DURATION ? 2
+      max_duration: parseInt process.env.MESSAGE_MAX_DURATION ? 300
       the_first_part: 1
-      the_last_part: process.env.MAX_PARTS ? 1
+      the_last_part: parseInt process.env.MAX_PARTS ? 1
 
       constructor: (@ctx,@user,@id) ->
         @part = @the_first_part
