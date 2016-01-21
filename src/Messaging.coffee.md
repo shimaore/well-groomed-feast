@@ -35,7 +35,7 @@ In most cases `session.endpoint` is already provided.
 
         @ctx.session.endpoint ?= yield @ctx.cfg.prov
           .get "endpoint:#{@ctx.session.endpoint_name}"
-          .catch (error) ->
+          .catch (error) =>
             debug "Endpoint #{@ctx.session.endpoint_name} not found, #{error}."
             null
           .then (data) ->
