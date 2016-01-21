@@ -45,6 +45,11 @@ by FreeSwitch) which can then be transcoded.
           user.main_menu()
 
         when 'main'
+
+Provide an empty endpoint -- there is none associated with the voicemail main number.
+
+          @session.endpoint ?= {}
+
           yield @action 'answer'
           yield @action 'set', "language=#{@session.language ? @cfg.announcement_language}"
 
