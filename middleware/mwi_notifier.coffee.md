@@ -23,23 +23,31 @@ Note: I believe these are currently not forwarded by ccnq4-opensips.
 
       socket.on 'message', (msg,rinfo) ->
         content = msg.toString 'ascii'
+        debug 'Received message', content
 
 Try to recover the number and the endpoint from the message
+FIXME: Replace with proper SIP parsing.
 
-        return unless r = content.match /^SUBSCRIBE sip:(\S+)@.*\nX-CCNQ3-Endpoint: (\S+)\n/
+        return unless r = content.match /^SUBSCRIBE sip:.*\nX-CCNQ3-Endpoint: (\S+)\n.*\nFrom: <sip:(\d+)@/
 
-        number = r[1]
-        endpoint = r[2]
+        number = r[2]
+        endpoint = r[1]
+
+        debug 'SUBSCRIBE', {number, endpoint}
 
 Recover the number-domain from the endpoint.
 
         {number_domain} = yield cfg.prov.get "endpoint:#{endpoint}"
         user_id = "#{number}@#{number_domain}"
 
+        debug 'SUBSCRIBE', {number_domain,user_id}
+
 Recover the local-number's user-database.
 
         {user_database} = yield cfg.prov.get "number:#{user_id}"
         db_uri = cfg.userdb_base_uri + '/' + user_database
+
+        debug 'SUBSCRIBE', {user_database,db_uri}
 
 Create a User object and use it to send the notification.
 
