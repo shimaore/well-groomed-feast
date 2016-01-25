@@ -21,6 +21,39 @@ Handle SUBSCRIBE messages
       address = socket.address()
       debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
 
+    test_msg = '''
+      SUBSCRIBE sip:test.phone.kwaoo.net SIP/2.0
+      X-CCNQ3-Endpoint: 0972222713@a.phone.kwaoo.net
+      Via: SIP/2.0/UDP 192.168.1.106:5063;branch=z9hG4bK-5e721c6;rport
+      From: <sip:0972222713@test.phone.kwaoo.net>;tag=ed1530ada8e777c4
+      To: <sip:test.phone.kwaoo.net>
+      Call-ID: 15591da1-15214f60@192.168.1.106
+      CSeq: 55159 SUBSCRIBE
+      Max-Forwards: 69
+      Proxy-Authorization: Digest username="0972222713",realm="test.phone.kwaoo.net",nonce="56a632ef0000001adeb0832ae67fe8747a68b3061dfb4349",uri="sip:test.phone.kwaoo.net",algorithm=MD5,response="8fb39ce0525f332b42e34d87ac7a6741"
+      Contact: <sip:0972222713@192.168.1.106:5063>
+      Expires: 2147483647
+      Event: message-summary
+      User-Agent: Linksys/SPA962-6.1.5(a)
+      Content-Length: 0
+
+    '''
+
+    msg_matcher =
+          ///
+          ^
+          SUBSCRIBE \s+ sip:
+          [\S\s]*
+          \n
+          X-CCNQ3-Endpoint: \s* (\S+)
+          [\r\n]
+          [\S\s]*
+          \n
+          From: \s* <sip:(\d+)@
+          ///
+
+    assert test_msg.match msg_matcher
+
     @server_pre = (cfg) ->
 
 Note: I believe these are currently not forwarded by ccnq4-opensips.
@@ -33,17 +66,7 @@ Note: I believe these are currently not forwarded by ccnq4-opensips.
 Try to recover the number and the endpoint from the message
 FIXME: Replace with proper SIP parsing.
 
-        return unless r = content.match ///
-          ^SUBSCRIBE \s+ sip:
-          [.\s]*
-          \n
-          X-CCNQ3-Endpoint: \s* (\S+)
-          [\r\n]
-          [.\s]*
-          \n
-          From: \s* <sip:(\d+)@
-          ///
-
+        return unless r = content.match msg_matcher
         number = r[2]
         endpoint = r[1]
 
