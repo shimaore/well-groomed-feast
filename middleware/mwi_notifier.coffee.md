@@ -30,7 +30,6 @@ Handle SUBSCRIBE messages
       Call-ID: 15591da1-15214f60@192.168.1.106
       CSeq: 55159 SUBSCRIBE
       Max-Forwards: 69
-      Proxy-Authorization: Digest username="0972222713",realm="test.phone.kwaoo.net",nonce="56a632ef0000001adeb0832ae67fe8747a68b3061dfb4349",uri="sip:test.phone.kwaoo.net",algorithm=MD5,response="8fb39ce0525f332b42e34d87ac7a6741"
       Contact: <sip:0972222713@192.168.1.106:5063>
       Expires: 2147483647
       Event: message-summary
@@ -40,30 +39,28 @@ Handle SUBSCRIBE messages
     '''
 
     msg_matcher =
-          ///
-          ^
-          SUBSCRIBE \s+ sip:
-          [\S\s]*
-          \n
-          X-CCNQ3-Endpoint: \s* (\S+)
-          [\r\n]
-          [\S\s]*
-          \n
-          From: \s* <sip:(\d+)@
-          ///
+      ///
+      ^
+      SUBSCRIBE \s+ sip:
+      [\S\s]*
+      \n
+      X-CCNQ3-Endpoint: \s* (\S+)
+      [\r\n]
+      [\S\s]*
+      \n
+      From: \s* <sip:(\d+)@
+      ///
 
     assert test_msg.match msg_matcher
 
     @server_pre = ->
-
-Note: I believe these are currently not forwarded by ccnq4-opensips.
 
       socket.on 'message', seem (msg,rinfo) =>
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
         content = msg.toString 'ascii'
         debug 'Received message', content
 
-Try to recover the number and the endpoint from the message
+Try to recover the number and the endpoint from the message.
 FIXME: Replace with proper SIP parsing.
 
         return unless r = content.match msg_matcher
@@ -92,6 +89,8 @@ Create a User object and use it to send the notification.
 
 Start socket
 ------------
+
+* cfg.voicemail.notifier_port (integer) Port number for the (UDP) forwarding of SUBSCRIBE messages for voicemail notifications.
 
       socket.bind @cfg.voicemail?.notifier_port ? 7124
 
