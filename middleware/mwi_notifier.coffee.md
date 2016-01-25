@@ -82,7 +82,7 @@ Recover the number-domain from the endpoint.
 Recover the local-number's user-database.
 
         {user_database} = yield @cfg.prov.get "number:#{user_id}"
-        db_uri = cfg.userdb_base_uri + '/' + user_database
+        db_uri = @cfg.userdb_base_uri + '/' + user_database
 
         debug 'SUBSCRIBE', {user_database,db_uri}
 
@@ -93,7 +93,7 @@ Create a User object and use it to send the notification.
 Start socket
 ------------
 
-      socket.bind cfg.voicemail?.notifier_port ? 7124
+      socket.bind @cfg.voicemail?.notifier_port ? 7124
 
 
 Unsollicited NOTIFY
