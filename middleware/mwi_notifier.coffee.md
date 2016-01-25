@@ -26,7 +26,7 @@ Handle SUBSCRIBE messages
 
 Note: I believe these are currently not forwarded by ccnq4-opensips.
 
-      socket.on 'message', (msg,rinfo) ->
+      socket.on 'message', seem (msg,rinfo) ->
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
         content = msg.toString 'ascii'
         debug 'Received message', content
