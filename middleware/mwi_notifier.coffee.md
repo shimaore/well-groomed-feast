@@ -19,13 +19,15 @@ Handle SUBSCRIBE messages
       debug "Socket error: #{error}"
 
     socket.on 'listening', ->
-      debug "Listening for SUBSCRIBE messages on port #{port}"
+      address = socket.address()
+      debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
 
     @server_pre = (cfg) ->
 
 Note: I believe these are currently not forwarded by ccnq4-opensips.
 
       socket.on 'message', (msg,rinfo) ->
+        debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
         content = msg.toString 'ascii'
         debug 'Received message', content
 
