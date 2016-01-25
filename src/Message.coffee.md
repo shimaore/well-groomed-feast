@@ -204,7 +204,12 @@ Note: now that we process `linger` properly this might be moved into `post_recor
 
         @ctx.call.on 'cleanup_linger', =>
           debug 'Disconnect Notice', @id
-          @notify 'create'
+          Promise.delay 3000
+          .then =>
+            @notify 'create'
+          .catch (e) =>
+            debug "Notification bug: #{e}"
+            cuddly.dev "Notification bug: #{e}"
 
 Create new CDB record to hold the voicemail metadata
 

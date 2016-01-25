@@ -119,10 +119,6 @@ Collect the number of messages from the user's database.
 
       {total_rows} = yield user.db.query 'voicemail/new_messages'
 
-When a new message is posted we might come too soon (for CouchDB) and get an invalid `total_rows` value.
-
-      total_rows = 1 if flag is 'create' and total_rows is 0
-
 Collect the endpoint/via fields from the local number.
 
       number_doc = yield cfg.prov.get "number:#{user.id}"
