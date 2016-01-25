@@ -54,11 +54,11 @@ Handle SUBSCRIBE messages
 
     assert test_msg.match msg_matcher
 
-    @server_pre = (cfg) ->
+    @server_pre = ->
 
 Note: I believe these are currently not forwarded by ccnq4-opensips.
 
-      socket.on 'message', seem (msg,rinfo) ->
+      socket.on 'message', seem (msg,rinfo) =>
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
         content = msg.toString 'ascii'
         debug 'Received message', content
@@ -74,21 +74,21 @@ FIXME: Replace with proper SIP parsing.
 
 Recover the number-domain from the endpoint.
 
-        {number_domain} = yield cfg.prov.get "endpoint:#{endpoint}"
+        {number_domain} = yield @cfg.prov.get "endpoint:#{endpoint}"
         user_id = "#{number}@#{number_domain}"
 
         debug 'SUBSCRIBE', {number_domain,user_id}
 
 Recover the local-number's user-database.
 
-        {user_database} = yield cfg.prov.get "number:#{user_id}"
+        {user_database} = yield @cfg.prov.get "number:#{user_id}"
         db_uri = cfg.userdb_base_uri + '/' + user_database
 
         debug 'SUBSCRIBE', {user_database,db_uri}
 
 Create a User object and use it to send the notification.
 
-        send_notification_to new User {cfg}, user_id, user_database, db_uri
+        send_notification_to new User this, user_id, user_database, db_uri
 
 Start socket
 ------------
