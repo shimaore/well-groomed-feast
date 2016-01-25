@@ -21,7 +21,7 @@ Handle SUBSCRIBE messages
       address = socket.address()
       debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
 
-    test_msg = '''
+    test_msg1 = '''
       SUBSCRIBE sip:test.phone.kwaoo.net SIP/2.0
       X-CCNQ3-Endpoint: 0972222713@a.phone.kwaoo.net
       Via: SIP/2.0/UDP 192.168.1.106:5063;branch=z9hG4bK-5e721c6;rport
@@ -38,20 +38,39 @@ Handle SUBSCRIBE messages
 
     '''
 
+    test_msg2 = '''
+      SUBSCRIBE sip:0972369812@a.phone.kwaoo.net SIP/2.0
+      X-CCNQ3-Endpoint: 0972369812@a.phone.kwaoo.net
+      Via: SIP/2.0/UDP 89.36.202.179:5060;branch=z9hG4bKddcd4dd080f01129f7749721fb029c7b;rport
+      From: "0478182907" <sip:0972369812@a.phone.kwaoo.net>;tag=494263519
+      To: "0478182907" <sip:0972369812@a.phone.kwaoo.net>
+      Call-ID: 2516407383@192_168_1_2
+      CSeq: 10319968 SUBSCRIBE
+      Contact: <sip:0972369812@89.36.202.179:5060>
+      Max-Forwards: 69
+      User-Agent: C610 IP/42.075.00.000.000
+      Event: message-summary
+      Expires: 3600
+      Allow: NOTIFY
+      Accept: application/simple-message-summary
+      Content-Length: 0
+
+    '''
+
     msg_matcher =
       ///
       ^
-      SUBSCRIBE \s+ sip:
+      SUBSCRIBE \u0020+ sip:
       [\S\s]*
       \n
-      X-CCNQ3-Endpoint: \s* (\S+)
-      [\r\n]
+      X-CCNQ3-Endpoint: \u0020* (\S+) [\r\n]
       [\S\s]*
       \n
-      From: \s* <sip:(\d+)@
+      From: [^\r\n]* <sip:(\d+)@
       ///
 
-    assert test_msg.match msg_matcher
+    assert (test_msg1.match msg_matcher), 'test_msg1 failed'
+    assert (test_msg2.match msg_matcher), 'test_msg2 failed'
 
     @server_pre = ->
 
