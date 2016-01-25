@@ -1,6 +1,6 @@
 {
   "name": "well-groomed-feast",
-  "version": "7.0.9-0",
+  "version": "7.0.9-1",
   "description": "Voicemail Application for FreeSwitch with CouchDB back-end",
   "main": "index.js",
   "scripts": {
