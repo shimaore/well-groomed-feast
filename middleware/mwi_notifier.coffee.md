@@ -13,7 +13,6 @@ Handle SUBSCRIBE messages
 =========================
 
     socket = dgram.createSocket 'udp4'
-    port = null
 
     socket.on 'error', (error) ->
       debug "Socket error: #{error}"
@@ -62,9 +61,8 @@ Create a User object and use it to send the notification.
 Start socket
 ------------
 
-      port = cfg.voicemail?.notifier_port ? 7124
+      socket.bind cfg.voicemail?.notifier_port ? 7124
 
-      socket.bind port
 
 Unsollicited NOTIFY
 ===================
