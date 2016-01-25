@@ -33,7 +33,16 @@ Note: I believe these are currently not forwarded by ccnq4-opensips.
 Try to recover the number and the endpoint from the message
 FIXME: Replace with proper SIP parsing.
 
-        return unless r = content.match /^SUBSCRIBE sip:.*\nX-CCNQ3-Endpoint: (\S+)\n.*\nFrom: <sip:(\d+)@/
+        return unless r = content.match ///
+          ^SUBSCRIBE \s+ sip:
+          [.\s]*
+          \n
+          X-CCNQ3-Endpoint: \s* (\S+)
+          [\r\n]
+          [.\s]*
+          \n
+          From: \s* <sip:(\d+)@
+          ///
 
         number = r[2]
         endpoint = r[1]
