@@ -143,7 +143,10 @@ Ready to send a notification
 We set the Expires header so that the client is forced to re-SUBSCRIBE regularly.
 FIXME: RFC3265 section 3.1.1 requires that our Expires be <= to the one requested in the SUBSCRIBE message.
 
-        message.reply 200, 'OK', Expires: 600
+        try
+          message.reply 200, 'OK', Expires: 600
+        catch error
+          debug "message.reply: #{error}"
 
 Create a User object and use it to send the notification.
 
