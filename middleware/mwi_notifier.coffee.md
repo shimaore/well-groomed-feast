@@ -14,6 +14,19 @@
       max: 200
       maxAge: 10 * 60 * 1000
 
+    prov_cache = LRU
+      max: 2000
+      maxAge: 20 * 1000
+
+    get_prov = seem (prov,key) ->
+      val = prov_cache.get key
+      if not val?
+        val ?= yield prov
+          .get key
+          .catch (error) ->
+            {}
+        prov_cache.set key, val
+
     assert = require 'assert'
 
 Handle SUBSCRIBE messages
@@ -106,14 +119,15 @@ Try to recover the number and the endpoint from the message.
 
 Recover the number-domain from the endpoint.
 
-        {number_domain} = yield @cfg.prov.get "endpoint:#{endpoint}"
+        {number_domain} = yield get_prov @cfg.prov, "endpoint:#{endpoint}"
+
         user_id = "#{number}@#{number_domain}"
 
         trace 'SUBSCRIBE', {number_domain,user_id}
 
 Recover the local-number's user-database.
 
-        {user_database} = doc = yield @cfg.prov.get "number:#{user_id}"
+        {user_database} = yield get_prov @cfg.prov, "number:#{user_id}"
 
 Record the Event header, dialog, etc. in a LRU-cache so that they may be used in NOTIFY messages.
 
@@ -168,7 +182,7 @@ Collect the number of messages from the user's database.
 
 Collect the endpoint/via fields from the local number.
 
-      number_doc = yield cfg.prov.get "number:#{user.id}"
+      number_doc = yield get_prov cfg.prov, "number:#{user.id}"
       return if number_doc.disabled
 
       via = number_doc.endpoint_via
