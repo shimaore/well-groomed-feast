@@ -230,7 +230,7 @@ URI = username@host:port
         name = m[2]
         port = m[3]
         trace 'resolve', {name,port}
-        results.push {port,name}
+        result.push {port,name}
 
 URI = username@domain
 
@@ -241,7 +241,7 @@ URI = username@domain
         trace 'Addresses', addresses
         for address in addresses
           do (address) ->
-            results.push address
+            result.push address
 
       dns_cache.set uri, result
       result
