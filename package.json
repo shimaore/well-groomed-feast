@@ -29,6 +29,7 @@
     "cuddly": "^1.1.4",
     "debug": "^2.2.0",
     "jssip": "^0.7.11",
+    "lru-cache": "^4.0.0",
     "milk": "^1.2.0",
     "nimble-direction": "^4.0.4",
     "nodemailer": "^2.0.0",

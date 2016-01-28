@@ -8,6 +8,11 @@
     trace = (require 'debug') "#{@name}:trace"
     User = require '../src/User'
     Parser = require 'jssip/lib/Parser'
+    LRU = require 'lru-cache'
+
+    dns_cache = LRU
+      max: 200
+      maxAge: 10 * 60 * 1000
 
     assert = require 'assert'
 
@@ -199,6 +204,9 @@ Static endpoint
 
     resolve = seem (uri) ->
 
+      result = dns_cache.get uri
+      return result if result?
+
       result = []
 
 URI = username@host:port
@@ -220,6 +228,7 @@ URI = username@domain
           do (address) ->
             results.push address
 
+      dns_cache.set uri, result
       result
 
 Notify a specific URI
