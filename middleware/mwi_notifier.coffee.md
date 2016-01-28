@@ -26,6 +26,7 @@
           .catch (error) ->
             {}
         prov_cache.set key, val
+      val
 
     assert = require 'assert'
 
