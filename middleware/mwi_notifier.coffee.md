@@ -5,6 +5,7 @@
     pkg = require '../package.json'
     @name = "#{pkg.name}:mwi_notifier"
     debug = (require 'debug') @name
+    trace = (require 'debug') "#{@name}:trace"
     User = require '../src/User'
 
     assert = require 'assert'
@@ -77,7 +78,7 @@ Handle SUBSCRIBE messages
       socket.on 'message', seem (msg,rinfo) =>
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
         content = msg.toString 'ascii'
-        debug 'Received message', content
+        trace 'Received message', content
 
 Try to recover the number and the endpoint from the message.
 FIXME: Replace with proper SIP parsing.
@@ -86,21 +87,21 @@ FIXME: Replace with proper SIP parsing.
         number = r[2]
         endpoint = r[1]
 
-        debug 'SUBSCRIBE', {number, endpoint}
+        trace 'SUBSCRIBE', {number, endpoint}
 
 Recover the number-domain from the endpoint.
 
         {number_domain} = yield @cfg.prov.get "endpoint:#{endpoint}"
         user_id = "#{number}@#{number_domain}"
 
-        debug 'SUBSCRIBE', {number_domain,user_id}
+        trace 'SUBSCRIBE', {number_domain,user_id}
 
 Recover the local-number's user-database.
 
         {user_database} = yield @cfg.prov.get "number:#{user_id}"
         db_uri = @cfg.userdb_base_uri + '/' + user_database
 
-        debug 'SUBSCRIBE', {user_database,db_uri}
+        trace 'SUBSCRIBE', {user_database,db_uri}
 
 Create a User object and use it to send the notification.
 
@@ -196,7 +197,7 @@ URI = username@domain
         domain = m[2]
 
         addresses = yield dns.resolveSrvAsync '_sip._udp.' + domain
-        debug 'Addresses', addresses
+        trace 'Addresses', addresses
         for address in addresses
           do (address) ->
             send_sip_notification uri, to, total_rows, address.port, address.name
