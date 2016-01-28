@@ -174,22 +174,18 @@ Static endpoint
 
       return
 
-Notify a specific URI
-=====================
 
-We route based on the URI domain, as per RFC.
+    resolve = seem (uri) ->
 
-    notify = seem (uri,to,total_rows) ->
-      debug 'notify', {uri,to,total_rows}
+      result = []
 
 URI = username@host:port
 
       if m = uri.match /^([^@]+)@(^[@:]+):(\d+)$/
         name = m[2]
         port = m[3]
-        debug 'Address', {name,port}
-        send_sip_notification uri, to, total_rows, port, name
-        return
+        trace 'resolve', {name,port}
+        results.push {port,name}
 
 URI = username@domain
 
@@ -200,15 +196,24 @@ URI = username@domain
         trace 'Addresses', addresses
         for address in addresses
           do (address) ->
-            send_sip_notification uri, to, total_rows, address.port, address.name
+            results.push address
 
-Also send to username@domain:5060
-FIXME: this probably should only happen if `addresses` is empty?
+      result
 
-        try send_sip_notification uri, to, total_rows, 5060, domain
-        return
+Notify a specific URI
+=====================
 
-      debug 'Invalid URI', {uri}
+We route based on the URI domain, as per RFC.
+
+    notify = seem (uri,to,total_rows) ->
+      debug 'notify', {uri,to,total_rows}
+
+      addresses = yield resolve uri
+
+      for address in addresses
+        do (address) ->
+          send_sip_notification uri, to, total_rows, address.port, address.name
+
       return
 
 Send notification packet to an URI at a given address and port
