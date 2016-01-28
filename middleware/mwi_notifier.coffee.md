@@ -7,6 +7,7 @@
     debug = (require 'debug') @name
     trace = (require 'debug') "#{@name}:trace"
     User = require '../src/User'
+    Parser = require 'jssip/lib/Parser'
 
     assert = require 'assert'
 
@@ -22,56 +23,56 @@ Handle SUBSCRIBE messages
       address = socket.address()
       debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
 
-    test_msg1 = '''
-      SUBSCRIBE sip:test.phone.kwaoo.net SIP/2.0
-      X-CCNQ3-Endpoint: 0972222713@a.phone.kwaoo.net
-      Via: SIP/2.0/UDP 192.168.1.106:5063;branch=z9hG4bK-5e721c6;rport
-      From: <sip:0972222713@test.phone.kwaoo.net>;tag=ed1530ada8e777c4
-      To: <sip:test.phone.kwaoo.net>
-      Call-ID: 15591da1-15214f60@192.168.1.106
-      CSeq: 55159 SUBSCRIBE
-      Max-Forwards: 69
-      Contact: <sip:0972222713@192.168.1.106:5063>
-      Expires: 2147483647
-      Event: message-summary
-      User-Agent: Linksys/SPA962-6.1.5(a)
-      Content-Length: 0
+This format is probably incorrect per section 3.1.2 of RFC3265 (the RURI or Event `id` field should uniquely identify the resource).
 
-    '''
+    _test = ->
+      test_msg1 = '''
+        SUBSCRIBE sip:test.phone.kwaoo.net SIP/2.0
+        X-CCNQ3-Endpoint: 0972222713@a.phone.kwaoo.net
+        Via: SIP/2.0/UDP 192.168.1.106:5063;branch=z9hG4bK-5e721c6;rport
+        From: <sip:0972222713@test.phone.kwaoo.net>;tag=ed1530ada8e777c4
+        To: <sip:test.phone.kwaoo.net>
+        Call-ID: 15591da1-15214f60@192.168.1.106
+        CSeq: 55159 SUBSCRIBE
+        Max-Forwards: 69
+        Contact: <sip:0972222713@192.168.1.106:5063>
+        Expires: 2147483647
+        Event: message-summary
+        User-Agent: Linksys/SPA962-6.1.5(a)
+        Content-Length: 0
+        \n
+      '''
 
-    test_msg2 = '''
-      SUBSCRIBE sip:0972369812@a.phone.kwaoo.net SIP/2.0
-      X-CCNQ3-Endpoint: 0972369812@a.phone.kwaoo.net
-      Via: SIP/2.0/UDP 89.36.202.179:5060;branch=z9hG4bKddcd4dd080f01129f7749721fb029c7b;rport
-      From: "0478182907" <sip:0972369812@a.phone.kwaoo.net>;tag=494263519
-      To: "0478182907" <sip:0972369812@a.phone.kwaoo.net>
-      Call-ID: 2516407383@192_168_1_2
-      CSeq: 10319968 SUBSCRIBE
-      Contact: <sip:0972369812@89.36.202.179:5060>
-      Max-Forwards: 69
-      User-Agent: C610 IP/42.075.00.000.000
-      Event: message-summary
-      Expires: 3600
-      Allow: NOTIFY
-      Accept: application/simple-message-summary
-      Content-Length: 0
+      test_msg2 = '''
+        SUBSCRIBE sip:0972369812@a.phone.kwaoo.net SIP/2.0
+        X-CCNQ3-Endpoint: 0972369812@a.phone.kwaoo.net
+        Via: SIP/2.0/UDP 89.36.202.179:5060;branch=z9hG4bKddcd4dd080f01129f7749721fb029c7b;rport
+        From: "0478182907" <sip:0972369812@a.phone.kwaoo.net>;tag=494263519
+        To: "0478182907" <sip:0972369812@a.phone.kwaoo.net>
+        Call-ID: 2516407383@192_168_1_2
+        CSeq: 10319968 SUBSCRIBE
+        Contact: <sip:0972369812@89.36.202.179:5060>
+        Max-Forwards: 69
+        User-Agent: C610 IP/42.075.00.000.000
+        Event: message-summary
+        Expires: 3600
+        Allow: NOTIFY
+        Accept: application/simple-message-summary
+        Content-Length: 0
+        \n
+      '''
 
-    '''
+      assert.strictEqual (Parser.parseMessage test_msg1.replace(/\n/g,'\r\n'), null).method, 'SUBSCRIBE'
+      assert.strictEqual (Parser.parseMessage test_msg2.replace(/\n/g,'\r\n'), null).method, 'SUBSCRIBE'
+      assert.strictEqual typeof (Parser.parseMessage test_msg1.replace(/\n/g,'\r\n'), null).ruri.user, 'undefined'
+      assert.strictEqual (Parser.parseMessage test_msg2.replace(/\n/g,'\r\n'), null).ruri.user, '0972369812'
+      assert.strictEqual (Parser.parseMessage test_msg2.replace(/\n/g,'\r\n'), null).event.event, 'message-summary'
 
-    msg_matcher =
-      ///
-      ^
-      SUBSCRIBE \u0020+ sip:
-      [\S\s]*
-      \n
-      X-CCNQ3-Endpoint: \u0020* (\S+) [\r\n]
-      [\S\s]*
-      \n
-      From: [^\r\n]* <sip:(\d+)@
-      ///
+      test_msg1 = null
+      test_msg2 = null
 
-    assert (test_msg1.match msg_matcher), 'test_msg1 failed'
-    assert (test_msg2.match msg_matcher), 'test_msg2 failed'
+
+    do _test
 
     @server_pre = ->
 
@@ -80,12 +81,21 @@ Handle SUBSCRIBE messages
         content = msg.toString 'ascii'
         trace 'Received message', content
 
-Try to recover the number and the endpoint from the message.
-FIXME: Replace with proper SIP parsing.
+        ua =
+          send: (msg) ->
+            message = msg.toString()
 
-        return unless r = content.match msg_matcher
-        number = r[2]
-        endpoint = r[1]
+Send our response (200 OK) back to the IP and port the message come from.
+
+            socket.send message, 0, message.length, rinfo.port, rinfo.address
+
+        message = Parser.parseMessage content, null
+        return unless message? and message.method is 'SUBSCRIBE' and message.event?.event is 'message-summary'
+
+Try to recover the number and the endpoint from the message.
+
+        number = message.ruri?.user ? message.from?.uri?.user
+        endpoint = message.headers['X-Ccnq3-Endpoint']?[0]?.raw
 
         trace 'SUBSCRIBE', {number, endpoint}
 
@@ -98,10 +108,22 @@ Recover the number-domain from the endpoint.
 
 Recover the local-number's user-database.
 
-        {user_database} = yield @cfg.prov.get "number:#{user_id}"
+        {user_database} = doc = yield @cfg.prov.get "number:#{user_id}"
+
+Record the Event header, dialog, etc. in a LRU-cache so that they may be used in NOTIFY messages.
+
+        # FIXME
+
+Ready to send a notification
+
         db_uri = @cfg.userdb_base_uri + '/' + user_database
 
         trace 'SUBSCRIBE', {user_database,db_uri}
+
+We set the Expires header so that the client is forced to re-SUBSCRIBE regularly.
+FIXME: RFC3265 section 3.1.1 requires that our Expires be <= to the one requested in the SUBSCRIBE message.
+
+        message.reply 200, 'OK', Expires: 600
 
 Create a User object and use it to send the notification.
 
@@ -226,13 +248,23 @@ Send notification packet to an URI at a given address and port
         Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
       """
 
-      # FIXME no tag, etc.
+RFC365, section 3.3.4:
+
+> NOTIFY requests are matched to such SUBSCRIBE requests if they
+> contain the same "Call-ID", a "To" header "tag" parameter which
+> matches the "From" header "tag" parameter of the SUBSCRIBE, and the
+> same "Event" header field.  Rules for comparisons of the "Event"
+> headers are described in section 7.2.1.  If a matching NOTIFY request
+> contains a "Subscription-State" of "active" or "pending", it creates
+> a new subscription and a new dialog (unless they have already been
+> created by a matching response, as described above).
+
       headers = new Buffer """
         NOTIFY sip:#{uri} SIP/2.0
         Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
         Max-Forwards: 2
         To: <sip:#{to}>
-        From: <sip:#{to}>
+        From: <sip:#{to}>;tag=#{Math.random()}
         Call-ID: #{pkg.name}-#{Math.random()}
         CSeq: 1 NOTIFY
         Event: message-summary
