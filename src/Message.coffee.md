@@ -250,5 +250,6 @@ Create new CDB record to hold the voicemail metadata
     pkg = require '../package.json'
     debug = (require 'debug') "#{pkg.name}:Message"
     cuddly = (require 'cuddly') "#{pkg.name}:Message"
+    Promise = require 'bluebird'
 
     timestamp = -> new Date().toJSON()
