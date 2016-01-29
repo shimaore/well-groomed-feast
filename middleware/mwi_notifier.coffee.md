@@ -150,7 +150,7 @@ FIXME: RFC3265 section 3.1.1 requires that our Expires be <= to the one requeste
 
 Create a User object and use it to send the notification.
 
-        send_notification_to new User this, user_id, user_database, db_uri
+        send_notification_to new User this, user_id, user_database, db_uri, true
 
 Start socket
 ------------
