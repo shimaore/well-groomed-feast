@@ -13,8 +13,8 @@ by FreeSwitch) which can then be transcoded.
     seconds = 1000
 
     pkg = require '../package.json'
-    debug = (require 'debug') "#{pkg.name}:voicemail"
-    @name = "#{pkg.name}/middleware/voicemail"
+    @name = "#{pkg.name}:middleware:voicemail"
+    debug = (require 'debug') @name
     seem = require 'seem'
 
     @include = seem ->
@@ -42,7 +42,13 @@ by FreeSwitch) which can then be transcoded.
           yield user.navigate_messages rows, 0
 
           debug 'Go to the main menu after message navigation'
-          user.main_menu()
+          yield user
+            .main_menu()
+            .catch (error) ->
+              debug "main_menu: #{error}"
+
+          user = null
+          rows = null
 
         when 'main'
 
@@ -60,7 +66,12 @@ Provide an empty endpoint -- there is none associated with the voicemail main nu
           yield user.authenticate()
 
           debug 'Present the main menu'
-          user.main_menu()
+          yield user
+            .main_menu()
+            .catch (error) ->
+              debug "main_menu: #{error}"
+
+          user = null
 
         else
 
@@ -78,3 +89,13 @@ Provide an empty endpoint -- there is none associated with the voicemail main nu
             yield msg.post_recording()
 
           @goodbye()
+            .catch (error) ->
+              debug "goodbye: #{error}"
+
+          user = null
+          msg = null
+
+      messaging = null
+
+      debug 'Done.'
+      return
