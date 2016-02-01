@@ -124,7 +124,7 @@ Note: `userdb_base_uri` must contain authentication elements (e.g. "voicemail" u
         db_uri = @ctx.cfg.userdb_base_uri + '/' + user_database
         user = new User @ctx, user_id, user_database, db_uri
         yield user.init_db()
-        return
+        user
 
     module.exports = Messaging
     pkg = require '../package.json'
