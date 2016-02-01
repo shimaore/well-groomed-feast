@@ -1,13 +1,18 @@
     seem = require 'seem'
+    LRU = require 'lru-cache'
 
     class User
 
       min_pin_length: parseInt process.env.MIN_PIN_LENGTH ? 6
       default_timezone: process.env.DEFAULT_TIMEZONE ? null
       voicemail_dir: '/opt/freeswitch/messages'
+      db_cache: LRU
+        max: 200
+        maxAge: 60 * 1000
 
       constructor: (@ctx,@id,@database,@db_uri) ->
-        @db = new PouchDB @db_uri
+        @db = (@db_cache.get @db_uri) ? new PouchDB @db_uri
+        @db_cache.set @db_uri, @db
 
 Inject the views into the database.
 Note: this requires the application to be database admin, which is OK.
