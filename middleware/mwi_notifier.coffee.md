@@ -138,6 +138,7 @@ FIXME: RFC3265 section 3.1.1 requires that our Expires be <= to the one requeste
           message.reply 200, 'OK', ['Expires: 600']
         catch error
           debug "SUBSCRIBE message.reply: #{error}"
+        message = null
 
 Create a User object and use it to send the notification.
 
@@ -200,7 +201,7 @@ Registered endpoint
         else
           uri = endpoint
         debug 'Notifying endpoint', {endpoint,uri,to}
-        notify uri, to, total_rows
+        yield notify uri, to, total_rows
 
 Static endpoint
 
@@ -209,7 +210,7 @@ Static endpoint
           to = [user.id,endpoint].join '@'
           uri = [user.id,via].join '@'
           debug 'Notifying endpoint', {endpoint,uri,to}
-          notify uri, to, total_rows
+          yield notify uri, to, total_rows
         else
           debug 'No `via` for static endpoint, skipping.'
 
