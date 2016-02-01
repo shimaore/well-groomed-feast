@@ -99,7 +99,7 @@ Send our response (200 OK) back to the IP and port the message come from.
 
             socket.send message, 0, message.length, rinfo.port, rinfo.address
 
-        message = Parser.parseMessage content, null
+        message = Parser.parseMessage content, ua
         return unless message? and message.method is 'SUBSCRIBE' and message.event?.event is 'message-summary'
 
 Try to recover the number and the endpoint from the message.
