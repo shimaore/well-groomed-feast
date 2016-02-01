@@ -46,18 +46,28 @@ URI = username@domain
       dns_cache.set uri, result
       result
 
+Provisioning cache
+==================
+
     prov_cache = LRU
       max: 2000
       maxAge: 20 * 1000
 
     get_prov = seem (prov,key) ->
+
+Use cache if available
+
       val = prov_cache.get key
-      if not val?
-        val ?= yield prov
-          .get key
-          .catch (error) ->
-            {}
-        prov_cache.set key, val
+      return val if val?
+
+Use database otherwise
+
+      val = yield prov
+        .get key
+        .catch (error) ->
+          {}
+
+      prov_cache.set key, val
       val
 
     assert = require 'assert'
