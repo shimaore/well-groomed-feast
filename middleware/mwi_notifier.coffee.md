@@ -88,6 +88,11 @@ Handle SUBSCRIBE messages
 
       socket.on 'message', seem (msg,rinfo) =>
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
+
+Testing for memory leaks here.
+
+        return
+
         content = msg.toString 'ascii'
         trace 'Received message', content
 
