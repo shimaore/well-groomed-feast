@@ -137,14 +137,14 @@ FIXME: RFC3265 section 3.1.1 requires that our Expires be <= to the one requeste
         try
           message.reply 200, 'OK', ['Expires: 600']
         catch error
-          debug "message.reply: #{error}"
+          debug "SUBSCRIBE message.reply: #{error}"
 
 Create a User object and use it to send the notification.
 
         user = new User this, user_id, user_database, db_uri
         yield send_notification_to user
           .catch (error) ->
-            debug "send_notification_to: #{error}", user_id
+            debug "SUBSCRIBE send_notification_to: #{error}", user_id
         user = null
         return
 
