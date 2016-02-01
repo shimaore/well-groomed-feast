@@ -6,9 +6,8 @@
       default_timezone: process.env.DEFAULT_TIMEZONE ? null
       voicemail_dir: '/opt/freeswitch/messages'
 
-      constructor: (@ctx,@id,@database,@db_uri,skip_init = false) ->
+      constructor: (@ctx,@id,@database,@db_uri) ->
         @db = new PouchDB @db_uri
-        @init_db() unless skip_init
 
 Inject the views into the database.
 Note: this requires the application to be database admin, which is OK.

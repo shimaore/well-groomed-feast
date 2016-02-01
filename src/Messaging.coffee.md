@@ -122,7 +122,9 @@ Note: `userdb_base_uri` must contain authentication elements (e.g. "voicemail" u
 * cfg.userdb_base_uri The base URI concatenated with a doc.local_number.user_database name to access the user's database. It must contain any required authentication elements.
 
         db_uri = @ctx.cfg.userdb_base_uri + '/' + user_database
-        new User @ctx, user_id, user_database, db_uri
+        user = new User @ctx, user_id, user_database, db_uri
+        yield user.init_db()
+        return
 
     module.exports = Messaging
     pkg = require '../package.json'
