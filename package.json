@@ -31,7 +31,7 @@
     "jssip": "^0.7.11",
     "lru-cache": "^4.0.0",
     "milk": "^1.2.0",
-    "nimble-direction": "^4.0.5",
+    "nimble-direction": "^4.1.0",
     "nodemailer": "^2.0.0",
     "nodemailer-smtp-transport": "^2.0.1",
     "pouchdb": "^5.2.1",
