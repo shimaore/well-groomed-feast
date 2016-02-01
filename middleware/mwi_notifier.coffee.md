@@ -50,7 +50,7 @@ Provisioning cache
 ==================
 
     prov_cache = LRU
-      max: 2000
+      max: 200
       maxAge: 20 * 1000
 
     get_prov = seem (prov,key) ->
