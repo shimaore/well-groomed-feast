@@ -10,9 +10,41 @@
     Parser = require 'jssip/lib/Parser'
     LRU = require 'lru-cache'
 
+URI DNS resolution and cache
+============================
+
     dns_cache = LRU
       max: 200
       maxAge: 10 * 60 * 1000
+
+    resolve = seem (uri) ->
+
+      result = dns_cache.get uri
+      return result if result?
+
+      result = []
+
+URI = username@host:port
+
+      if m = uri.match /^([^@]+)@(^[@:]+):(\d+)$/
+        name = m[2]
+        port = m[3]
+        trace 'resolve', {name,port}
+        result.push {port,name}
+
+URI = username@domain
+
+      if m = uri.match /^([^@]+)@([^@:]+)$/
+        domain = m[2]
+
+        addresses = yield dns.resolveSrvAsync '_sip._udp.' + domain
+        trace 'Addresses', addresses
+        for address in addresses
+          do (address) ->
+            result.push address
+
+      dns_cache.set uri, result
+      result
 
     prov_cache = LRU
       max: 2000
@@ -224,35 +256,6 @@ Static endpoint
 
       return
 
-
-    resolve = seem (uri) ->
-
-      result = dns_cache.get uri
-      return result if result?
-
-      result = []
-
-URI = username@host:port
-
-      if m = uri.match /^([^@]+)@(^[@:]+):(\d+)$/
-        name = m[2]
-        port = m[3]
-        trace 'resolve', {name,port}
-        result.push {port,name}
-
-URI = username@domain
-
-      if m = uri.match /^([^@]+)@([^@:]+)$/
-        domain = m[2]
-
-        addresses = yield dns.resolveSrvAsync '_sip._udp.' + domain
-        trace 'Addresses', addresses
-        for address in addresses
-          do (address) ->
-            result.push address
-
-      dns_cache.set uri, result
-      result
 
 Notify a specific URI
 =====================
