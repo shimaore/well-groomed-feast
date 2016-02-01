@@ -352,7 +352,11 @@ Default navigation is: read next message
 
     tz = require 'timezone'
     Promise = require 'bluebird'
-    PouchDB = require 'pouchdb'
+    PouchDB = (require 'pouchdb').defaults
+      ajax:
+        forever: true
+        timeout: 10000
+      skip_setup: true
     Message = require './Message'
 
     couchapp = require './couchapp'
