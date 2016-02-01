@@ -219,23 +219,23 @@ Create new CDB record to hold the voicemail metadata
           cuddly.csr "Could not create message: #{e}"
           @ctx.error 'MSG-180'
 
-      notify: (flag) ->
+      notify: seem (flag) ->
         debug 'notify', flag, @user.id, @id
         return unless @ctx.cfg.notifiers?
         for name, notifier of @ctx.cfg.notifiers
-          do (name,notifier) =>
+          yield do (name,notifier) =>
             notifier @user, @id, flag
             .catch (error) ->
               debug "Notifier #{name} error: #{error}"
               cuddly.csr "Notifier #{name} error: #{error}"
-        return
+        null
 
       remove: seem ->
         debug 'remove', @id
         doc = yield @user.db.get @id
         doc.box = 'trash'
         yield @user.db.put doc
-        @notify 'remove'
+        yield @notify 'remove'
         @ctx.action 'phrase', 'voicemail_ack,deleted'
 
       save: seem ->
@@ -243,7 +243,7 @@ Create new CDB record to hold the voicemail metadata
         doc = yield @user.db.get @id
         doc.box = 'saved'
         yield @user.db.put doc
-        @notify 'save'
+        yield @notify 'save'
         @ctx.action 'phrase', 'voicemail_ack,saved'
 
     module.exports = Message
