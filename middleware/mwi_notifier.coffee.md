@@ -89,10 +89,6 @@ Handle SUBSCRIBE messages
       socket.on 'message', seem (msg,rinfo) =>
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
 
-Testing for memory leaks here.
-
-        return
-
         content = msg.toString 'ascii'
         trace 'Received message', content
 
@@ -113,6 +109,10 @@ Try to recover the number and the endpoint from the message.
         endpoint = message.headers['X-Ccnq3-Endpoint']?[0]?.raw
 
         trace 'SUBSCRIBE', {number, endpoint}
+
+Testing for memory leaks here.
+
+        return
 
 Recover the number-domain from the endpoint.
 
