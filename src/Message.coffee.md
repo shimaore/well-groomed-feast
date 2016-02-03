@@ -226,7 +226,7 @@ Create new CDB record to hold the voicemail metadata
           yield do (name,notifier) =>
             notifier @user, @id, flag
             .catch (error) ->
-              debug "Notifier #{name} error: #{error}"
+              debug "Notifier #{name} error: #{error}\n#{error.stack}"
               cuddly.csr "Notifier #{name} error: #{error}"
         null
 

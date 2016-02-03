@@ -83,7 +83,9 @@ Use database otherwise
       prov_cache.set key, val
       val
 
-    @server_pre = (cfg) ->
+    @server_pre = (ctx) ->
+      cfg = ctx.cfg
+      debug "server_pre, ctx = ", ctx
 
       socket = dgram.createSocket 'udp4'
 
@@ -97,7 +99,15 @@ Use database otherwise
 Handle SUBSCRIBE messages
 =========================
 
-      socket.on 'message', seem (msg,rinfo) ->
+      socket.on 'message', ->
+        args = arguments
+        Promise.resolve()
+        .then ->
+          on_message.apply ctx, args
+        .catch (error) ->
+          debug "on_message: #{error}\n#{error.stack}"
+
+      on_message = seem (msg,rinfo) ->
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
 
         content = msg.toString 'ascii'
@@ -106,6 +116,7 @@ Handle SUBSCRIBE messages
         ua =
           send: (msg) ->
             message = msg.toString()
+            trace 'ua:send', message
 
 Send our response (200 OK) back to the IP and port the message come from.
 
@@ -154,11 +165,12 @@ FIXME: RFC3265 section 3.1.1 requires that our Expires be <= to the one requeste
 
 Create a User object and use it to send the notification.
 
-        user = new User this, user_id, user_database, db_uri
+        user = new User ctx, user_id, user_database, db_uri
         yield send_notification_to user
           .catch (error) ->
-            debug "SUBSCRIBE send_notification_to: #{error}", user_id
+            debug "SUBSCRIBE send_notification_to: #{error}\n#{error.stack}", user_id
         user = null
+        debug "SUBSCRIBE done"
         return
 
 Start socket
@@ -171,12 +183,13 @@ Start socket
 Notifier Callback: Send notification to a user
 ==============================================
 
-      send_notification_to = seem (user,id,flag) ->
+      send_notification_to = seem (user) ->
         debug 'send_notification_to', {user}
 
 Collect the number of messages from the user's database.
 
         {total_rows} = yield user.db.query 'voicemail/new_messages'
+        trace 'send_notification_to', {total_rows}
 
 Collect the endpoint/via fields from the local number.
 
@@ -188,6 +201,8 @@ Collect the endpoint/via fields from the local number.
 Use the endpoint name and via to route the packet.
 
         endpoint = number_doc.endpoint
+
+        trace 'send_notification_to', {via,endpoint}
 
 Registered endpoint
 
@@ -211,6 +226,9 @@ Static endpoint
           else
             debug 'No `via` for static endpoint, skipping.'
 
+        debug 'send_notification_to done', {user}
+        return
+
 Notify a specific URI
 =====================
 
@@ -225,6 +243,7 @@ We route based on the URI domain, as per RFC.
           do (address) ->
             send_sip_notification uri, to, total_rows, address.port, address.name
 
+        debug 'notify done', {uri,to,total_rows}
         return
 
 Send notification packet to an URI at a given address and port
