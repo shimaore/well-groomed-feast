@@ -10,7 +10,18 @@
     Parser = require 'jssip/lib/Parser'
     LRU = require 'lru-cache'
 
+Unsollicited NOTIFY
+===================
+
+By default we issue "Unsollicited NOTIFY" messages.
+
+    send_notification_to = null
+
     @include = ->
+      @cfg.notifiers ?= {}
+      return if @cfg.notifiers.mwi?
+
+      @cfg.notifiers.mwi ?= send_notification_to
 
 URI DNS resolution and cache
 ============================
@@ -73,9 +84,6 @@ Use database otherwise
       val
 
     @server_pre = (cfg) ->
-
-      cfg.notifiers ?= {}
-      return if cfg.notifiers.mwi?
 
       socket = dgram.createSocket 'udp4'
 
@@ -202,13 +210,6 @@ Static endpoint
             yield notify uri, to, total_rows
           else
             debug 'No `via` for static endpoint, skipping.'
-
-Unsollicited NOTIFY
-===================
-
-By default we issue "Unsollicited NOTIFY" messages.
-
-      cfg.notifiers.mwi ?= send_notification_to
 
 Notify a specific URI
 =====================
