@@ -70,23 +70,21 @@ Use database otherwise
       prov_cache.set key, val
       val
 
-    assert = require 'assert'
+    @server_pre = (cfg) ->
+
+      socket = dgram.createSocket 'udp4'
+
+      socket.on 'error', (error) ->
+        debug "Socket error: #{error}"
+
+      socket.on 'listening', ->
+        address = socket.address()
+        debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
 
 Handle SUBSCRIBE messages
 =========================
 
-    socket = dgram.createSocket 'udp4'
-
-    socket.on 'error', (error) ->
-      debug "Socket error: #{error}"
-
-    socket.on 'listening', ->
-      address = socket.address()
-      debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
-
-    @server_pre = ->
-
-      socket.on 'message', seem (msg,rinfo) =>
+      socket.on 'message', seem (msg,rinfo) ->
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
 
         content = msg.toString 'ascii'
@@ -110,13 +108,9 @@ Try to recover the number and the endpoint from the message.
 
         trace 'SUBSCRIBE', {number, endpoint}
 
-Testing for memory leaks here.
-
-        return
-
 Recover the number-domain from the endpoint.
 
-        {number_domain} = yield get_prov @cfg.prov, "endpoint:#{endpoint}"
+        {number_domain} = yield get_prov cfg.prov, "endpoint:#{endpoint}"
 
         user_id = "#{number}@#{number_domain}"
 
@@ -124,7 +118,7 @@ Recover the number-domain from the endpoint.
 
 Recover the local-number's user-database.
 
-        {user_database} = yield get_prov @cfg.prov, "number:#{user_id}"
+        {user_database} = yield get_prov cfg.prov, "number:#{user_id}"
 
 Record the Event header, dialog, etc. in a LRU-cache so that they may be used in NOTIFY messages.
 
@@ -132,7 +126,7 @@ Record the Event header, dialog, etc. in a LRU-cache so that they may be used in
 
 Ready to send a notification
 
-        db_uri = @cfg.userdb_base_uri + '/' + user_database
+        db_uri = cfg.userdb_base_uri + '/' + user_database
 
         trace 'SUBSCRIBE', {user_database,db_uri}
 
@@ -159,67 +153,60 @@ Start socket
 
 * cfg.voicemail.notifier_port (integer) Port number for the (UDP) forwarding of SUBSCRIBE messages for voicemail notifications.
 
-      socket.bind @cfg.voicemail?.notifier_port ? 7124
-
+      socket.bind cfg.voicemail?.notifier_port ? 7124
 
 Unsollicited NOTIFY
 ===================
 
-    @include = ->
-      @cfg.notifiers ?= {}
-      return if @cfg.notifiers.mwi?
+      cfg.notifiers ?= {}
+      return if cfg.notifiers.mwi?
 
 By default we issue "Unsollicited NOTIFY" messages.
 
-      @cfg.notifiers.mwi ?= send_notification_to
-
-      debug 'Configured.'
+      cfg.notifiers.mwi ?= send_notification_to
 
 Notifier Callback: Send notification to a user
 ==============================================
 
-    send_notification_to = seem (user,id,flag) ->
-      debug 'send_notification_to', {user}
-      cfg = user.ctx.cfg
+      send_notification_to = seem (user,id,flag) ->
+        debug 'send_notification_to', {user}
 
 Collect the number of messages from the user's database.
 
-      {total_rows} = yield user.db.query 'voicemail/new_messages'
+        {total_rows} = yield user.db.query 'voicemail/new_messages'
 
 Collect the endpoint/via fields from the local number.
 
-      number_doc = yield get_prov cfg.prov, "number:#{user.id}"
-      return if number_doc.disabled
+        number_doc = yield get_prov cfg.prov, "number:#{user.id}"
+        return if number_doc.disabled
 
-      via = number_doc.endpoint_via
+        via = number_doc.endpoint_via
 
 Use the endpoint name and via to route the packet.
 
-      endpoint = number_doc.endpoint
+        endpoint = number_doc.endpoint
 
 Registered endpoint
 
-      if m = endpoint.match /^([^@]+)@([^@]+)$/
-        to = endpoint
-        if via?
-          uri = [m[1],via].join '@'
-        else
-          uri = endpoint
-        debug 'Notifying endpoint', {endpoint,uri,to}
-        yield notify uri, to, total_rows
+        if m = endpoint.match /^([^@]+)@([^@]+)$/
+          to = endpoint
+          if via?
+            uri = [m[1],via].join '@'
+          else
+            uri = endpoint
+          debug 'Notifying endpoint', {endpoint,uri,to}
+          yield notify uri, to, total_rows
 
 Static endpoint
 
-      else
-        if via?
-          to = [user.id,endpoint].join '@'
-          uri = [user.id,via].join '@'
-          debug 'Notifying endpoint', {endpoint,uri,to}
-          yield notify uri, to, total_rows
         else
-          debug 'No `via` for static endpoint, skipping.'
-
-      return
+          if via?
+            to = [user.id,endpoint].join '@'
+            uri = [user.id,via].join '@'
+            debug 'Notifying endpoint', {endpoint,uri,to}
+            yield notify uri, to, total_rows
+          else
+            debug 'No `via` for static endpoint, skipping.'
 
 
 Notify a specific URI
@@ -227,26 +214,26 @@ Notify a specific URI
 
 We route based on the URI domain, as per RFC.
 
-    notify = seem (uri,to,total_rows) ->
-      debug 'notify', {uri,to,total_rows}
+      notify = seem (uri,to,total_rows) ->
+        debug 'notify', {uri,to,total_rows}
 
-      addresses = yield resolve uri
+        addresses = yield resolve uri
 
-      for address in addresses
-        do (address) ->
-          send_sip_notification uri, to, total_rows, address.port, address.name
+        for address in addresses
+          do (address) ->
+            send_sip_notification uri, to, total_rows, address.port, address.name
 
-      return
+        return
 
 Send notification packet to an URI at a given address and port
 ==============================================================
 
-    send_sip_notification = (uri,to,total_rows,target_port,target_name) ->
-      debug 'Send SIP notification', {uri,target_port,target_name}
+      send_sip_notification = (uri,to,total_rows,target_port,target_name) ->
+        debug 'Send SIP notification', {uri,target_port,target_name}
 
-      body = new Buffer """
-        Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
-      """
+        body = new Buffer """
+          Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
+        """
 
 RFC365, section 3.3.4:
 
@@ -259,25 +246,28 @@ RFC365, section 3.3.4:
 > a new subscription and a new dialog (unless they have already been
 > created by a matching response, as described above).
 
-      headers = new Buffer """
-        NOTIFY sip:#{uri} SIP/2.0
-        Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
-        Max-Forwards: 2
-        To: <sip:#{to}>
-        From: <sip:#{to}>;tag=#{Math.random()}
-        Call-ID: #{pkg.name}-#{Math.random()}
-        CSeq: 1 NOTIFY
-        Event: message-summary
-        Subscription-State: active
-        Content-Type: application/simple-message-summary
-        Content-Length: #{body.length}
-        \n
-      """.replace /\n/g, "\r\n"
+        headers = new Buffer """
+          NOTIFY sip:#{uri} SIP/2.0
+          Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
+          Max-Forwards: 2
+          To: <sip:#{to}>
+          From: <sip:#{to}>;tag=#{Math.random()}
+          Call-ID: #{pkg.name}-#{Math.random()}
+          CSeq: 1 NOTIFY
+          Event: message-summary
+          Subscription-State: active
+          Content-Type: application/simple-message-summary
+          Content-Length: #{body.length}
+          \n
+        """.replace /\n/g, "\r\n"
 
-      message = new Buffer headers.length + body.length
-      headers.copy message
-      body.copy message, headers.length
+        message = new Buffer headers.length + body.length
+        headers.copy message
+        body.copy message, headers.length
 
-      socket.send message, 0, message.length, target_port, target_name
-      debug 'Sent SIP notification'
+        socket.send message, 0, message.length, target_port, target_name
+        debug 'Sent SIP notification'
+        return
+
+      debug 'Configured.'
       return
