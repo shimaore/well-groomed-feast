@@ -11,6 +11,7 @@
         cfg =
           prov:true
         m.server_pre.call cfg, cfg
+        m.include.call {cfg}, null
 
       it 'setup', ->
         m = require '../middleware/setup'

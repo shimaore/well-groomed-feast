@@ -10,6 +10,8 @@
     Parser = require 'jssip/lib/Parser'
     LRU = require 'lru-cache'
 
+    @include = ->
+
 URI DNS resolution and cache
 ============================
 
