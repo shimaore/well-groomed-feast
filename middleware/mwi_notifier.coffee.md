@@ -74,6 +74,9 @@ Use database otherwise
 
     @server_pre = (cfg) ->
 
+      cfg.notifiers ?= {}
+      return if cfg.notifiers.mwi?
+
       socket = dgram.createSocket 'udp4'
 
       socket.on 'error', (error) ->
@@ -157,16 +160,6 @@ Start socket
 
       socket.bind cfg.voicemail?.notifier_port ? 7124
 
-Unsollicited NOTIFY
-===================
-
-      cfg.notifiers ?= {}
-      return if cfg.notifiers.mwi?
-
-By default we issue "Unsollicited NOTIFY" messages.
-
-      cfg.notifiers.mwi ?= send_notification_to
-
 Notifier Callback: Send notification to a user
 ==============================================
 
@@ -210,6 +203,12 @@ Static endpoint
           else
             debug 'No `via` for static endpoint, skipping.'
 
+Unsollicited NOTIFY
+===================
+
+By default we issue "Unsollicited NOTIFY" messages.
+
+      cfg.notifiers.mwi ?= send_notification_to
 
 Notify a specific URI
 =====================
