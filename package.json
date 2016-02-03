@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/shimaore/well-groomed-feast",
   "dependencies": {
-    "bluebird": "^3.2.0",
+    "bluebird": "^3.2.1",
     "coffeescript-helpers": "^2.2.0",
     "cuddly": "^1.1.4",
     "debug": "^2.2.0",
@@ -32,7 +32,7 @@
     "lru-cache": "^4.0.0",
     "milk": "^1.2.0",
     "nimble-direction": "^4.1.0",
-    "nodemailer": "^2.0.0",
+    "nodemailer": "^2.1.0",
     "nodemailer-smtp-transport": "^2.0.1",
     "pouchdb": "^5.2.1",
     "request": "^2.69.0",
