@@ -160,7 +160,7 @@ FIXME: RFC3265 section 3.1.1 requires that our Expires be <= to the one requeste
         try
           message.reply 200, 'OK', ['Expires: 600']
         catch error
-          debug "SUBSCRIBE message.reply: #{error}"
+          debug "SUBSCRIBE message.reply: #{error}\n#{error.stack}"
         message = null
 
 Create a User object and use it to send the notification.
@@ -184,7 +184,7 @@ Notifier Callback: Send notification to a user
 ==============================================
 
       send_notification_to = seem (user) ->
-        debug 'send_notification_to', {user}
+        trace 'send_notification_to', user.id
 
 Collect the number of messages from the user's database.
 
@@ -226,7 +226,7 @@ Static endpoint
           else
             debug 'No `via` for static endpoint, skipping.'
 
-        debug 'send_notification_to done', {user}
+        debug 'send_notification_to done', user.id
         return
 
 Notify a specific URI
