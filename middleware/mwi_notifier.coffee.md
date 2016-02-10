@@ -111,6 +111,8 @@ Handle SUBSCRIBE messages
       on_message = seem (msg,rinfo) ->
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
 
+        return
+
         content = msg.toString 'ascii'
         trace 'Received message', content
 
