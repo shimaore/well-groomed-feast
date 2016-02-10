@@ -2,7 +2,7 @@
     seem = require 'seem'
 
     pkg = require './package'
-    @name = "#{pkg.name}-#{pkg.version}-monitor"
+    @name = "#{pkg.name}-monitor"
     debug = (require 'debug') @name
 
     request = (require 'superagent-as-promised') require 'superagent'
