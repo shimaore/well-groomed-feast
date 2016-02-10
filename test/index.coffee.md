@@ -10,8 +10,8 @@
         m = require '../middleware/mwi_notifier'
         cfg =
           prov:true
-        m.server_pre.call cfg, cfg
-        m.include.call {cfg}, null
+        m.server_pre.call {cfg}, {cfg}
+        m.include.call {cfg}, {cfg}
 
       it 'setup', ->
         m = require '../middleware/setup'
