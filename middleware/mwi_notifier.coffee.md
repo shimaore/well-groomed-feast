@@ -123,6 +123,15 @@ Send our response (200 OK) back to the IP and port the message come from.
 
             socket.send message, 0, message.length, rinfo.port, rinfo.address
 
+          newTransaction: (transaction) ->
+            @transactions[transaction.type][transaction.id] = transaction
+
+          transactions:
+              nist: {}
+              nict: {}
+              ist: {}
+              ict: {}
+
 The parser returns an IncomingRequest for a SUBSCRIBE message.
 
         request = Parser.parseMessage content, ua
