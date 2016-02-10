@@ -187,16 +187,22 @@ If the voicemail-settings document exist, use the default voicemail settings for
 
       debug 'Starting changes listener'
 
+      on_change = seem (doc) ->
+        if typeof cfg.voicemail?.monitoring is 'number'
+          yield Promise.delay cfg.voicemail?.monitoring
+        monitored cfg, doc
+
       cfg.prov.changes
         live: true
         filter: "#{couchapp.id}/numbers"
         include_docs: true
         since: 'now'
-      .on 'change', seem ({doc}) ->
-        if typeof cfg.voicemail?.monitoring is 'number'
-          yield Promise.delay cfg.voicemail?.monitoring
-        monitored cfg, doc
+      .on 'change', ({doc}) ->
+        on_change doc
+        .catch (error) ->
+          debug "on_change: #{err.stack ? err}"
       .on 'error', (err) ->
+        debug "changes: #{err.stack ? err}"
         run cfg
 
       debug 'Ready'
