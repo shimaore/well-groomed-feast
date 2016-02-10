@@ -8,6 +8,7 @@
     trace = (require 'debug') "#{@name}:trace"
     User = require '../src/User'
     Parser = require 'jssip/lib/Parser'
+    {NonInviteServerTransaction} = require 'jssip/lib/Transactions'
     LRU = require 'lru-cache'
 
 Unsollicited NOTIFY
@@ -122,8 +123,12 @@ Send our response (200 OK) back to the IP and port the message come from.
 
             socket.send message, 0, message.length, rinfo.port, rinfo.address
 
+The parser returns an IncomingRequest for a SUBSCRIBE message.
+
         message = Parser.parseMessage content, ua
         return unless message? and message.method is 'SUBSCRIBE' and message.event?.event is 'message-summary'
+
+        transaction = new NonInviteServerTransaction message, ua
 
 Try to recover the number and the endpoint from the message.
 
