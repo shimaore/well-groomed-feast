@@ -125,15 +125,15 @@ Send our response (200 OK) back to the IP and port the message come from.
 
 The parser returns an IncomingRequest for a SUBSCRIBE message.
 
-        message = Parser.parseMessage content, ua
-        return unless message? and message.method is 'SUBSCRIBE' and message.event?.event is 'message-summary'
+        request = Parser.parseMessage content, ua
+        return unless request? and request.method is 'SUBSCRIBE' and request.event?.event is 'message-summary'
 
-        transaction = new NonInviteServerTransaction message, ua
+        transaction = new NonInviteServerTransaction request, ua
 
 Try to recover the number and the endpoint from the message.
 
-        number = message.ruri?.user ? message.from?.uri?.user
-        endpoint = message.headers['X-Ccnq3-Endpoint']?[0]?.raw
+        number = request.ruri?.user ? request.from?.uri?.user
+        endpoint = request.headers['X-Ccnq3-Endpoint']?[0]?.raw
 
         trace 'SUBSCRIBE', {number, endpoint}
 
@@ -163,10 +163,10 @@ We set the Expires header so that the client is forced to re-SUBSCRIBE regularly
 FIXME: RFC3265 section 3.1.1 requires that our Expires be <= to the one requested in the SUBSCRIBE message.
 
         try
-          message.reply 200, 'OK', ['Expires: 600']
+          request.reply 200, 'OK', ['Expires: 600']
         catch error
-          debug "SUBSCRIBE message.reply: #{error}\n#{error.stack}"
-        message = null
+          debug "SUBSCRIBE request.reply: #{error}\n#{error.stack}"
+        request = null
 
 Create a User object and use it to send the notification.
 
