@@ -47,6 +47,7 @@ by FreeSwitch) which can then be transcoded.
             .catch (error) ->
               debug "main_menu: #{error}"
 
+          user.close_db()
           user = null
           rows = null
 
@@ -71,6 +72,7 @@ Provide an empty endpoint -- there is none associated with the voicemail main nu
             .catch (error) ->
               debug "main_menu: #{error}"
 
+          user.close_db()
           user = null
 
         else
@@ -92,6 +94,7 @@ Provide an empty endpoint -- there is none associated with the voicemail main nu
             .catch (error) ->
               debug "goodbye: #{error}"
 
+          user.close_db()
           user = null
           msg = null
 
