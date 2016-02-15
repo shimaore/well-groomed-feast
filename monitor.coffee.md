@@ -175,7 +175,7 @@ If the voicemail-settings document exist, use the default voicemail settings for
 
       return
 
-    run = seem (cfg) ->
+    module.exports = run = seem (cfg) ->
       return if process.env.MODE is 'test'
 
       if cfg.voicemail?.monitoring is false
@@ -184,6 +184,9 @@ If the voicemail-settings document exist, use the default voicemail settings for
       debug 'Starting monitor.'
 
       yield config cfg
+        .catch (error) ->
+          debug "config: #{err.stack ? err}"
+          run cfg
 
       debug 'Starting changes listener'
 
@@ -208,11 +211,3 @@ If the voicemail-settings document exist, use the default voicemail settings for
       debug 'Ready'
 
       return
-
-    module.exports = seem (cfg) ->
-      while true
-        debug "Starting run"
-        yield run cfg
-          .catch (error) ->
-            debug "run: #{err.stack ? err}"
-        yield Promise.delay 500
