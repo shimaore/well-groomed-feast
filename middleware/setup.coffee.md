@@ -213,23 +213,26 @@ Attachment upload/download
     @web = ->
 
       @get '/voicemail/:db/:msg/:file', ->
+        uri = "/#{@params.db}/#{@params.msg}/#{@params.file}"
         proxy = request.get
           baseUrl: @cfg.userdb_base_uri
-          uri: "/#{@params.db}/#{@params.msg}/#{@params.file}"
+          uri: uri
           followRedirects: false
           maxRedirects: 0
 
         @request.pipe proxy
-        .on 'error', (error) =>
-          @next "Got #{error}"
+         .on 'error', (error) =>
+          debug "GET #{uri} : #{error}"
+          @next "GET #{uri} : #{error}"
           return
         proxy.pipe @response
         return
 
       @put '/voicemail/:db/:msg/:rev/:file', ->
+        uri = "#{@params.db}/#{@params.msg}/#{@params.file}"
         proxy = request.put
           baseUrl: @cfg.userdb_base_uri
-          uri: "#{@params.db}/#{@params.msg}/#{@params.file}"
+          uri: uri
           qs:
             rev: @params.rev
           followRedirects: false
@@ -238,7 +241,8 @@ Attachment upload/download
 
         @request.pipe proxy
         .on 'error', (error) =>
-          @next "Got #{error}"
+          debug "GET #{uri} rev #{@params.rev} : #{error}"
+          @next "GET #{uri} rev #{@params.rev} : #{error}"
           return
         proxy.pipe @response
         return
