@@ -173,6 +173,9 @@ If the voicemail-settings document exist, use the default voicemail settings for
       yield target_db
         .put vm_settings
 
+      # FIXME: close()
+      target_db.emit 'destroyed'
+      target_db = null
       return
 
     module.exports = run = seem (cfg) ->
@@ -195,19 +198,23 @@ If the voicemail-settings document exist, use the default voicemail settings for
           yield Promise.delay cfg.voicemail?.monitoring
         monitored cfg, doc
 
-      cfg.prov.changes
-        live: true
-        filter: "#{couchapp.id}/numbers"
-        include_docs: true
-        since: 'now'
-      .on 'change', ({doc}) ->
-        on_change doc
-        .catch (error) ->
-          debug "on_change: #{error.stack ? error}"
-      .on 'error', (error) ->
-        debug "changes: #{error.stack ? error}"
-        run cfg
+      main = ->
+        cfg.prov.changes
+          live: true
+          filter: "#{couchapp.id}/numbers"
+          include_docs: true
+          since: 'now'
+        .on 'change', ({doc}) ->
+          on_change doc
+          .catch (error) ->
+            debug "on_change: #{error.stack ? error}"
+          return
+        .on 'error', (error) ->
+          debug "changes: #{error.stack ? error}"
+          do main
+          return
 
+      do main
       debug 'Ready'
 
       return
