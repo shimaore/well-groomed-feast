@@ -185,7 +185,7 @@ If the voicemail-settings document exist, use the default voicemail settings for
 
       yield config cfg
         .catch (error) ->
-          debug "config: #{err.stack ? err}"
+          debug "config: #{error.stack ? error}"
           run cfg
 
       debug 'Starting changes listener'
@@ -203,9 +203,9 @@ If the voicemail-settings document exist, use the default voicemail settings for
       .on 'change', ({doc}) ->
         on_change doc
         .catch (error) ->
-          debug "on_change: #{err.stack ? err}"
-      .on 'error', (err) ->
-        debug "changes: #{err.stack ? err}"
+          debug "on_change: #{error.stack ? error}"
+      .on 'error', (error) ->
+        debug "changes: #{error.stack ? error}"
         run cfg
 
       debug 'Ready'
