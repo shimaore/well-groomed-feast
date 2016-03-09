@@ -178,6 +178,9 @@ If the voicemail-settings document exist, use the default voicemail settings for
       target_db = null
       return
 
+Startup
+-------
+
     module.exports = run = seem (cfg) ->
       return if process.env.MODE is 'test'
 
