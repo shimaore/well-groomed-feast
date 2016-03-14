@@ -164,14 +164,11 @@ If the voicemail-settings document does not exist, create one based on the defau
         vm_settings = default_voicemail_settings ? {}
         vm_settings._id = VM_ID
 
-If the voicemail-settings document exist, use the default voicemail settings for any non-existent field.
+        debug 'Update voicemail settings', vm_settings
+        yield target_db
+          .put vm_settings
 
-      else
-        vm_settings[k] ?= v for own k,v of default_voicemail_settings ? {} when not k.match /^_/
-
-      debug 'Update voicemail settings', vm_settings
-      yield target_db
-        .put vm_settings
+Close.
 
       # FIXME: close()
       target_db.emit 'destroyed'
