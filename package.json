@@ -25,6 +25,7 @@
   "homepage": "https://github.com/shimaore/well-groomed-feast",
   "dependencies": {
     "bluebird": "^3.3.4",
+    "charming-circle": "^1.0.0",
     "coffeescript-helpers": "^2.2.0",
     "cuddly": "^1.1.5",
     "debug": "^2.2.0",

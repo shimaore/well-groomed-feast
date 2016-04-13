@@ -12,17 +12,14 @@
 
     Nimble = require 'nimble-direction'
 
+    set_voicemail_security = require 'charming-circle/set-voicemail-security'
+
 The couchapp used in the (local) provisioning database to monitor changes.
 
     id = "#{@name}-#{pkg.version}"
     couchapp =
       _id: "_design/#{id}"
       id: id
-      views:
-        userdb:
-          map: p_fun (doc) ->
-            if doc.user_database?
-              emit doc.user_database, doc.name
       filters:
         numbers: p_fun (doc,req) ->
           return false unless doc.type is 'number'
@@ -94,33 +91,10 @@ It's OK if the database already exists.
 
 ### Build access restrictions
 
-Collect the list of users for this database
-
-      debug 'Collect users', {user_database}
-      {rows} = yield cfg.prov.query "#{couchapp.id}/userdb", key: user_database
-      members_names = (row.value for row in rows)
-
 Make sure the users can access it.
 
-      debug 'Retrieve security object', {target_db_uri}
-      security_uri = [target_db_uri,'_security'].join '/'
-      {body} = yield request
-        .get security_uri
-        .accept 'json'
-        .catch -> body:{}
-
-      security = body
-      security.members ?= {}
-      security.members.names = members_names
-      security.members.roles = [ 'update:user_db:']
-
-      debug 'Setting security', {security_uri,security}
-      yield request
-        .put security_uri
-        .send security
-        .catch (error) ->
-          debug "Security: #{error}"
-          true
+      debug 'Setting security', target_db_uri
+      yield set_voicemail_security user_database, cfg.userdb_base_uri
 
 ### Limit number of documents revisions
 
