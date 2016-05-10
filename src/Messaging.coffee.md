@@ -43,9 +43,9 @@ In most cases `session.endpoint` is already provided.
 
 Internal consistency
 
-        if not @ctx.session.endpoint?
+        if @ctx.session.endpoint_name? and not @ctx.session.endpoint?
           cuddly.dev "Missing session.endpoint for #{@ctx.session.endpoint_name}"
-        assert @ctx.session.endpoint?, "Missing session.endpoint for #{@ctx.session.endpoint_name}"
+          return @ctx.error 'MSI-48'
 
 Number-domain selection
 -----------------------
@@ -56,7 +56,7 @@ In most cases we will already have a proper `number_domain` selected in the sess
 
 Fallback to the number-domain associated with the endpoint, if any.
 
-        number_domain ?= @ctx.session.endpoint.number_domain
+        number_domain ?= @ctx.session.endpoint?.number_domain
 
 Fallback to the one specified in the headers.
 

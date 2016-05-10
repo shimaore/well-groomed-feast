@@ -107,7 +107,6 @@ Default prompt
 As long as we went through `locate_user` these should be provided.
 
         assert @ctx.session.number?, 'Missing session number data'
-        assert @ctx.session.endpoint?, 'Missing session endpoint data'
 
         attempts ?= 3
         if attempts <= 0
@@ -127,7 +126,7 @@ If the user requested not to be queried for a PIN, we authenticate using the end
 
 ... however let's make sure we don't compare `null` with `null`.
 
-          if @ctx.session.endpoint.endpoint?
+          if @ctx.session.endpoint?.endpoint?
             authenticated = @ctx.session.number.endpoint is @ctx.session.endpoint.endpoint
 
 Otherwise, authentication can only happen with the PIN.
