@@ -53,17 +53,10 @@ Convert a timestamp (ISO string) to a local timestamp (ISO string)
       time: (t) ->
         debug 'time'
         timezone = @vm_settings.timezone ? @default_timezone
-        tz_mod = null
         if timezone?
-          try
-            tz_mod = require "timezone/#{timezone}"
-          catch e
-            debug "Error loading timezone/#{timezone}"
-            tz_mod = null
-        if tz_mod?
-          tz t, timezone, tz_mod, '%FT%T%z'
+          moment.tz(t, timezone).format()
         else
-          t
+          moment(t).format()
 
       play_prompt: ->
         debug 'play_prompt'
@@ -353,7 +346,7 @@ Default navigation is: read next message
     cuddly = (require 'cuddly') "#{pkg.name}:User"
     assert = require 'assert'
 
-    tz = require 'timezone'
+    moment = require 'moment-timezone'
     Promise = require 'bluebird'
     PouchDB = (require 'pouchdb').defaults
       ajax:
