@@ -128,11 +128,32 @@ Send our response (200 OK) back to the IP and port the message come from.
           newTransaction: (transaction) ->
             @transactions[transaction.type][transaction.id] = transaction
 
+          destroyTransaction: ->
+
           transactions:
               nist: {}
               nict: {}
               ist: {}
               ict: {}
+
+Wed, 10 Feb 2016 22:31:54 GMT well-groomed-feast:mwi_notifier SUBSCRIBE request.reply: TypeError: Cannot read property 'send' of null
+TypeError: Cannot read property 'send' of null
+  at NonInviteServerTransaction.receiveResponse (/opt/natural-passenger/node_modules/well-groomed-feast/node_modules/jssip/lib/Transactions.js:466:27)
+  at Object.IncomingRequest.reply (/opt/natural-passenger/node_modules/well-groomed-feast/node_modules/jssip/lib/SIPMessage.js:550:27)
+  at Object.<anonymous> (/opt/natural-passenger/node_modules/well-groomed-feast/middleware/mwi_notifier.coffee.md:167:17)
+  at [object Generator].next (native)
+  at /opt/natural-passenger/node_modules/well-groomed-feast/node_modules/seem/index.js:12:33
+  at process._tickCallback (node.js:368:9)
+
+Wed, 10 Feb 2016 22:31:54 GMT well-groomed-feast:mwi_notifier SUBSCRIBE done
+Wed, 10 Feb 2016 22:31:54 GMT JsSIP:NonInviteServerTransaction Timer J expired for transaction z9hG4bK91c62e8f3a4b2769bb3d1c8e10268c
+/opt/natural-passenger/node_modules/well-groomed-feast/node_modules/jssip/lib/Transactions.js:414
+  this.ua.destroyTransaction(this);
+
+TypeError: this.ua.destroyTransaction is not a function
+  at NonInviteServerTransaction.timer_J (/opt/natural-passenger/node_modules/well-groomed-feast/node_modules/jssip/lib/Transactions.js:414:11)
+  at [object Object]._onTimeout (/opt/natural-passenger/node_modules/well-groomed-feast/node_modules/jssip/lib/Transactions.js:464:14)
+  at Timer.listOnTimeout (timers.js:92:15)
 
 The parser returns an IncomingRequest for a SUBSCRIBE message.
 
