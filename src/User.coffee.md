@@ -58,41 +58,38 @@ Convert a timestamp (ISO string) to a local timestamp (ISO string)
         else
           moment(t).format()
 
-      play_prompt: ->
+      play_prompt: seem ->
         debug 'play_prompt'
-        @voicemail_settings()
-        .then (vm_settings) =>
+        vm_settings = @voicemail_settings()
 
 User-specified prompt
 
 * doc.voicemail_settings._attachments.prompt (prompt.wav) User-specified voicemail prompt. Used if present.
 
-          if vm_settings._attachments?["prompt.#{Message::format}"]
-            @ctx.play @uri "prompt.#{Message::format}"
+        switch
+          when vm_settings._attachments?["prompt.#{Message::format}"]
+            yield @ctx.play @uri "prompt.#{Message::format}"
 
 User-specified name
 
 * doc.voicemail_settings._attachments.name (name.wav) User-specified voicemail name. Used if the prompt is not present.
 
-          else if vm_settings._attachments?["name.#{Message::format}"]
-            @ctx.play @uri "name.#{Message::format}"
-            .then =>
-              @ctx.action 'phrase', 'voicemail_unavailable'
+          when vm_settings._attachments?["name.#{Message::format}"]
+            yield @ctx.play @uri "name.#{Message::format}"
+            yield @ctx.action 'phrase', 'voicemail_unavailable'
 
 Default prompt
 
           else
-            @ctx.action 'phrase', "voicemail_play_greeting,#{@id}"
+            yield @ctx.action 'phrase', "voicemail_play_greeting,#{@id}"
 
 * doc.voicemail_settings.do_not_record If true, do not record voicemail messages.
 
-        .then =>
-          if @vm_settings.do_not_record
-            false
-          else
-            @ctx.action 'phrase', 'voicemail_record_message'
-            .then ->
-              true
+        if @vm_settings.do_not_record
+          return false
+
+        yield @ctx.action 'phrase', 'voicemail_record_message'
+        return true
 
       authenticate: seem (attempts) ->
         debug 'authenticate', {attempts}
