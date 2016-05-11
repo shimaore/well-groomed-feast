@@ -61,8 +61,61 @@ Convert a timestamp (ISO string) to a local timestamp (ISO string)
         else
           moment(t).format()
 
+      is_on_vacation: seem ->
+        debug 'is_on_vacation'
+        vm_settings = @voicemail_settings()
+
+Vacation settings
+
+        return false unless vm_settings.vacation
+
+* doc.voicemail_settings.start (string) either a date or timestamp (in ISO8601 format, local time or with timezone) that specifies the earliest point in time the user is to be considered on vacation
+
+        now = moment.tz @timezone()
+
+        if vm_settings.vacation.start?
+          start = moment.tz vm_settings.vacation.start, @timezone()
+          return false unless starting.isBefore now
+
+        if vm_settings.vacation.end?
+          end = moment.tz vm_settings.vacation.end, @timezone()
+          return false unless now.isBefore end
+
+The user is on vacation. Now let's try to say something intelligent about it.
+
+        today = day_of now
+
+        yield @ctx.action 'phrase', 'person_is_on_vacation'
+
+        if start?
+          start_day = day_of start
+
+If the start date is today then simply play the hour.
+
+          if start_day is today
+            @ctx.action 'phrase', "person_left_time,#{start.format 'HH:mm'}"
+
+TODO: yesterday, etc.
+
+          else
+            @ctx.action 'phrase', "person_left_day,#{start.format 'MM-DD'}"
+
+        if end?
+          end_day = day_of end
+
+          if end_day is today
+            @ctx.action 'phrase', "person_returns_time,#{end.format 'HH:mm'}"
+          else
+            @ctx.action 'phrase', "person_returns_day,#{end.format 'MM-DD'}"
+
+        true
+
       play_prompt: seem ->
         debug 'play_prompt'
+
+        if @is_on_vacation()
+          return false
+
         vm_settings = @voicemail_settings()
 
 User-specified prompt
@@ -347,6 +400,8 @@ Default navigation is: read next message
     assert = require 'assert'
 
     moment = require 'moment-timezone'
+    day_of = (t) -> t.clone().startOf 'day'
+
     Promise = require 'bluebird'
     PouchDB = (require 'pouchdb').defaults
       ajax:
