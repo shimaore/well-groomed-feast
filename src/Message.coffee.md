@@ -246,6 +246,17 @@ Create new CDB record to hold the voicemail metadata
         yield @notify 'save'
         @ctx.action 'phrase', 'voicemail_ack,saved'
 
+The forward operation is a bit complex since it requires to:
+
+- locate and open the database for the destination user (I guess this can be done with `locate_user`);
+- copy the JSON document from the original db to the destination db;
+- copy the attachment(s);
+- optionally add a new attachment (comment) in the destination (but not the source) db.
+
+There used to be code properly handling "more than one attachment" in this module; however some of it was removed for ccnq4. Make sure all places know how to handle multi-part voicemails.
+
+      forward: seem (destination) ->
+
     module.exports = Message
     pkg = require '../package.json'
     debug = (require 'debug') "#{pkg.name}:Message"
