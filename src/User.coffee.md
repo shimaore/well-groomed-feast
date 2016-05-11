@@ -50,9 +50,12 @@ Convert a timestamp (ISO string) to a local timestamp (ISO string)
 
 * doc.voicemail_settings.timezone Timezone for voicemail.
 
+      timezone: ->
+        @vm_settings.timezone ? @default_timezone
+
       time: (t) ->
         debug 'time'
-        timezone = @vm_settings.timezone ? @default_timezone
+        timezone = @timezone()
         if timezone?
           moment.tz(t, timezone).format()
         else
