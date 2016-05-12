@@ -256,11 +256,86 @@ The forward operation is a bit complex since it requires to:
 There used to be code properly handling "more than one attachment" in this module; however some of it was removed for ccnq4. Make sure all places know how to handle multi-part voicemails.
 
       forward: seem (destination) ->
+        messaging = new Messaging @ctx
+        {user} = messaging.retrieve_number destination
+
+        assert user.number is destination, "user.number = #{user.number} but destination = #{destination}"
+
+        if not user?
+          ## Blabla destination does not exist, try again
+          return false
+
+        @ctx.source = @user.number
+        @ctx.destination = user.number
+
+        target = new Message @ctx, user
+        yield target.create()
+
+Record an additional part, which should be put as the first part (and the remaining parts should be shifted).
+
+        yield target.user.play_prompt()
+        yield target.start_recording()
+        yield target.post_recording()
+
+So, mostly, we're left with:
+
+        # Granted, downloading all the attachment in memory is not a good idea.
+
+        doc = yield @user.db.get @id,
+          attachments:true
+          binary:true
+        new_doc = yield target.user.db.get target.id,
+          attachments:true
+          binary:true
+
+Append the parts of `doc` to the ones in `new_doc`.
+
+        new_doc._attachments = new_doc._attachments.concat doc._attachments
+        new_doc.durations = new_doc.durations.concat doc.durations
+        new_doc.duration += doc.duration
+
+        yield target.user.db.put new_doc
+
+        ###
+        # This is probably a better but more complex way to do it:
+
+        doc = yield @user.db.get @id
+
+        # etc, get without attachments
+        # but still do the changes on `durations` and `duration`.
+
+        # Then:
+
+Message is created, now push the attachments in it.
+This uses `request`, [undocumented](https://github.com/pouchdb/pouchdb/issues/3502).
+The issue is whether that method supports `pipe` in and out.
+
+        for name, attachment of doc._attachments
+
+          yield @user.db.request
+            method: 'GET'
+            url: "#{@id}/#{name}"
+          .pipe user.db.request
+            method: 'PUT'
+            url: "#{target.id}/#{name}"
+            headers:
+              'Content-Type': attachment.content_type
+
+        ###
+
+Do not leak.
+
+        target.user.close_db()
+        target.user = null
+        target = null
+
+        true
 
     module.exports = Message
     pkg = require '../package.json'
     debug = (require 'debug') "#{pkg.name}:Message"
     cuddly = (require 'cuddly') "#{pkg.name}:Message"
     Promise = require 'bluebird'
+    Messaging = require './Messaging'
 
     timestamp = -> new Date().toJSON()
