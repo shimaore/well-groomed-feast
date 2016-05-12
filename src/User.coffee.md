@@ -196,14 +196,14 @@ Otherwise, authentication can only happen with the PIN.
 Gather recipient's number
 
               destination = yield @ctx.get_number
-                file: 'phrase:voicemail_enter_recipient:#'
-                invalid_file: 'phrase:voicemail_invalid_recipient'
+                file: 'phrase:voicemail_forward_message_enter_extension:#'
+                invalid_file: 'phrase:voicemail_invalid_extension'
 
 Attempt to forward
 
               if destination?
                 unless yield msg.forward destination
-                  yield @ctx.action 'phrase', 'voicemail_invalid_recipient'
+                  yield @ctx.action 'phrase', 'voicemail_invalid_extension'
 
 Repeat message so that the user knows where to continue
 
