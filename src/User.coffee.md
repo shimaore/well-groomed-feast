@@ -167,33 +167,29 @@ Otherwise, authentication can only happen with the PIN.
           return Promise.resolve()
 
         msg = new Message @ctx, @, rows[current].id
-        navigate = (key) =>
+        navigate = seem (key) =>
           switch key
             when "7"
               if current is 0
-                @ctx.action 'phrase', 'no previous message'
-                .then =>
-                  @navigate_messages rows, current
+                yield @ctx.action 'phrase', 'no previous message'
+                @navigate_messages rows, current
               else
                 @navigate_messages rows, current-1
 
             when "9"
               if current is rows.length-1
-                @ctx.action 'phrase', 'no next message'
-                .then =>
-                  @navigate_messages rows, current
+                yield @ctx.action 'phrase', 'no next message'
+                @navigate_messages rows, current
               else
                 @navigate_messages rows, current+1
 
             when "3"
-              msg.remove()
-              .then =>
-                @navigate_messages rows, current+1
+              yield msg.remove()
+              @navigate_messages rows, current+1
 
             when "2"
-              msg.save()
-              .then =>
-                @navigate_messages rows, current+1
+              yield msg.save()
+              @navigate_messages rows, current+1
 
             when "0"
               true
