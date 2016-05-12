@@ -7,6 +7,7 @@
       voicemail_dir: '/opt/freeswitch/messages'
 
       constructor: (@ctx,@id,@database,@db_uri) ->
+        [@number,@number_domain] = @id.split '@'
         @db = new PouchDB @db_uri
 
 Inject the views into the database.
