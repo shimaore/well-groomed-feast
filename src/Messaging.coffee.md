@@ -72,39 +72,13 @@ Fallback to the default one configured.
           number_domain = @ctx.cfg.voicemail.number_domain ? 'local'
           cuddly.csr "No user_domain specified for #{number}, using configured #{number_domain} instead."
 
-Pass through any translation that the application may suggest.
+        @ctx.session.number_domain ?= number_domain
 
-        if @ctx.translate_local_number?
-          new_number = yield @ctx.translate_local_number number, number_domain
-          number = new_number if new_number?
+        {number_data,user} = @retrieve_number number, @ctx.session.number
 
-Attempt to locate the local-number record.
+        assert number_data?, "Missing local number for #{user_id}"
 
-        user_id = "#{number}@#{number_domain}"
-
-        debug 'locate_user >', user_id
-
-* session.number Data record of the local number for which we are handling voicemail.
-* doc.local_number.user_database Name of the user's database.
-* session.number.user_database Name of the user's database, see doc.local_number.user_database
-
-        @ctx.session.number ?= yield @ctx.cfg.prov
-          .get "number:#{user_id}"
-          .catch (error) ->
-            debug "Number #{user_id} not found, #{error}."
-            {}
-          .then (data) ->
-            if data?.disabled then {} else data
-
-Internal consistency
-
-        if not @ctx.session.number?
-          cuddly.dev "Missing session.number for #{user_id}"
-        assert @ctx.session.number?, "Missing session.number for #{user_id}"
-
-Use data from local-number
-
-        {user_database,_id} = @ctx.session.number
+        {user_database,_id} = number_data
 
 If the record was not found, this might be due to the user mistyping their number when using `gather_user`, so give them another opportunity to do so.
 
@@ -118,6 +92,53 @@ If the record was found but no user-database is specified, either the line has n
           cuddly.csr "Customer #{user_id} has no user_database."
           return @ctx.error 'MSI-42'
 
+        @ctx.session.number = user_data
+        user
+
+Retrieve user based on number and optional user-data
+----------------------------------------------------
+
+      retrieve_number: seem (number,number_data) ->
+
+        number_domain = @ctx.session.number_domain
+
+Pass through any translation that the application may suggest.
+
+        if @ctx.translate_local_number?
+          new_number = yield @ctx.translate_local_number number, number_domain
+          number = new_number if new_number?
+
+Attempt to locate the local-number record.
+
+        user_id = "#{number}@#{number_domain}"
+
+        debug 'retrieve_number >', user_id
+
+* session.number Data record of the local number for which we are handling voicemail.
+* doc.local_number.user_database Name of the user's database.
+* session.number.user_database Name of the user's database, see doc.local_number.user_database
+
+        number_data ?= yield @ctx.cfg.prov
+          .get "number:#{user_id}"
+          .catch (error) ->
+            debug "Number #{user_id} not found, #{error}."
+            {}
+          .then (data) ->
+            if data?.disabled then {} else data
+
+Internal consistency
+
+        if not number_data?
+          cuddly.dev "Missing local number for #{user_id}"
+          return {}
+
+Use data from local-number
+
+        {user_database,_id} = number_data
+
+        unless user_database? and _id?
+          return {number_data}
+
 Now that we have a user/local-number document, let's locate the associated user database.
 Note: `userdb_base_uri` must contain authentication elements (e.g. "voicemail" user+pass)
 
@@ -126,7 +147,7 @@ Note: `userdb_base_uri` must contain authentication elements (e.g. "voicemail" u
         db_uri = @ctx.cfg.userdb_base_uri + '/' + user_database
         user = new User @ctx, user_id, user_database, db_uri
         yield user.init_db()
-        user
+        {number_data,user}
 
     module.exports = Messaging
     pkg = require '../package.json'
