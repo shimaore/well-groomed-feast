@@ -221,7 +221,7 @@ Repeat message so that the user knows where to continue
           msg.play_recording()
         .then (choice) =>
           return choice if choice?
-          @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3'"
+          @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3:4'"
         .then (choice) =>
           navigate choice if choice?
         .catch (error) =>
