@@ -191,6 +191,24 @@ Otherwise, authentication can only happen with the PIN.
               yield msg.save()
               @navigate_messages rows, current+1
 
+            when "4"
+
+Gather recipient's number
+
+              destination = yield @ctx.get_number
+                file: 'phrase:voicemail_enter_recipient:#'
+                invalid_file: 'phrase:voicemail_invalid_recipient'
+
+Attempt to forward
+
+              if destination?
+                unless yield msg.forward destination
+                  yield @ctx.action 'phrase', 'voicemail_invalid_recipient'
+
+Repeat message so that the user knows where to continue
+
+              @navigate_messages rows, current
+
             when "0"
               true
 
