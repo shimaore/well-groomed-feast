@@ -120,7 +120,7 @@ Attempt to locate the local-number record.
 * doc.local_number.user_database Name of the user's database.
 * session.number.user_database Name of the user's database, see doc.local_number.user_database
 
-        number_data ?= yield @ctx.cfg.prov
+        number_data = yield @ctx.cfg.prov
           .get "number:#{user_id}"
           .catch (error) ->
             debug "number:#{user_id} not found, #{error}"
