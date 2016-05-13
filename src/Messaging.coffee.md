@@ -121,22 +121,24 @@ Attempt to locate the local-number record.
         number_data ?= yield @ctx.cfg.prov
           .get "number:#{user_id}"
           .catch (error) ->
-            debug "Number #{user_id} not found, #{error}."
+            debug "number:#{user_id} not found, #{error}"
+            cuddly.dev "number:#{user_id} not found, #{error}"
             {}
           .then (data) ->
             if data?.disabled then {} else data
 
 Internal consistency
 
-        if not number_data?
-          cuddly.dev "Missing local number for #{user_id}"
+        unless number_data?._id?
+          debug "No local number for #{user_id}"
           return {}
 
 Use data from local-number
 
-        {user_database,_id} = number_data
+        {user_database} = number_data
 
-        unless user_database? and _id?
+        unless user_database?
+          debug "Missing database for #{user_id}"
           return {number_data}
 
 Now that we have a user/local-number document, let's locate the associated user database.
@@ -147,6 +149,8 @@ Note: `userdb_base_uri` must contain authentication elements (e.g. "voicemail" u
         db_uri = @ctx.cfg.userdb_base_uri + '/' + user_database
         user = new User @ctx, user_id, user_database, db_uri
         yield user.init_db()
+
+        debug 'retrieve_number OK'
         {number_data,user}
 
     module.exports = Messaging
