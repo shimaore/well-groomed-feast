@@ -29,7 +29,7 @@ new Message(ctx, User).create()
       min_duration: parseInt process.env.MESSAGE_MIN_DURATION ? 2
       max_duration: parseInt process.env.MESSAGE_MAX_DURATION ? 300
       the_first_part: 1
-      the_last_part: parseInt process.env.MAX_PARTS ? 1
+      the_last_part: parseInt process.env.MAX_PARTS ? 9
 
       constructor: (@ctx,@user,@id) ->
         @part = @the_first_part
