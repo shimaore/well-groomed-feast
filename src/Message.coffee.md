@@ -310,7 +310,7 @@ We need to rename the parts in `doc` so that they follow the ones in new_doc.
         new_doc._attachments = {}
         new_doc.durations = {}
         for part, i in parts
-          name = "part#{i+the_first_part}.#{part.extension}"
+          name = "part#{i+target.the_first_part}.#{part.extension}"
           new_doc._attachments[name] = part.value
           new_doc.durations[name] = part.duration
 
