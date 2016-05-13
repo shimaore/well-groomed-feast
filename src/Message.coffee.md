@@ -290,9 +290,31 @@ So, mostly, we're left with:
 
 Append the parts of `doc` to the ones in `new_doc`.
 
-        new_doc._attachments = new_doc._attachments.concat doc._attachments
-        new_doc.durations = new_doc.durations.concat doc.durations
-        new_doc.duration += doc.duration
+        sorted_attachements = (d) ->
+          Object.keys(d._attachments).sort()
+
+        parts = []
+
+        gather_parts = (d) ->
+          for name in sorted_attachments(d) when m = name.match /^part\d+\.(\S+)$/
+            parts.push
+              extension: m[1]
+              value: d._attachments[name]
+              duration: d.durations[name]
+
+We need to rename the parts in `doc` so that they follow the ones in new_doc.
+
+        gather_parts new_doc
+        gather_parts doc
+
+        new_doc._attachments = {}
+        new_doc.durations = {}
+        for part, i in parts
+          name = "part#{i+the_first_part}.#{part.extension}"
+          new_doc._attachments[name] = part.value
+          new_doc.durations[name] = part.duration
+
+        new_doc.duration = sum_of new_doc.durations
 
         yield target.user.db.put new_doc
 
