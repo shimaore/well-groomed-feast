@@ -90,8 +90,10 @@ See `file_open` in mod_httapi.c.
 
 Keep playing if no user interaction
 
-        @play_recording this_part+1 if not choice?
-        choice
+        if not choice?
+          @play_recording this_part+1
+        else
+          choice
 
 Delete parts
 ------------
