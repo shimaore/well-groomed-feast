@@ -83,15 +83,15 @@ A missing `user` might be due to the user mistyping their number when using `gat
 
 Internal consistency
 
-        assert number_data?, "Missing local number for #{user_id}"
+        assert number_data?, "Missing local number for #{user.id}"
 
         {user_database} = number_data
 
 If the record was found but no user-database is specified, either the line has no voicemail, or the record is incorrect. Either way, we can't proceed any further.
 
         if not user_database?
-          debug "Customer #{user_id} has no user_database."
-          cuddly.csr "Customer #{user_id} has no user_database."
+          debug "Customer #{user.id} has no user_database."
+          cuddly.csr "Customer #{user.id} has no user_database."
           return @ctx.error 'MSI-42'
 
         @ctx.session.number = number_data
