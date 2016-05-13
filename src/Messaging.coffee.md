@@ -76,14 +76,16 @@ Fallback to the default one configured.
 
         {number_data,user} = yield @retrieve_number number
 
+A missing `user` might be due to the user mistyping their number when using `gather_user`, so give them another opportunity to do so.
+
+        if not user?
+          return @gather_user attempts
+
+Internal consistency
+
         assert number_data?, "Missing local number for #{user_id}"
 
-        {user_database,_id} = number_data
-
-If the record was not found, this might be due to the user mistyping their number when using `gather_user`, so give them another opportunity to do so.
-
-        if not _id?
-          return @gather_user attempts
+        {user_database} = number_data
 
 If the record was found but no user-database is specified, either the line has no voicemail, or the record is incorrect. Either way, we can't proceed any further.
 
@@ -92,7 +94,7 @@ If the record was found but no user-database is specified, either the line has n
           cuddly.csr "Customer #{user_id} has no user_database."
           return @ctx.error 'MSI-42'
 
-        @ctx.session.number = user_data
+        @ctx.session.number = number_data
         user
 
 Retrieve user based on number and optional user-data
