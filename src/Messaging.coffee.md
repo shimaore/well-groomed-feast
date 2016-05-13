@@ -74,7 +74,7 @@ Fallback to the default one configured.
 
         @ctx.session.number_domain ?= number_domain
 
-        {number_data,user} = yield @retrieve_number number, @ctx.session.number
+        {number_data,user} = yield @retrieve_number number
 
         assert number_data?, "Missing local number for #{user_id}"
 
@@ -98,7 +98,7 @@ If the record was found but no user-database is specified, either the line has n
 Retrieve user based on number and optional user-data
 ----------------------------------------------------
 
-      retrieve_number: seem (number,number_data) ->
+      retrieve_number: seem (number) ->
 
         number_domain = @ctx.session.number_domain
 
