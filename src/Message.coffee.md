@@ -257,7 +257,7 @@ There used to be code properly handling "more than one attachment" in this modul
 
       forward: seem (destination) ->
         messaging = new Messaging @ctx
-        {user} = messaging.retrieve_number destination
+        {user} = yield messaging.retrieve_number destination
 
         assert user.number is destination, "user.number = #{user.number} but destination = #{destination}"
 

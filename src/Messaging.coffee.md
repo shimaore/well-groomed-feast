@@ -74,7 +74,7 @@ Fallback to the default one configured.
 
         @ctx.session.number_domain ?= number_domain
 
-        {number_data,user} = @retrieve_number number, @ctx.session.number
+        {number_data,user} = yield @retrieve_number number, @ctx.session.number
 
         assert number_data?, "Missing local number for #{user_id}"
 
