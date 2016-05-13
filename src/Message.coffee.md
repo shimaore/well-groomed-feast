@@ -290,7 +290,7 @@ So, mostly, we're left with:
 
 Append the parts of `doc` to the ones in `new_doc`.
 
-        sorted_attachements = (d) ->
+        sorted_attachments = (d) ->
           Object.keys(d._attachments).sort()
 
         parts = []
