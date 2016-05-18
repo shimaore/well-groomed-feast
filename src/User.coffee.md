@@ -308,8 +308,8 @@ Default navigation is: read next message
         upload_url = @uri "#{that}.#{Message::format}", rev
         recorded = yield @ctx.record upload_url
         if recorded < 3
-          @ctx.action 'phrase', 'vm_say,too short'
-          yield @record_something that,phrase
+          yield @ctx.action 'phrase', 'vm_say,too short'
+          @record_something that,phrase
         else
           @ctx.action 'phrase', 'vm_say,thank you'
 
