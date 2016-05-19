@@ -64,7 +64,7 @@ Convert a timestamp (ISO string) to a local timestamp (ISO string)
 
       play_prompt: seem ->
         debug 'play_prompt'
-        vm_settings = @voicemail_settings()
+        vm_settings = yield @voicemail_settings()
 
 User-specified prompt
 
