@@ -62,30 +62,56 @@ Convert a timestamp (ISO string) to a local timestamp (ISO string)
         else
           moment(t).format()
 
+Playing prompt before recording a voice message
+-----------------------------------------------
+
       play_prompt: seem ->
         debug 'play_prompt'
         vm_settings = yield @voicemail_settings()
 
-User-specified prompt
+        _of = (name) ->
+          "#{name}.#{Message::format}"
+        has = (name) ->
+          vm_settings._attachments?[ _of name ]
 
-* doc.voicemail_settings._attachments.prompt (prompt.wav) User-specified voicemail prompt. Used if present.
+### Selecting a prompt
+
+The prompt to be played may be one of:
+- a recorded message;
+- an announceiment with the recorded full name of the recipient;
+- or a generic announcement.
+
+The user might indicate which announcement they'd like to play; otherwise an announcement is automatically selected based on the available recordings.
 
         switch
-          when vm_settings._attachments?["prompt.#{Message::format}"]
-            yield @ctx.play @uri "prompt.#{Message::format}"
 
-User-specified name
+          when vm_settings.prompt is 'prompt' and has 'prompt'
+            yield @ctx.play @uri _of 'prompt'
 
-* doc.voicemail_settings._attachments.name (name.wav) User-specified voicemail name. Used if the prompt is not present.
-
-          when vm_settings._attachments?["name.#{Message::format}"]
-            yield @ctx.play @uri "name.#{Message::format}"
+          when vm_settings.prompt is 'name' and has 'name'
+            yield @ctx.play @uri _of 'name'
             yield @ctx.action 'phrase', 'voicemail_unavailable'
 
-Default prompt
+          when vm_settings.prompt is 'default'
+            yield @ctx.action 'phrase', "voicemail_play_greeting,#{@id}"
+
+          when has 'prompt'
+            yield @ctx.play @uri _of 'prompt'
+
+          when has 'name'
+            yield @ctx.play @uri _of 'name'
+            yield @ctx.action 'phrase', 'voicemail_unavailable'
 
           else
             yield @ctx.action 'phrase', "voicemail_play_greeting,#{@id}"
+
+* doc.voicemail_settings.prompt (optional string, either 'prompt', 'name', or 'default') Indicate how the user would like the caller to be prompted to leave a message. If not present, the choice is made based on which attachment is present.
+* doc.voicemail_settings._attachments.prompt (prompt.wav) User-specified voicemail prompt. Used if present.
+* doc.voicemail_settings._attachments.name (name.wav) User-specified voicemail name. Used if the prompt is not present.
+
+### Actually recording the message
+
+The user might opt for an announcement-only voicemailbox, in which case the caller does not have the option to leave a message.
 
 * doc.voicemail_settings.do_not_record If true, do not record voicemail messages.
 
