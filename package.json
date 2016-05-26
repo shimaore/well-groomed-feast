@@ -34,7 +34,7 @@
     "milk": "^1.2.0",
     "moment-timezone": "^0.5.4",
     "nimble-direction": "^4.1.2",
-    "nodemailer": "^2.4.1",
+    "nodemailer": "^2.4.2",
     "nodemailer-smtp-transport": "^2.5.0",
     "pouchdb": "^5.3.2",
     "request": "^2.72.0",
@@ -47,6 +47,6 @@
     "chai": "^3.5.0",
     "chai-as-promised": "^5.3.0",
     "coffee-script": "^1.10.0",
-    "mocha": "^2.4.5"
+    "mocha": "^2.5.3"
   }
 }
