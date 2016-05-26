@@ -1,5 +1,8 @@
     seem = require 'seem'
 
+User
+====
+
     class User
 
       min_pin_length: parseInt process.env.MIN_PIN_LENGTH ? 6
@@ -144,7 +147,7 @@ If the user requested not to be queried for a PIN, we authenticate using the end
 
         if vm_settings.ask_pin is false
 
-... however let's make sure we don't compare `null` with `null`.
+... however let's make sure we don't compare `null` with `null`, which would lead us to allow entry to non-validated calls.
 
           if @ctx.session.endpoint?.endpoint?
             authenticated = @ctx.session.number.endpoint is @ctx.session.endpoint.endpoint
@@ -166,163 +169,144 @@ Otherwise, authentication can only happen with the PIN.
         else
           @authenticate attempts-1
 
-      new_messages: ->
+      new_messages: seem ->
         debug 'new_messages'
-        the_rows = null
-        @db.query 'voicemail/new_messages'
-        .then ({rows}) =>
-          the_rows = rows
-          @ctx.action 'phrase', "voicemail_message_count,#{rows.length}:new"
-        .then ->
-          the_rows
+        {rows} = yield @db.query 'voicemail/new_messages'
+        yield @ctx.action 'phrase', "voicemail_message_count,#{rows.length}:new"
+        rows
 
-      saved_messages: ->
+      saved_messages: seem ->
         debug 'saved_messages'
-        the_rows = null
-        @db.query 'voicemail/saved_messages'
-        .then ({rows}) =>
-          the_rows = rows
-          @ctx.action 'phrase', "voicemail_message_count,#{rows.length}:saved"
-        .then ->
-          the_rows
+        {rows} = yield @db.query 'voicemail/saved_messages'
+        yield @ctx.action 'phrase', "voicemail_message_count,#{rows.length}:saved"
+        rows
 
-      navigate_messages: (rows,current) ->
+      navigate_messages: seem (rows,current) ->
         debug 'navigate_messages', {rows,current}
         # Exit once we reach the end or there are no messages, etc.
         if current < 0 or not rows? or current >= rows.length
-          return Promise.resolve()
+          return
 
         msg = new Message @ctx, @, rows[current].id
-        navigate = seem (key) =>
-          switch key
-            when "7"
-              if current is 0
-                yield @ctx.action 'phrase', 'no previous message'
-                @navigate_messages rows, current
-              else
-                @navigate_messages rows, current-1
 
-            when "9"
-              if current is rows.length-1
-                yield @ctx.action 'phrase', 'no next message'
-                @navigate_messages rows, current
-              else
-                @navigate_messages rows, current+1
+        choice  = yield msg.play_enveloppe current
+        choice ?= yield msg.play_recording()
+        choice ?= yield @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3:4'"
 
-            when "3"
-              yield msg.remove()
+        switch key
+
+Listen to the current message
+
+          when '1'
+            @navigate_messages rows, current
+
+Jump to the previous message
+
+          when "7"
+            if current is 0
+              yield @ctx.action 'phrase', 'no previous message'
+              @navigate_messages rows, current
+            else
+              @navigate_messages rows, current-1
+
+Jump to the next message
+
+          when "9"
+            if current is rows.length-1
+              yield @ctx.action 'phrase', 'no next message'
+              @navigate_messages rows, current
+            else
               @navigate_messages rows, current+1
 
-            when "2"
-              yield msg.save()
-              @navigate_messages rows, current+1
+Delete
 
-            when "4"
+          when "3"
+            yield msg.remove()
+            @navigate_messages rows, current+1
+
+Save
+
+          when "2"
+            yield msg.save()
+            @navigate_messages rows, current+1
+
+Forward
+
+          when "4"
 
 Gather recipient's number
 
-              destination = yield @ctx.get_number
-                file: 'phrase:voicemail_forward_message_enter_extension:#'
-                invalid_file: 'phrase:voicemail_invalid_extension'
+            destination = yield @ctx.get_number
+              file: 'phrase:voicemail_forward_message_enter_extension:#'
+              invalid_file: 'phrase:voicemail_invalid_extension'
 
 Attempt to forward
 
-              if destination?
-                unless yield msg.forward destination
-                  yield @ctx.action 'phrase', 'voicemail_invalid_extension'
+            if destination?
+              unless yield msg.forward destination
+                yield @ctx.action 'phrase', 'voicemail_invalid_extension'
 
 Repeat message so that the user knows where to continue
 
-              @navigate_messages rows, current
+            @navigate_messages rows, current
 
-            when "0"
-              true
+Return to the main menu
 
-            else # including "1" meaning "listen"
-              @navigate_messages rows, current
+          when "0"
+            true
 
-        msg.play_enveloppe current
-        .then (choice) =>
-          return choice if choice?
-          msg.play_recording()
-        .then (choice) =>
-          return choice if choice?
-          @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3:4'"
-        .then (choice) =>
-          navigate choice if choice?
-        .catch (error) =>
-          debug "navigate_messages: #{error}"
+Default navigation is: read next message or return to the main menu
 
-Default navigation is: read next message
-
-          if error.choice
-            @navigate_messages rows, current+1
           else
-            throw error
+            if current is rows.length-1
+              return
+            yield @navigate_messages rows, current+1
 
-      config_menu: (attempt = 3) ->
+      config_menu: seem (attempt = 3) ->
         debug 'config_menu'
         return if @ctx.call.closed
-        @ctx.get_choice "phrase:'voicemail_config_menu:1:2:3:4:5'"
-        .then (choice) =>
-          switch choice
-            when "1"
-              @record_greeting()
-              .then =>
-                @config_menu()
-            when "3"
-              @record_name()
-              .then =>
-                @config_menu()
-            when "4"
-              @change_password()
-              .then =>
-                @config_menu()
-            when "5"
-              @main_menu()
+        choice = yield @ctx.get_choice "phrase:'voicemail_config_menu:1:2:3:4:5'"
+        switch choice
+          when "1"
+            yield @record_greeting()
+            @config_menu()
+          when "3"
+            yield @record_name()
+            @config_menu()
+          when "4"
+            yield @change_password()
+            @config_menu()
+          when "5"
+            @main_menu()
+          else
+            if attempt > 0
+              @config_menu attempt-1
             else
-              if attempt > 0
-                @config_menu attempt-1
-              else
-                @main_menu()
-        .catch (error) =>
-          debug "config_menu: #{error}"
-          @ctx.error 'USR-211'
+              @main_menu()
 
-      main_menu: (attempt = 7) ->
+      main_menu: seem (attempt = 7) ->
         debug 'main_menu'
         return if @ctx.call.closed
-        @ctx.get_choice "phrase:'voicemail_menu:1:2:3:4'"
-        .then (choice) =>
-          debug 'main_menu', {choice}
-          switch choice
-            when "1"
-              @new_messages()
-              .then (rows) =>
-                @navigate_messages rows, 0
-              .then =>
-                @main_menu()
-            when "2"
-              @saved_messages()
-              .then (rows) =>
-                @navigate_messages rows, 0
-              .then =>
-                @main_menu()
-            when "3"
-              @config_menu()
-            when "4"
-              @ctx.goodbye()
-            else
-              if attempt > 0
-                @main_menu attempt-1
-              else
-                @ctx.goodbye()
-        .catch (error) =>
-          debug "main_menu: #{error}"
-          if error.choice
+        choice = yield @ctx.get_choice "phrase:'voicemail_menu:1:2:3:4'"
+        debug 'main_menu', {choice}
+        switch choice
+          when "1"
+            rows = yield @new_messages()
+            yield @navigate_messages rows, 0
+            @main_menu()
+          when "2"
+            rows = yield @saved_messages()
+            yield @navigate_messages rows, 0
+            @main_menu()
+          when "3"
+            @config_menu()
+          when "4"
             @ctx.goodbye()
           else
-            @ctx.error 'USR-238'
+            if attempt > 0
+              @main_menu attempt-1
+            else
+              @ctx.goodbye()
 
 * doc.voicemail_settings._attachments Contains prompts for the user's voicemail.
 
@@ -353,33 +337,25 @@ Default navigation is: read next message
           debug "record_name: #{error}"
           @ctx.error 'USR-270'
 
-      change_password: ->
+      change_password: seem ->
         debug 'change_password'
-        new_pin = null
+        return if @ctx.call.closed
 
-        get_pin = =>
-          @ctx.get_new_pin min:@min_pin_length
-          .then (pin) =>
-            return get_pin() unless pin?
-            new_pin = pin
-            debug 'change_password', {new_pin}
-            return if new_pin?.length >= @min_pin_length
-            @ctx
-            .action 'phrase', 'vm_say,too short'
-            .then =>
-              get_pin()
+        get_pin = seem =>
+          pin = yield @ctx.get_new_pin min:@min_pin_length
+          if pin?
+            if pin.length >= @min_pin_length
+              return pin
+            else
+              yield @ctx.action 'phrase', 'vm_say,too short'
+          get_pin()
 
-        get_pin()
-        .then =>
-          @db.get 'voicemail_settings'
-        .then (vm_settings) =>
-          vm_settings.pin = new_pin
-          @db.put vm_settings
-        .then =>
-          delete @vm_settings # remove memoized value
-          @ctx.action 'phrase', 'vm_say,thank you'
-        .catch (error) =>
-          debug "change_password: #{error}"
+        new_pin = yield get_pin()
+        vm_settings = yield @db.get 'voicemail_settings'
+        vm_settings.pin = new_pin
+        yield @db.put vm_settings
+        delete @vm_settings # remove memoized value
+        @ctx.action 'phrase', 'vm_say,thank you'
 
     module.exports = User
     pkg = require '../package.json'
