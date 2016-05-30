@@ -11,11 +11,6 @@
     {NonInviteServerTransaction} = require 'jssip/lib/Transactions'
     LRU = require 'lru-cache'
 
-Unsollicited NOTIFY
-===================
-
-By default we issue "Unsollicited NOTIFY" messages.
-
     send_notification_to = null
 
     @include = ->
@@ -97,9 +92,6 @@ Use database otherwise
         address = socket.address()
         debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
 
-Handle SUBSCRIBE messages
-=========================
-
       socket.on 'message', ->
         args = arguments
         Promise.resolve()
@@ -115,102 +107,6 @@ Handle SUBSCRIBE messages
 
         content = msg.toString 'ascii'
         trace 'Received message', content
-
-        ua =
-          send: (msg) ->
-            message = msg.toString()
-            trace 'ua:send', message
-
-Send our response (200 OK) back to the IP and port the message come from.
-
-            socket.send message, 0, message.length, rinfo.port, rinfo.address
-
-          newTransaction: (transaction) ->
-            @transactions[transaction.type][transaction.id] = transaction
-
-          destroyTransaction: ->
-
-          transactions:
-              nist: {}
-              nict: {}
-              ist: {}
-              ict: {}
-
-Wed, 10 Feb 2016 22:31:54 GMT well-groomed-feast:mwi_notifier SUBSCRIBE request.reply: TypeError: Cannot read property 'send' of null
-TypeError: Cannot read property 'send' of null
-  at NonInviteServerTransaction.receiveResponse (/opt/natural-passenger/node_modules/well-groomed-feast/node_modules/jssip/lib/Transactions.js:466:27)
-  at Object.IncomingRequest.reply (/opt/natural-passenger/node_modules/well-groomed-feast/node_modules/jssip/lib/SIPMessage.js:550:27)
-  at Object.<anonymous> (/opt/natural-passenger/node_modules/well-groomed-feast/middleware/mwi_notifier.coffee.md:167:17)
-  at [object Generator].next (native)
-  at /opt/natural-passenger/node_modules/well-groomed-feast/node_modules/seem/index.js:12:33
-  at process._tickCallback (node.js:368:9)
-
-Wed, 10 Feb 2016 22:31:54 GMT well-groomed-feast:mwi_notifier SUBSCRIBE done
-Wed, 10 Feb 2016 22:31:54 GMT JsSIP:NonInviteServerTransaction Timer J expired for transaction z9hG4bK91c62e8f3a4b2769bb3d1c8e10268c
-/opt/natural-passenger/node_modules/well-groomed-feast/node_modules/jssip/lib/Transactions.js:414
-  this.ua.destroyTransaction(this);
-
-TypeError: this.ua.destroyTransaction is not a function
-  at NonInviteServerTransaction.timer_J (/opt/natural-passenger/node_modules/well-groomed-feast/node_modules/jssip/lib/Transactions.js:414:11)
-  at [object Object]._onTimeout (/opt/natural-passenger/node_modules/well-groomed-feast/node_modules/jssip/lib/Transactions.js:464:14)
-  at Timer.listOnTimeout (timers.js:92:15)
-
-The parser returns an IncomingRequest for a SUBSCRIBE message.
-
-        request = Parser.parseMessage content, ua
-        return unless request? and request.method is 'SUBSCRIBE' and request.event?.event is 'message-summary'
-
-        transaction = new NonInviteServerTransaction request, ua
-
-Try to recover the number and the endpoint from the message.
-
-        number = request.ruri?.user ? request.from?.uri?.user
-        endpoint = request.headers['X-Ccnq3-Endpoint']?[0]?.raw
-
-        trace 'SUBSCRIBE', {number, endpoint}
-
-Recover the number-domain from the endpoint.
-
-        {number_domain} = yield get_prov cfg.prov, "endpoint:#{endpoint}"
-
-        user_id = "#{number}@#{number_domain}"
-
-        trace 'SUBSCRIBE', {number_domain,user_id}
-
-Recover the local-number's user-database.
-
-        {user_database} = yield get_prov cfg.prov, "number:#{user_id}"
-
-Record the Event header, dialog, etc. in a LRU-cache so that they may be used in NOTIFY messages.
-
-        # FIXME
-
-Ready to send a notification
-
-        db_uri = cfg.userdb_base_uri + '/' + user_database
-
-        trace 'SUBSCRIBE', {user_database,db_uri}
-
-We set the Expires header so that the client is forced to re-SUBSCRIBE regularly.
-FIXME: RFC3265 section 3.1.1 requires that our Expires be <= to the one requested in the SUBSCRIBE message.
-
-        try
-          request.reply 200, 'OK', ['Expires: 600']
-        catch error
-          debug "SUBSCRIBE request.reply: #{error}\n#{error.stack}"
-        request = null
-
-Create a User object and use it to send the notification.
-
-        user = new User ctx, user_id, user_database, db_uri
-        yield send_notification_to user
-          .catch (error) ->
-            debug "SUBSCRIBE send_notification_to: #{error}\n#{error.stack}", user_id
-        user.close_db()
-        user = null
-
-        debug "SUBSCRIBE done"
-        return
 
 Start socket
 ------------
@@ -295,25 +191,14 @@ Send notification packet to an URI at a given address and port
           Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
         """
 
-RFC365, section 3.3.4:
-
-> NOTIFY requests are matched to such SUBSCRIBE requests if they
-> contain the same "Call-ID", a "To" header "tag" parameter which
-> matches the "From" header "tag" parameter of the SUBSCRIBE, and the
-> same "Event" header field.  Rules for comparisons of the "Event"
-> headers are described in section 7.2.1.  If a matching NOTIFY request
-> contains a "Subscription-State" of "active" or "pending", it creates
-> a new subscription and a new dialog (unless they have already been
-> created by a matching response, as described above).
-
         headers = new Buffer """
-          NOTIFY sip:#{uri} SIP/2.0
+          PUBLISH sip:#{uri} SIP/2.0
           Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
           Max-Forwards: 2
           To: <sip:#{to}>
           From: <sip:#{to}>;tag=#{Math.random()}
           Call-ID: #{pkg.name}-#{Math.random()}
-          CSeq: 1 NOTIFY
+          CSeq: 1 PUBLISH
           Event: message-summary
           Subscription-State: active
           Content-Type: application/simple-message-summary
