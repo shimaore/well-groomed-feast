@@ -168,7 +168,10 @@ Notifier Callback: Send notification to a user
 Collect the number of messages from the user's database.
 
         {total_rows} = yield user.db.query 'voicemail/new_messages'
-        trace 'send_notification_to', {total_rows}
+        new_messages = total_rows
+        {total_rows} = yield user.db.query 'voicemail/saved_messages'
+        saved_messages = total_rows
+        trace 'send_notification_to', {new_messages,saved_messages}
 
 Collect the endpoint/via fields from the local number.
 
@@ -192,7 +195,7 @@ Registered endpoint
           else
             uri = endpoint
           debug 'Notifying endpoint', {endpoint,uri,to}
-          yield notify uri, to, total_rows
+          yield notify uri, to, new_messages, saved_messages
 
 Static endpoint
 
@@ -201,7 +204,7 @@ Static endpoint
             to = [user.id,endpoint].join '@'
             uri = [user.id,via].join '@'
             debug 'Notifying endpoint', {endpoint,uri,to}
-            yield notify uri, to, total_rows
+            yield notify uri, to, new_messages, saved_messages
           else
             debug 'No `via` for static endpoint, skipping.'
 
@@ -213,26 +216,30 @@ Notify a specific URI
 
 We route based on the URI domain, as per RFC.
 
-      notify = seem (uri,to,total_rows) ->
-        debug 'notify', {uri,to,total_rows}
+      notify = seem (uri,to,new_messages,saved_messages) ->
+        debug 'notify', {uri,to,new_messages,saved_messages}
 
         addresses = yield resolve uri
 
         for address in addresses
           do (address) ->
-            send_sip_notification uri, to, total_rows, address.port, address.name
+            send_sip_notification uri, to, new_messages,saved_messages, address.port, address.name
 
-        debug 'notify done', {uri,to,total_rows}
+        debug 'notify done', {uri,to,new_messages,saved_messages}
         return
 
 Send notification packet to an URI at a given address and port
 ==============================================================
 
-      send_sip_notification = (uri,to,total_rows,target_port,target_name) ->
+      send_sip_notification = (uri,to,new_messages,saved_messages,target_port,target_name) ->
         debug 'Send SIP notification', {uri,target_port,target_name}
 
+[RFC3842](https://tools.ietf.org/html/rfc3842)
+
         body = new Buffer """
-          Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
+          Message-Waiting: #{if new_messages > 0 then 'yes' else 'no'}
+          Voice-Message: #{new_messages}/#{saved_messages}
+
         """
 
         headers = new Buffer """
