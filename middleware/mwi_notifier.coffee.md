@@ -8,7 +8,6 @@
     trace = (require 'debug') "#{@name}:trace"
     User = require '../src/User'
     Parser = require 'jssip/lib/Parser'
-    {NonInviteServerTransaction} = require 'jssip/lib/Transactions'
     LRU = require 'lru-cache'
 
     send_notification_to = null
@@ -103,10 +102,55 @@ Use database otherwise
       on_message = seem (msg,rinfo) ->
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
 
-        return
-
         content = msg.toString 'ascii'
         trace 'Received message', content
+
+        ua = {}
+
+The parser returns an IncomingRequest for a SUBSCRIBE message.
+
+        request = Parser.parseMessage content, ua
+        return unless request? and request.method is 'SUBSCRIBE' and request.event?.event is 'message-summary'
+
+Try to recover the number and the endpoint from the message.
+
+        number = request.ruri?.user ? request.from?.uri?.user
+        endpoint = request.headers['X-Ccnq3-Endpoint']?[0]?.raw
+
+        trace 'SUBSCRIBE', {number, endpoint}
+
+Recover the number-domain from the endpoint.
+
+        {number_domain} = yield get_prov cfg.prov, "endpoint:#{endpoint}"
+
+        user_id = "#{number}@#{number_domain}"
+
+        trace 'SUBSCRIBE', {number_domain,user_id}
+
+Recover the local-number's user-database.
+
+        {user_database} = yield get_prov cfg.prov, "number:#{user_id}"
+
+Ready to send a notification
+
+        db_uri = cfg.userdb_base_uri + '/' + user_database
+
+        trace 'SUBSCRIBE', {user_database,db_uri}
+
+        request = null
+
+Create a User object and use it to send the notification.
+
+        user = new User ctx, user_id, user_database, db_uri
+        yield send_notification_to user
+          .catch (error) ->
+            debug "SUBSCRIBE send_notification_to: #{error}\n#{error.stack}", user_id
+        user.close_db()
+        user = null
+
+        debug "SUBSCRIBE done"
+        return
+
 
 Start socket
 ------------
