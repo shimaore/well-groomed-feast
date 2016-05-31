@@ -229,15 +229,14 @@ Send notification packet to an URI at a given address and port
 ==============================================================
 
       send_sip_notification = (uri,to,total_rows,target_port,target_name) ->
-        presence_domain = uri.split('@')[1]
-        debug 'Send SIP notification', {presence_domain,uri,to,target_port,target_name}
+        debug 'Send SIP notification', {uri,target_port,target_name}
 
         body = new Buffer """
           Message-Waiting: #{if total_rows > 0 then 'yes' else 'no'}
         """
 
         headers = new Buffer """
-          PUBLISH sip:#{presence_domain} SIP/2.0
+          PUBLISH sip:#{uri} SIP/2.0
           Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
           Max-Forwards: 2
           To: <sip:#{to}>
