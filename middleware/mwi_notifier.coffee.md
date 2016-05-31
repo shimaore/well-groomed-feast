@@ -115,7 +115,7 @@ The parser returns an IncomingRequest for a SUBSCRIBE message.
 Try to recover the number and the endpoint from the message.
 
         number = request.ruri?.user ? request.from?.uri?.user
-        endpoint = request.headers['X-Ccnq3-Endpoint']?[0]?.raw
+        endpoint = request.headers['X-Ccnq-Endpoint']?[0]?.raw
 
         trace 'SUBSCRIBE', {number, endpoint}
 
