@@ -193,7 +193,7 @@ Otherwise, authentication can only happen with the PIN.
         choice ?= yield msg.play_recording()
         choice ?= yield @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3:4'"
 
-        switch key
+        switch choice
 
 Listen to the current message
 
