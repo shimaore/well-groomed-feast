@@ -119,6 +119,8 @@ Try to recover the number and the endpoint from the message.
 
         trace 'SUBSCRIBE', {number, endpoint}
 
+        return unless number? and endpoint?
+
 Recover the number-domain from the endpoint.
 
         {number_domain} = yield get_prov cfg.prov, "endpoint:#{endpoint}"
