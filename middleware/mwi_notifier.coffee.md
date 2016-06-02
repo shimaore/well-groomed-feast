@@ -129,6 +129,8 @@ Recover the number-domain from the endpoint.
 
         trace 'SUBSCRIBE', {number_domain,user_id}
 
+        return unless number_domain?
+
 Recover the local-number's user-database.
 
         {user_database} = yield get_prov cfg.prov, "number:#{user_id}"
@@ -138,6 +140,8 @@ Ready to send a notification
         db_uri = cfg.userdb_base_uri + '/' + user_database
 
         trace 'SUBSCRIBE', {user_database,db_uri}
+
+        return unless user_database?
 
         request = null
 
