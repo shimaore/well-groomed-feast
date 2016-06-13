@@ -206,7 +206,7 @@ Note: now that we process `linger` properly this might be moved into `post_recor
 
         @ctx.call.on 'cleanup_linger', =>
           debug 'Disconnect Notice', @id
-          Promise.delay 3000
+          Promise.delay 15000
           .then =>
             @notify 'create'
           .catch (e) =>

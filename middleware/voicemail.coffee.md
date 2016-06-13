@@ -20,7 +20,7 @@ by FreeSwitch) which can then be transcoded.
 `esl` will wait 4000ms, while our own `Message` will wait 3000ms.
 In any case closing too early will cause issues with email notifications.
 
-    close_delay = 8*seconds
+    close_delay = 30*seconds
 
     finish = (user) ->
       setTimeout ->
