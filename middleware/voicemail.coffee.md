@@ -17,6 +17,17 @@ by FreeSwitch) which can then be transcoded.
     debug = (require 'debug') @name
     seem = require 'seem'
 
+`esl` will wait 4000ms, while our own `Message` will wait 3000ms.
+In any case closing too early will cause issues with email notifications.
+
+    close_delay = 30*seconds
+
+    finish = (user) ->
+      setTimeout ->
+        user.close_db()
+        user = null
+      , close_delay
+
     @include = seem ->
 
       return unless @session.direction is 'voicemail'
@@ -47,7 +58,7 @@ by FreeSwitch) which can then be transcoded.
             .catch (error) ->
               debug "main_menu: #{error}"
 
-          user.close_db()
+          finish user
           user = null
           rows = null
 
@@ -68,7 +79,7 @@ by FreeSwitch) which can then be transcoded.
             .catch (error) ->
               debug "main_menu: #{error}"
 
-          user.close_db()
+          finish user
           user = null
 
         else
@@ -90,7 +101,7 @@ by FreeSwitch) which can then be transcoded.
             .catch (error) ->
               debug "goodbye: #{error}"
 
-          user.close_db()
+          finish user
           user = null
           msg = null
 

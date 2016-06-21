@@ -25,11 +25,6 @@
     @web = ->
       @cfg.versions[pkg.name] = pkg.version
 
-    class ChoiceError extends Error
-      constructor: (name) ->
-        @choice = true
-        super "Missing #{name}"
-
 Use `mod_httpapi` to support URLs.
 
     @include = (ctx) ->
