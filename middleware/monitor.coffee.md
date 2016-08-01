@@ -153,8 +153,6 @@ Startup
 -------
 
     module.exports = run = seem (cfg) ->
-      return if process.env.MODE is 'test'
-
       if cfg.voicemail?.monitoring is false
         return
 
