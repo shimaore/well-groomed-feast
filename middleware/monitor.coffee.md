@@ -1,7 +1,7 @@
     {p_fun} = require 'coffeescript-helpers'
     seem = require 'seem'
 
-    pkg = require './package'
+    pkg = require '../package'
     @name = "#{pkg.name}-monitor"
     debug = (require 'debug') @name
 
@@ -27,7 +27,7 @@ The couchapp used in the (local) provisioning database to monitor changes.
 
 The couchapp inserted in the user's database, contains the views used by the voicemail application.
 
-    user_app = require './src/couchapp'
+    user_app = require '../src/couchapp'
 
 Initial configuration
 ---------------------
@@ -191,4 +191,8 @@ Startup
       do main
       debug 'Ready'
 
+      return
+
+    @server_pre = ->
+      run @cfg
       return

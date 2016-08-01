@@ -10,17 +10,11 @@
     qs = require 'querystring'
     seem = require 'seem'
 
-    monitor = require '../monitor'
-
     @config = ->
       if @cfg.userdb_base_uri?
         {auth} = url.parse @cfg.userdb_base_uri
         if auth?
           @cfg.httapi_credentials ?= auth
-
-    @server_pre = ->
-      monitor @cfg
-      return
 
     @web = ->
       @cfg.versions[pkg.name] = pkg.version
