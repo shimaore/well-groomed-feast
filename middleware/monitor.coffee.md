@@ -193,4 +193,3 @@ Startup
 
     @server_pre = ->
       run @cfg
-      return
