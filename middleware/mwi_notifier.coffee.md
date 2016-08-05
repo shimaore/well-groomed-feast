@@ -3,7 +3,7 @@
     seem = require 'seem'
     dns = Promise.promisifyAll require 'dns'
     pkg = require '../package.json'
-    @name = "#{pkg.name}:mwi_notifier"
+    @name = "#{pkg.name}:middleware:mwi_notifier"
     debug = (require 'debug') @name
     trace = (require 'debug') "#{@name}:trace"
     User = require '../src/User'

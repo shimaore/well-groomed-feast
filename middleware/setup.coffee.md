@@ -1,5 +1,5 @@
     pkg = require '../package.json'
-    @name = "#{pkg.name}/middleware/setup"
+    @name = "#{pkg.name}:middleware:setup"
     debug = (require 'debug') @name
 
     Promise = require 'bluebird'

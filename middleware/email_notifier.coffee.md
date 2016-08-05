@@ -7,7 +7,7 @@
     smtpTransport = require 'nodemailer-smtp-transport'
 
     pkg = require '../package.json'
-    @name = "#{pkg.name}:email_notifier"
+    @name = "#{pkg.name}:middleware:email_notifier"
     debug = (require 'debug') @name
     assert = require 'assert'
 
