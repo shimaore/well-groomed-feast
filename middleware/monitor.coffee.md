@@ -152,7 +152,7 @@ Close.
 Startup
 -------
 
-    module.exports = run = seem (cfg) ->
+    run = seem (cfg) ->
       if cfg.voicemail?.monitoring is false
         return
 
