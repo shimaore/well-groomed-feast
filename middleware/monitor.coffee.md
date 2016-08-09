@@ -12,7 +12,7 @@
 
     Nimble = require 'nimble-direction'
 
-    set_voicemail_security = require 'charming-circle/set-voicemail-security'
+    set_security = require 'charming-circle/set-security'
 
 The couchapp used in the (local) provisioning database to monitor changes.
 
@@ -94,7 +94,7 @@ It's OK if the database already exists.
 Make sure the users can access it.
 
       debug 'Setting security', target_db_uri
-      yield set_voicemail_security user_database, cfg.userdb_base_uri
+      yield set_security user_database, cfg.userdb_base_uri
 
 ### Limit number of documents revisions
 
