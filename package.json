@@ -24,29 +24,29 @@
   },
   "homepage": "https://github.com/shimaore/well-groomed-feast",
   "dependencies": {
-    "bluebird": "^3.4.1",
-    "charming-circle": "^3.2.0",
+    "bluebird": "^3.4.6",
+    "charming-circle": "^3.2.2",
     "coffeescript-helpers": "^2.2.0",
     "cuddly": "^1.1.5",
     "debug": "^2.2.0",
-    "jssip": "^2.0.2",
+    "jssip": "^2.0.6",
     "lru-cache": "^4.0.1",
     "milk": "^1.2.0",
-    "moment-timezone": "^0.5.5",
+    "moment-timezone": "^0.5.6",
     "nimble-direction": "^4.2.2",
-    "nodemailer": "^2.5.0",
-    "nodemailer-smtp-transport": "^2.6.0",
-    "pouchdb": "^5.4.5",
-    "request": "^2.74.0",
+    "nodemailer": "^2.6.4",
+    "nodemailer-smtp-transport": "^2.7.2",
+    "pouchdb": "^6.0.6",
+    "request": "^2.75.0",
     "seem": "^2.0.0",
-    "superagent": "^2.2.0",
+    "superagent": "^2.3.0",
     "superagent-as-promised": "^4.0.0",
-    "uuid": "^2.0.2"
+    "uuid": "^2.0.3"
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "chai-as-promised": "^5.3.0",
-    "coffee-script": "^1.10.0",
-    "mocha": "^3.0.2"
+    "chai-as-promised": "^6.0.0",
+    "coffee-script": "^1.11.1",
+    "mocha": "^3.1.2"
   }
 }
