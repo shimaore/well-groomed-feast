@@ -23,8 +23,8 @@ In any case closing too early will cause issues with email notifications.
     close_delay = 30*seconds
 
     finish = (user) ->
-      setTimeout ->
-        user.close_db()
+      setTimeout seem ->
+        yield user.close_db()
         user = null
       , close_delay
 

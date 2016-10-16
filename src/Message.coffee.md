@@ -349,7 +349,7 @@ The issue is whether that method supports `pipe` in and out.
 
 Do not leak.
 
-        target.user.close_db()
+        yield target.user.close_db()
         target.user = null
         target = null
 
