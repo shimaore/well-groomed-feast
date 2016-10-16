@@ -2,7 +2,6 @@
     @name = "#{pkg.name}:middleware:setup"
     debug = (require 'debug') @name
 
-    Promise = require 'bluebird'
     nimble = require 'nimble-direction'
     assert = require 'assert'
     request = require 'request'

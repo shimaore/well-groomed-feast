@@ -364,7 +364,6 @@ Default navigation is: read next message or return to the main menu
     assert = require 'assert'
 
     moment = require 'moment-timezone'
-    Promise = require 'bluebird'
     PouchDB = (require 'pouchdb').defaults
       ajax:
         forever: true
