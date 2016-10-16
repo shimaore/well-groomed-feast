@@ -230,7 +230,7 @@ Attachment upload/download
         @request.pipe proxy
         .on 'error', (error) =>
           debug "GET #{uri} rev #{@params.rev} : #{error}"
-          @next "GET #{uri} rev #{@params.rev} : #{error}"
+          try @res.end()
           return
         proxy.pipe @response
         return
