@@ -147,12 +147,13 @@ Ready to send a notification
 Create a User object and use it to send the notification.
 
         user = new User ctx, user_id, user_database, db_uri
-        yield send_notification_to user
-          .catch (error) ->
-            debug "SUBSCRIBE send_notification_to: #{error}\n#{error.stack}", user_id
-        user.close_db()
-        yield user.close_db()
-        user = null
+        try
+          yield send_notification_to user
+        catch error
+          debug "SUBSCRIBE send_notification_to: #{error}\n#{error.stack}", user_id
+        finally
+          yield user.close_db()
+          user = null
 
         debug "SUBSCRIBE done"
         return
