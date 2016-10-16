@@ -93,11 +93,10 @@ Use database otherwise
 
       socket.on 'message', ->
         args = arguments
-        Promise.resolve()
-        .then ->
-          on_message.apply ctx, args
-        .catch (error) ->
-          debug "on_message: #{error}\n#{error.stack}"
+        on_message
+          .apply ctx, args
+          .catch (error) ->
+            debug "on_message: #{error}\n#{error.stack}"
 
       on_message = seem (msg,rinfo) ->
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
