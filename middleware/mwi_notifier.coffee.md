@@ -11,10 +11,8 @@
 
     @include = ->
       @cfg.notifiers ?= {}
-      return if @cfg.notifiers.mwi?
-
       @cfg.notifiers.mwi ?= send_notification_to
-
+      null
 
     get_prov = require '../lib/get_prov'
     notify = require '../lib/notify'
