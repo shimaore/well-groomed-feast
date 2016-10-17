@@ -54,29 +54,7 @@ URI = username@domain
       dns_cache.set uri, result
       result
 
-Provisioning cache
-==================
-
-    prov_cache = LRU
-      max: 200
-      maxAge: 20 * 1000
-
-    get_prov = seem (prov,key) ->
-
-Use cache if available
-
-      val = prov_cache.get key
-      return val if val?
-
-Use database otherwise
-
-      val = yield prov
-        .get key
-        .catch (error) ->
-          {}
-
-      prov_cache.set key, val
-      val
+    get_prov = require '../lib/get_prov'
 
     @server_pre = (ctx) ->
       cfg = ctx.cfg
