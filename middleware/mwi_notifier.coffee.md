@@ -1,14 +1,11 @@
     dgram = require 'dgram'
-    Promise = require 'bluebird'
     seem = require 'seem'
-    dns = Promise.promisifyAll require 'dns'
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:mwi_notifier"
     debug = (require 'debug') @name
     trace = (require 'debug') "#{@name}:trace"
     User = require '../src/User'
     Parser = require 'jssip/lib/Parser'
-    LRU = require 'lru-cache'
 
     send_notification_to = null
 
@@ -18,43 +15,9 @@
 
       @cfg.notifiers.mwi ?= send_notification_to
 
-URI DNS resolution and cache
-============================
-
-    dns_cache = LRU
-      max: 200
-      maxAge: 10 * 60 * 1000
-
-    resolve = seem (uri) ->
-
-      result = dns_cache.get uri
-      return result if result?
-
-      result = []
-
-URI = username@host:port
-
-      if m = uri.match /^([^@]+)@(^[@:]+):(\d+)$/
-        name = m[2]
-        port = m[3]
-        trace 'resolve', {name,port}
-        result.push {port,name}
-
-URI = username@domain
-
-      if m = uri.match /^([^@]+)@([^@:]+)$/
-        domain = m[2]
-
-        addresses = yield dns.resolveSrvAsync '_sip._udp.' + domain
-        trace 'Addresses', addresses
-        for address in addresses
-          do (address) ->
-            result.push address
-
-      dns_cache.set uri, result
-      result
 
     get_prov = require '../lib/get_prov'
+    notify = require '../lib/notify'
 
     @server_pre = (ctx) ->
       cfg = ctx.cfg
@@ -180,7 +143,7 @@ Registered endpoint
           else
             uri = endpoint
           debug 'Notifying endpoint', {endpoint,uri,to}
-          yield notify uri, to, new_messages, saved_messages
+          yield notify socket, uri, to, new_messages, saved_messages
 
 Static endpoint
 
@@ -189,66 +152,9 @@ Static endpoint
             to = [user.id,endpoint].join '@'
             uri = [user.id,via].join '@'
             debug 'Notifying endpoint', {endpoint,uri,to}
-            yield notify uri, to, new_messages, saved_messages
+            yield notify socket, uri, to, new_messages, saved_messages
           else
             debug 'No `via` for static endpoint, skipping.'
 
         debug 'send_notification_to done', user.id
         return
-
-Notify a specific URI
-=====================
-
-We route based on the URI domain, as per RFC.
-
-      notify = seem (uri,to,new_messages,saved_messages) ->
-        debug 'notify', {uri,to,new_messages,saved_messages}
-
-        addresses = yield resolve uri
-
-        for address in addresses
-          do (address) ->
-            send_sip_notification uri, to, new_messages,saved_messages, address.port, address.name
-
-        debug 'notify done', {uri,to,new_messages,saved_messages}
-        return
-
-Send notification packet to an URI at a given address and port
-==============================================================
-
-      send_sip_notification = (uri,to,new_messages,saved_messages,target_port,target_name) ->
-        debug 'Send SIP notification', {uri,target_port,target_name}
-
-[RFC3842](https://tools.ietf.org/html/rfc3842)
-
-        body = new Buffer """
-          Message-Waiting: #{if new_messages > 0 then 'yes' else 'no'}
-          Voice-Message: #{new_messages}/#{saved_messages}
-
-        """
-
-        headers = new Buffer """
-          PUBLISH sip:#{uri} SIP/2.0
-          Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
-          Max-Forwards: 2
-          To: <sip:#{to}>
-          From: <sip:#{to}>;tag=#{Math.random()}
-          Call-ID: #{pkg.name}-#{Math.random()}
-          CSeq: 1 PUBLISH
-          Event: message-summary
-          Subscription-State: active
-          Content-Type: application/simple-message-summary
-          Content-Length: #{body.length}
-          \n
-        """.replace /\n/g, "\r\n"
-
-        message = new Buffer headers.length + body.length
-        headers.copy message
-        body.copy message, headers.length
-
-        socket.send message, 0, message.length, target_port, target_name
-        debug 'Sent SIP notification'
-        return
-
-      debug 'Configured.'
-      return
