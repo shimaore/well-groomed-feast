@@ -145,6 +145,7 @@ If the voicemail-settings document does not exist, create one based on the defau
 Close.
 
       yield target_db.close()
+      target_db.emit 'destroyed'
       target_db = null
       return
 

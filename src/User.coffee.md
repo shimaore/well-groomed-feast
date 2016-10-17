@@ -24,6 +24,7 @@ Note: this requires the application to be database admin, which is OK.
 
       close_db: seem ->
         yield @db.close()
+        @db.emit 'destroyed'
         @db = null
 
       uri: (name,rev) ->
