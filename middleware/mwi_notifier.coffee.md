@@ -156,3 +156,6 @@ Static endpoint
 
         debug 'send_notification_to done', user.id
         return
+
+      debug 'Configured.'
+      return

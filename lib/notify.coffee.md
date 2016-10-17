@@ -21,9 +21,6 @@ We route based on the URI domain, as per RFC.
       debug 'notify done', {uri,to,new_messages,saved_messages}
       return
 
-    debug 'Configured.'
-    return
-
 Send notification packet to an URI at a given address and port
 ==============================================================
 
