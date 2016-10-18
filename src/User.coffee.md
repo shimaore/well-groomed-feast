@@ -23,7 +23,7 @@ Note: this requires the application to be database admin, which is OK.
         yield @db.put(doc).catch -> true
 
       close_db: seem ->
-        yield @db.close()
+        yield @db.close?()
         @db.emit 'destroyed'
         @db = null
 
