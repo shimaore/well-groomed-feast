@@ -22,8 +22,7 @@ Note: this requires the application to be database admin, which is OK.
         doc[k] = v for own k,v of couchapp
         yield @db.put(doc).catch -> true
 
-      close_db: seem ->
-        yield @db.close?()
+      close_db: ->
         @db.emit 'destroyed'
         @db = null
 
