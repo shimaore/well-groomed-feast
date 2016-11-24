@@ -109,7 +109,7 @@ FIXME: Migrate to new `node_mailer` conventions.
 Delete record once all data has been emailed.
 
             if (opts.attach or opts.do_not_record) and opts.send_then_delete
-              user.db.remove msg
+              opts.user.db.remove msg
           .catch (error) ->
             debug "sendMail: #{error}", msg
 
