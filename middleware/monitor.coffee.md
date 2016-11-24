@@ -53,6 +53,8 @@ Individual user database changes
 
 If no user-database is specified (but a set of default voicemail settings is present), we create a new database.
 
+* doc.local_number.user_database (string) The name of the user database used to store voicemail messages for that number. Created automatically by the voicemail system, its format is the letter `u` followed by a UUIDv4.
+
       if not user_database?
         unless 'object' is typeof default_voicemail_settings
           debug "Invalid default_voicemail_settings: #{typeof default_voicemail_settings}"
@@ -133,6 +135,9 @@ Create the voicemail settings record.
         .catch -> null
 
 If the voicemail-settings document does not exist, create one based on the default voicemail settings specified.
+
+* doc.local_number.default_voicemail_settings (hash) Object used to initialize the voicemail user database's `voicemail_settings` record. See doc.voicemail_settings for its content.
+* doc.voicemail_settings._id (string) `voicemail_settings`
 
       if not vm_settings?
         vm_settings = default_voicemail_settings ? {}
