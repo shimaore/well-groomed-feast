@@ -127,6 +127,9 @@ FIXME: Sadly enough we don't have yet a way to be notified when the attachment m
 
         yield Promise.delay 7*1000
 
+* doc.local_number.voicemail_sender (email address) Address used as the sender for voicemail notifications via email. See doc.voicemail_settings, doc.voicemail_settings.email_notifications . Default: cfg.voicemail.sender
+* cfg.voicemail.sender (email address) Address used as default the sender for voicemail notifications via email. See doc.voicemail_settings, doc.voicemail_settings.email_notifications .
+
         number_doc = yield cfg.prov.get "number:#{user.id}"
         return if number_doc.disabled
         sender = number_doc.voicemail_sender ? cfg.voicemail.sender
@@ -135,6 +138,11 @@ FIXME: Sadly enough we don't have yet a way to be notified when the attachment m
 We should only email about new messages.
 
         return unless message.box is 'new'
+
+* doc.voicemail_settings.language (two-letter language string) Language used for email notifications. Default: `en`
+* doc.voicemail_settings.send_then_delete (boolean) If true, messages are deleted from the voicemail after the email notification is sent. Default: false.
+* doc.voicemail_settings.email_notifications (hash) For each destination email address, provides parameters used when sending voicemail notifications via email.
+* doc.voicemail_settings.email_notifications[].attach_message (boolean) If true, when sending an email notification for voicemail, attach the audio file(s) to the email. Default: false.
 
         settings = yield user.db.get 'voicemail_settings'
         return unless settings.email_notifications

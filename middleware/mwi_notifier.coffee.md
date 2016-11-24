@@ -124,6 +124,9 @@ Collect the endpoint/via fields from the local number.
         number_doc = yield get_prov cfg.prov, "number:#{user.id}"
         return if number_doc.disabled
 
+* doc.local_number.endpoint_via (domain name string) If present, domain name used to route voicemail notifications via the SUBSCRIBE/PUBLISH mechanism. It is optional for dynamic endpoints (`<username>@<endpoint-domain>`) and required for static endpoints. Default: the domain of doc.local_number.endpoint (for dynamic endpoints), none for static endpoints.
+* doc.local_number.endpoint (endpoint name string) If `<username>@<endpoint-domain>`, used for routing voicemail notifications va the SUBSCRIBE/PUBLISH mechanism, unless doc.local_number.endpoint_via is specified. If `<endpoint-domain>` (for static endpoints), domain name used as destination for voicemail notifications, while routing is done using the doc.local_number.endpoint_via domain name.
+
         via = number_doc.endpoint_via
 
 Use the endpoint name and via to route the packet.
