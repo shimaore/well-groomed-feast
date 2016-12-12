@@ -364,7 +364,7 @@ Default navigation is: read next message or return to the main menu
     assert = require 'assert'
 
     moment = require 'moment-timezone'
-    PouchDB = (require 'pouchdb').defaults
+    PouchDB = (require 'shimaore-pouchdb').defaults
       ajax:
         forever: true
         timeout: 10000
