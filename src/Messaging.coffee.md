@@ -33,13 +33,16 @@ In most cases `session.endpoint` is already provided.
 
 * session.endpoint Data of the endpoint used for locating the number-domain.
 
-        @ctx.session.endpoint ?= yield @ctx.cfg.prov
-          .get "endpoint:#{@ctx.session.endpoint_name}"
-          .catch (error) =>
-            debug "Endpoint #{@ctx.session.endpoint_name} not found, #{error}."
-            null
-          .then (data) ->
-            if data?.disabled then {} else data
+        if @ctx.session.endpoint_name?
+          @ctx.session.endpoint ?= yield @ctx.cfg.prov
+            .get "endpoint:#{@ctx.session.endpoint_name}"
+            .catch (error) =>
+              debug "Endpoint #{@ctx.session.endpoint_name} not found, #{error.stack ? error}."
+              null
+            .then (data) ->
+              if data?.disabled then {} else data
+        else
+          @ctx.session.endpoint = null
 
 Internal consistency
 
