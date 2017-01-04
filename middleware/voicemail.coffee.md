@@ -42,7 +42,7 @@ In any case closing too early will cause issues with email notifications.
           yield @action 'answer'
           yield @action 'set', "language=#{@session.language ? @cfg.announcement_language}"
 
-          debug 'Locate user'
+          debug 'Locate user', @source
           user = yield messaging.locate_user @source
 
           debug 'Authenticate', user
@@ -87,6 +87,7 @@ In any case closing too early will cause issues with email notifications.
           yield @action 'answer'
           yield @action 'set', "language=#{@session.language ? @cfg.announcement_language}"
 
+          debug 'Locate user', @destination
           user = yield messaging.locate_user @destination
 
           msg = new Message this, user
