@@ -2,7 +2,6 @@
 
     class Messaging
       constructor: (@ctx) ->
-        debug 'ctx', @ctx
         assert @ctx.cfg.prov?, 'Missing @ctx.cfg.prov'
         assert @ctx.cfg.userdb_base_uri?, 'Missing @ctx.cfg.userdb_base_uri'
 
