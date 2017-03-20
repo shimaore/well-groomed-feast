@@ -20,8 +20,12 @@ Gather a customer phone number and locate that record.
             @gather_user attempts-1
 
       locate_user: seem (number,attempts = 3) ->
+
         assert number?, 'locate_user: number must be defined'
         debug 'locate_user', number, attempts
+
+        if number is 'user-database'
+          return yield @_user @ctx.session.voicemail_user_id, @ctx.session.voicemail_user_database
 
 Locate endpoint-data (`User` will also need it, so store it in the session).
 In most cases `session.endpoint` is already provided.
@@ -145,17 +149,23 @@ Use data from local-number
           debug "Missing database for #{user_id}"
           return {number_data}
 
+        user = yield @_user user_id, user_database
+
+        debug 'retrieve_number OK'
+        {number_data,user}
+
 Now that we have a user/local-number document, let's locate the associated user database.
 Note: `userdb_base_uri` must contain authentication elements (e.g. "voicemail" user+pass)
+
+      _user: seem (user_id,user_database) ->
 
 * cfg.userdb_base_uri The base URI concatenated with a doc.local_number.user_database name to access the user's database. It must contain any required authentication elements.
 
         db_uri = @ctx.cfg.userdb_base_uri + '/' + user_database
         user = new User @ctx, user_id, user_database, db_uri
         yield user.init_db()
+        user
 
-        debug 'retrieve_number OK'
-        {number_data,user}
 
     module.exports = Messaging
     pkg = require '../package.json'
