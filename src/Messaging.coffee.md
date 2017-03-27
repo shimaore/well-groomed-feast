@@ -10,9 +10,9 @@ Gather a customer phone number and locate that record.
       gather_user: (attempts = 3) ->
         debug 'gather_user', {attempts}
         if attempts <= 0
-          return @ctx.error()
+          return @ctx.prompt.error()
 
-        @ctx.get_number()
+        @ctx.prompt.get_number()
         .then (number) =>
           if number?
             @locate_user number, attempts-1
@@ -51,7 +51,7 @@ Internal consistency
 
         if @ctx.session.endpoint_name? and not @ctx.session.endpoint?
           cuddly.dev "Missing session.endpoint for #{@ctx.session.endpoint_name}"
-          return @ctx.error 'MSI-48'
+          return @ctx.prompt.error 'MSI-48'
 
 Number-domain selection
 -----------------------
@@ -98,7 +98,7 @@ If the record was found but no user-database is specified, either the line has n
         if not user_database?
           debug "Customer #{user.id} has no user_database."
           cuddly.csr "Customer #{user.id} has no user_database."
-          return @ctx.error 'MSI-42'
+          return @ctx.prompt.error 'MSI-42'
 
         @ctx.session.number = number_data
         user

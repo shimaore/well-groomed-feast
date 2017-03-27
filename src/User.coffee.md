@@ -27,7 +27,7 @@ Note: this requires the application to be database admin, which is OK.
         @db = null
 
       uri: (name,rev) ->
-        @ctx.uri this, 'voicemail_settings', name, rev
+        @ctx.voicemail_uri this, 'voicemail_settings', name, rev
 
       voicemail_settings: (no_error = false) ->
         debug 'voicemail_settings'
@@ -46,7 +46,7 @@ Debug as much as we can.
 Tell the user to call support.
 
           return {} if no_error
-          @ctx.error 'USR-41'
+          @ctx.prompt.error 'USR-41'
         .then (doc) =>
           @vm_settings = doc # Memoize
 
@@ -89,24 +89,24 @@ The user might indicate which announcement they'd like to play; otherwise an ann
         switch
 
           when vm_settings.prompt is 'prompt' and has 'prompt'
-            yield @ctx.play @uri _of 'prompt'
+            yield @ctx.prompt.play @uri _of 'prompt'
 
           when vm_settings.prompt is 'name' and has 'name'
-            yield @ctx.play @uri _of 'name'
-            yield @ctx.action 'phrase', 'voicemail_unavailable'
+            yield @ctx.prompt.play @uri _of 'name'
+            yield @ctx.prompt.phrase 'voicemail_unavailable'
 
           when vm_settings.prompt is 'default'
-            yield @ctx.action 'phrase', "voicemail_play_greeting,#{@id}"
+            yield @ctx.prompt.phrase "voicemail_play_greeting,#{@id}"
 
           when has 'prompt'
-            yield @ctx.play @uri _of 'prompt'
+            yield @ctx.prompt.play @uri _of 'prompt'
 
           when has 'name'
-            yield @ctx.play @uri _of 'name'
-            yield @ctx.action 'phrase', 'voicemail_unavailable'
+            yield @ctx.prompt.play @uri _of 'name'
+            yield @ctx.prompt.phrase 'voicemail_unavailable'
 
           else
-            yield @ctx.action 'phrase', "voicemail_play_greeting,#{@id}"
+            yield @ctx.prompt.phrase "voicemail_play_greeting,#{@id}"
 
 * doc.voicemail_settings.prompt (optional string, either 'prompt', 'name', or 'default') Indicate how the user would like the caller to be prompted to leave a message. If not present, the choice is made based on which attachment is present.
 * doc.voicemail_settings._attachments.prompt (prompt.wav) User-specified voicemail prompt. Used if present.
@@ -133,7 +133,7 @@ As long as we went through `locate_user` these should be provided.
 
         attempts ?= 3
         if attempts <= 0
-          return @ctx.error()
+          return @ctx.prompt.error()
 
 * doc.voicemail_settings Document found in the user database. Contains parameters for that user's voicemail box.
 
@@ -158,7 +158,7 @@ Otherwise, authentication can only happen with the PIN.
 
         if not authenticated
           if vm_settings.pin?
-            pin = yield @ctx.get_pin()
+            pin = yield @ctx.prompt.get_pin()
             authenticated = pin is vm_settings.pin
 
 * doc.voicemail_settings.language Language used inside voicemail.
@@ -191,7 +191,7 @@ Otherwise, authentication can only happen with the PIN.
 
         choice  = yield msg.play_enveloppe current
         choice ?= yield msg.play_recording()
-        choice ?= yield @ctx.get_choice "phrase:'voicemail_listen_file_check:1:2:3:4'"
+        choice ?= yield @ctx.prompt.get_choice "phrase:'voicemail_listen_file_check:1:2:3:4'"
 
         switch choice
 
@@ -204,7 +204,7 @@ Jump to the previous message
 
           when "7"
             if current is 0
-              yield @ctx.action 'phrase', 'no previous message'
+              yield @ctx.prompt.phrase 'no previous message'
               @navigate_messages rows, current
             else
               @navigate_messages rows, current-1
@@ -213,7 +213,7 @@ Jump to the next message
 
           when "9"
             if current is rows.length-1
-              yield @ctx.action 'phrase', 'no next message'
+              yield @ctx.prompt.phrase 'no next message'
               @navigate_messages rows, current
             else
               @navigate_messages rows, current+1
@@ -236,7 +236,7 @@ Forward
 
 Gather recipient's number
 
-            destination = yield @ctx.get_number
+            destination = yield @ctx.prompt.get_number
               file: 'phrase:voicemail_forward_message_enter_extension:#'
               invalid_file: 'phrase:voicemail_invalid_extension'
 
@@ -244,7 +244,7 @@ Attempt to forward
 
             if destination?
               unless yield msg.forward destination
-                yield @ctx.action 'phrase', 'voicemail_invalid_extension'
+                yield @ctx.prompt.phrase 'voicemail_invalid_extension'
 
 Repeat message so that the user knows where to continue
 
@@ -265,7 +265,7 @@ Default navigation is: read next message or return to the main menu
       config_menu: seem (attempt = 3) ->
         debug 'config_menu'
         return if @ctx.call.closed
-        choice = yield @ctx.get_choice "phrase:'voicemail_config_menu:1:2:3:4:5'"
+        choice = yield @ctx.prompt.get_choice "phrase:'voicemail_config_menu:1:2:3:4:5'"
         switch choice
           when "1"
             yield @record_greeting()
@@ -287,7 +287,7 @@ Default navigation is: read next message or return to the main menu
       main_menu: seem (attempt = 7) ->
         debug 'main_menu'
         return if @ctx.call.closed
-        choice = yield @ctx.get_choice "phrase:'voicemail_menu:1:2:3:4'"
+        choice = yield @ctx.prompt.get_choice "phrase:'voicemail_menu:1:2:3:4'"
         debug 'main_menu', {choice}
         switch choice
           when "1"
@@ -301,12 +301,12 @@ Default navigation is: read next message or return to the main menu
           when "3"
             @config_menu()
           when "4"
-            @ctx.goodbye()
+            @ctx.prompt.goodbye()
           else
             if attempt > 0
               @main_menu attempt-1
             else
-              @ctx.goodbye()
+              @ctx.prompt.goodbye()
 
 * doc.voicemail_settings._attachments Contains prompts for the user's voicemail.
 
@@ -314,40 +314,40 @@ Default navigation is: read next message or return to the main menu
         debug 'record_something', {that,phrase}
         doc = yield @db.get 'voicemail_settings'
         rev = doc._rev
-        yield @ctx.action 'phrase', phrase
+        yield @ctx.prompt.phrase phrase
         upload_url = @uri "#{that}.#{Message::format}", rev
-        recorded = yield @ctx.record upload_url
+        recorded = yield @ctx.prompt.record upload_url
         if recorded < 3
-          yield @ctx.action 'phrase', 'vm_say,too short'
+          yield @ctx.prompt.phrase 'vm_say,too short'
           @record_something that,phrase
         else
-          @ctx.action 'phrase', 'vm_say,thank you'
+          @ctx.prompt.phrase 'vm_say,thank you'
 
       record_greeting: ->
         debug 'record_greeting'
         @record_something 'prompt', 'voicemail_record_greeting'
         .catch (error) =>
           debug "record_greeting: #{error}"
-          @ctx.error 'USR-263'
+          @ctx.prompt.error 'USR-263'
 
       record_name: ->
         debug 'record_name'
         @record_something 'name', 'voicemail_record_name'
         .catch (error) =>
           debug "record_name: #{error}"
-          @ctx.error 'USR-270'
+          @ctx.prompt.error 'USR-270'
 
       change_password: seem ->
         debug 'change_password'
         return if @ctx.call.closed
 
         get_pin = seem =>
-          pin = yield @ctx.get_new_pin min:@min_pin_length
+          pin = yield @ctx.prompt.get_new_pin min:@min_pin_length
           if pin?
             if pin.length >= @min_pin_length
               return pin
             else
-              yield @ctx.action 'phrase', 'vm_say,too short'
+              yield @ctx.prompt.phrase 'vm_say,too short'
           get_pin()
 
         new_pin = yield get_pin()
@@ -355,7 +355,7 @@ Default navigation is: read next message or return to the main menu
         vm_settings.pin = new_pin
         yield @db.put vm_settings
         delete @vm_settings # remove memoized value
-        @ctx.action 'phrase', 'vm_say,thank you'
+        @ctx.prompt.phrase 'vm_say,thank you'
 
     module.exports = User
     pkg = require '../package.json'

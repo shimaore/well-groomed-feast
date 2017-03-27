@@ -40,7 +40,7 @@ In any case closing too early will cause issues with email notifications.
 
         when 'inbox'
           yield @action 'answer'
-          yield @action 'set', "language=#{@session.language ? @cfg.announcement_language}"
+          yield @set language: @session.language ? @cfg.announcement_language
 
           debug 'Locate user', @source
           user = yield messaging.locate_user @source
@@ -65,7 +65,7 @@ In any case closing too early will cause issues with email notifications.
         when 'main'
 
           yield @action 'answer'
-          yield @action 'set', "language=#{@session.language ? @cfg.announcement_language}"
+          yield @set language: @session.language ? @cfg.announcement_language
 
           debug 'Retrieve and locate user'
           user = yield messaging.gather_user()
@@ -85,7 +85,7 @@ In any case closing too early will cause issues with email notifications.
         else
 
           yield @action 'answer'
-          yield @action 'set', "language=#{@session.language ? @cfg.announcement_language}"
+          yield @set language: @session.language ? @cfg.announcement_language
 
           debug 'Locate user', @destination
           user = yield messaging.locate_user @destination
@@ -98,7 +98,7 @@ In any case closing too early will cause issues with email notifications.
             yield msg.start_recording()
             yield msg.post_recording()
 
-          @goodbye()
+          @prompt.goodbye()
             .catch (error) ->
               debug "goodbye: #{error}"
 

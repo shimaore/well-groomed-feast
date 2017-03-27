@@ -97,7 +97,7 @@ FIXME: Migrate to new `node_mailer` conventions.
 
                 email_options.attachments.push {
                   filename: name
-                  path: ctx.uri opts.user, msg._id, name, null, true
+                  path: ctx.voicemail_uri opts.user, msg._id, name, null, true
                   contentType: data.content_type
                 }
 

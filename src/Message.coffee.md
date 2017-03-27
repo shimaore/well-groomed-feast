@@ -35,7 +35,7 @@ new Message(ctx, User).create()
         @part = @the_first_part
 
       uri: (name,rev) ->
-        @ctx.uri @user,@id,name,rev
+        @ctx.voicemail_uri @user,@id,name,rev
 
       has_part: seem (part = @part) ->
         name = "part#{part}.#{@format}"
@@ -57,7 +57,7 @@ FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
 
         name = "part#{@part}.#{@format}"
         upload_url = @uri name, doc._rev
-        record_seconds = parseInt yield @ctx.record upload_url, @max_duration
+        record_seconds = parseInt yield @ctx.prompt.record upload_url, @max_duration
         debug 'start_recording: message saved', {record_seconds}
         if (isNaN record_seconds) or record_seconds < @min_duration
           yield @delete_single_part @part
@@ -86,7 +86,7 @@ See `file_open` in mod_httapi.c.
         url = @uri name
         it_does = yield @has_part this_part
         debug 'play_recording', {it_does}
-        choice = yield @ctx.play url if it_does
+        choice = yield @ctx.prompt.play url if it_does
 
 Keep playing if no user interaction
 
@@ -138,7 +138,7 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
 
 FIXME The default FreeSwitch prompts only allow for one-part messages, while we allow for multiple.
 
-        choice = yield @ctx.get_choice 'phrase:voicemail_record_file_check:1:2:3'
+        choice = yield @ctx.prompt.get_choice 'phrase:voicemail_record_file_check:1:2:3'
         switch choice
 
 Play
@@ -184,7 +184,7 @@ Play the message enveloppe
         debug 'play_enveloppe', @id
         doc = yield @user.db.get @id
         user_timestamp = @user.time doc.timestamp
-        @ctx.play "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
+        @ctx.prompt.phrase "message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}"
 
 Create a new voicemail record in the database
 ---------------------------------------------
@@ -219,7 +219,7 @@ Create new CDB record to hold the voicemail metadata
         .catch (e) =>
           debug "Could not create message: #{e}.", @id
           cuddly.csr "Could not create message: #{e}"
-          @ctx.error 'MSG-180'
+          @ctx.prompt.error 'MSG-180'
 
       notify: seem (flag) ->
         debug 'notify', flag, @user.id, @id
