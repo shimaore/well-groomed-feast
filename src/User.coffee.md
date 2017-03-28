@@ -164,8 +164,8 @@ Otherwise, authentication can only happen with the PIN.
 * doc.voicemail_settings.language Language used inside voicemail.
 
         if authenticated
-          yield @ctx.action 'set', "language=#{vm_settings.language}" if vm_settings.language?
-          yield @ctx.action 'phrase', 'voicemail_hello'
+          yield @ctx.set language: vm_settings.language if vm_settings.language?
+          yield @ctx.prompt.phrase 'voicemail_hello'
         else
           @authenticate attempts-1
 
