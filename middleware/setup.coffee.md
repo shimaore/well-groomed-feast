@@ -20,21 +20,4 @@ Use `mod_httpapi` to support URLs.
     @include = ->
 
       @voicemail_uri = (user,id,name,rev,simple) =>
-        db = qs.escape user.database
-        id = qs.escape id
-        rev = qs.escape rev ? 'current'
-        name = qs.escape name
-        @prompt.uri "/voicemail/#{db}/#{id}/#{rev}/#{name}", simple
-
-Attachment upload/download
-==========================
-
-    @web = (ctx) ->
-
-      @get '/voicemail/:db/:msg/:rev/:file', ->
-        uri = "/#{qs @params.db}/#{qs @params.msg}/#{qs @params.file}"
-        ctx.proxy_get @cfg.userdb_base_uri, uri
-
-      @put '/voicemail/:db/:msg/:rev/:file', ->
-        uri = "#{qs @params.db}/#{qs @params.msg}/#{qs @params.file}"
-        ctx.proxy_put @cfg.userdb_base_uri, uri, @params.rev
+        @prompt.uri 'user-db', user.database, id, name, rev, simple
