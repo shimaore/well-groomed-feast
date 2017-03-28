@@ -184,7 +184,7 @@ Play the message enveloppe
         debug 'play_enveloppe', @id
         doc = yield @user.db.get @id
         user_timestamp = @user.time doc.timestamp
-        @ctx.prompt.phrase "message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}"
+        @ctx.prompt.play "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
 
 Create a new voicemail record in the database
 ---------------------------------------------
@@ -260,8 +260,6 @@ There used to be code properly handling "more than one attachment" in this modul
       forward: seem (destination) ->
         messaging = new Messaging @ctx
         {user} = yield messaging.retrieve_number destination
-
-        assert user.number is destination, "user.number = #{user.number} but destination = #{destination}"
 
         if not user?
           ## Blabla destination does not exist, try again
