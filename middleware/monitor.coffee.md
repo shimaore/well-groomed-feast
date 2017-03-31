@@ -25,6 +25,10 @@ The couchapp used in the (local) provisioning database to monitor changes.
           return false unless doc.type is 'number'
           doc.default_voicemail_settings? or doc.user_database?
 
+        number_domains: p_fun (doc,req) ->
+          return false unless doc.type is 'number_domain'
+          doc.fifos?.some (fifo) -> fifo.default_voicemail_settings? or fifo.user_database?
+
 The couchapp inserted in the user's database, contains the views used by the voicemail application.
 
     user_app = require '../src/couchapp'
@@ -45,22 +49,23 @@ Install the couchapp in the (local) provisioning database.
 Individual user database changes
 --------------------------------
 
-    monitored = seem (cfg,doc) ->
+    monitored = seem (cfg,doc,data = doc) ->
 
-      {default_voicemail_settings,user_database} = doc
+      {default_voicemail_settings,user_database} = data
 
 ### Assign a user-database
 
 If no user-database is specified (but a set of default voicemail settings is present), we create a new database.
 
 * doc.local_number.user_database (string) The name of the user database used to store voicemail messages for that number. Created automatically by the voicemail system, its format is the letter `u` followed by a UUIDv4.
+* doc.number_domain.fifos[].user_database (string) The name of the user database used to store voicemail messages for that call group. Created automatically by the voicemail system, its format is the letter `u` followed by a UUIDv4.
 
       if not user_database?
         unless 'object' is typeof default_voicemail_settings
           debug "Invalid default_voicemail_settings: #{typeof default_voicemail_settings}"
           return
         user_database = "u#{uuid.v4()}"
-        doc.user_database = user_database
+        data.user_database = user_database
         debug 'Setting user_database', doc
         yield cfg.master_push(doc).catch (error) ->
           return if error.status is 409
@@ -137,6 +142,7 @@ Create the voicemail settings record.
 If the voicemail-settings document does not exist, create one based on the default voicemail settings specified.
 
 * doc.local_number.default_voicemail_settings (hash) Object used to initialize the voicemail user database's `voicemail_settings` record. See doc.voicemail_settings for its content.
+* doc.number_domain.fifos[].default_voicemail_settings (hash) Object used to initialize the voicemail database's `voicemail_settings` record. See doc.voicemail_settings for its content.
 * doc.voicemail_settings._id (string) `voicemail_settings`
 
       if not vm_settings?
@@ -169,10 +175,10 @@ Startup
 
       debug 'Starting changes listener'
 
-      on_change = seem (doc) ->
+      on_change = seem (doc,data) ->
         if typeof cfg.voicemail?.monitoring is 'number'
           yield Promise.delay cfg.voicemail?.monitoring
-        monitored cfg, doc
+        monitored cfg, doc, data
 
       main = ->
         cfg.prov.changes
@@ -190,7 +196,25 @@ Startup
           do main
           return
 
+      main2 = ->
+        cfg.prov.changes
+          live: true
+          filter: "#{couchapp.id}/number_domains"
+          include_docs: true
+          since: 'now'
+        .on 'change', ({doc}) ->
+          fifo = doc.fifos?.find (fifo) -> fifo.default_voicemail_settings? or fifo.user_database?
+          on_change doc, fifo
+          .catch (error) ->
+            debug "on_change: #{error.stack ? error}"
+          return
+        .on 'error', (error) ->
+          debug "changes: #{error.stack ? error}"
+          do main2
+          return
+
       do main
+      do main2
       debug 'Ready'
 
       return
