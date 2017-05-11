@@ -64,7 +64,7 @@ Get templates
           uri_name = [file_name, opts.language, part].join '.'
 
           data = yield cfg.prov
-            .getAttachment opts.number_domain, uri_name
+            .getAttachment opts.user.number_domain, uri_name
             .catch -> null
 
           if data?
