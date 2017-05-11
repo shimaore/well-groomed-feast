@@ -33,7 +33,7 @@
 Template handling
 =================
 
-      send_email_notification = (msg,opts) ->
+      send_email_notification = seem (msg,opts) ->
         debug 'send_email_notification', {msg,opts}
         file_name = if opts.attach
             'voicemail_notification_with_attachment'
@@ -60,58 +60,66 @@ Get templates
 
         template = {}
 
-        Promise.all (Object.keys default_templates).map (part) ->
+        yield Promise.all (Object.keys default_templates).map (part) seem ->
           uri_name = [file_name, opts.language, part].join '.'
 
-### Templates in the server configuration
+          data = yield cfg.prov
+            .getAttachment opts.number_domain, uri_name
+            .catch -> null
 
-          cfg.prov.getAttachment "config:voicemail", uri_name
-          .catch (error) ->
-            null
-          .then (data) ->
-            template[part] = data?.toString() ? default_templates[part]
+          if data?
+            template[part] = data.toString()
+            return
+
+### Templates in the provisioning database
+
+          data = yield cfg.prov
+            .getAttachment "config:voicemail", uri_name
+            .catch (error) -> null
+
+          if data?
+            template[part] = data.toString()
+            return
+
+          template[part] = default_templates[part]
 
 Send email out
 ==============
 
-        .then ->
-          debug 'Ready to send.'
-          email_options =
-            from: opts.sender ? opts.email
-            to: opts.email
-            subject: Milk.render template.subject, msg
-            text: Milk.render template.body, msg
-            html: Milk.render template.html, msg
-            attachments: []
+        debug 'Ready to send.'
+        email_options =
+          from: opts.sender ? opts.email
+          to: opts.email
+          subject: Milk.render template.subject, msg
+          text: Milk.render template.body, msg
+          html: Milk.render template.html, msg
+          attachments: []
 
-          if opts.attach and msg._attachments
+        if opts.attach and msg._attachments
 
 Alternatively, enumerate the part#{n}.#{extension} files? (FIXME?)
 
-            for name, data of msg._attachments
-              do (name,data) ->
+          for name, data of msg._attachments
+            do (name,data) ->
 
 `data` fields might be: `content_type`, `revpos`, `digest`, `length`, `stub`:boolean
 
 FIXME: Migrate to new `node_mailer` conventions.
 
-                email_options.attachments.push {
-                  filename: name
-                  path: ctx.voicemail_uri opts.user, msg._id, name, null, true
-                  contentType: data.content_type
-                }
+              email_options.attachments.push {
+                filename: name
+                path: ctx.voicemail_uri opts.user, msg._id, name, null, true
+                contentType: data.content_type
+              }
 
-          debug 'sendMail', email_options
-          sendMail.call transport, email_options
-          .then (info) ->
-            debug 'sendMail', info
+        debug 'sendMail', email_options
+        info = yield sendMail.call transport, email_options
+        debug 'sendMail', info
 
 Delete record once all data has been emailed.
 
-            if (opts.attach or opts.do_not_record) and opts.send_then_delete
-              opts.user.db.remove msg
-          .catch (error) ->
-            debug "sendMail: #{error}", msg
+        if (opts.attach or opts.do_not_record) and opts.send_then_delete
+          yield opts.user.db.remove msg
 
 API wrapper
 ===========
@@ -146,8 +154,8 @@ We should only email about new messages.
 
         settings = yield user.db.get 'voicemail_settings'
         return unless settings.email_notifications
-        notifications = for email, params of settings.email_notifications
-          send_email_notification message,
+        for email, params of settings.email_notifications
+          p = send_email_notification message,
             email: email
             do_not_record: settings.do_not_record
             send_then_delete: settings.send_then_delete
@@ -155,7 +163,8 @@ We should only email about new messages.
             language: settings.language
             user: user
             sender: sender
-        yield Promise.all notifications
+          yield p.catch (error) ->
+            debug "sendMail: #{error}", message
         debug 'send_notification: done'
 
       cfg.notifiers.email ?= send_notification_to
