@@ -60,7 +60,7 @@ Get templates
 
         template = {}
 
-        yield Promise.all (Object.keys default_templates).map (part) seem ->
+        yield Promise.all (Object.keys default_templates).map seem (part) ->
           uri_name = [file_name, opts.language, part].join '.'
 
           data = yield cfg.prov
