@@ -131,7 +131,7 @@ Check whether the attachment exists (it might be deleted if it doesn't match the
         it_does = yield @has_part @part
         debug 'post_recording', {it_does}
         unless it_does
-          yield cuddly.ops "Could not record message part", {message_id:@id,user_id:@user.id}
+          yield debug.ops "Could not record message part", {message_id:@id,user_id:@user.id}
           yield @ctx.action 'phrase', "could not record please try again"
           yield @start_recording()
           return
@@ -211,14 +211,14 @@ Note: now that we process `linger` properly this might be moved into `post_recor
             @notify 'create'
           .catch (e) =>
             debug "Notification bug: #{e}"
-            cuddly.dev "Notification bug: #{e}"
+            debug.dev "Notification bug: #{e}"
 
 Create new CDB record to hold the voicemail metadata
 
         @user.db.put msg
         .catch (e) =>
           debug "Could not create message: #{e}.", @id
-          cuddly.csr "Could not create message: #{e}"
+          debug.csr "Could not create message: #{e}"
           @ctx.prompt.error 'MSG-180'
 
       notify: seem (flag) ->
@@ -229,7 +229,7 @@ Create new CDB record to hold the voicemail metadata
             notifier @user, @id, flag
             .catch (error) ->
               debug "Notifier #{name} error: #{error}\n#{error.stack}"
-              cuddly.csr "Notifier #{name} error: #{error}"
+              debug.csr "Notifier #{name} error: #{error}"
         null
 
       remove: seem ->
@@ -355,8 +355,7 @@ Do not leak.
 
     module.exports = Message
     pkg = require '../package.json'
-    debug = (require 'debug') "#{pkg.name}:Message"
-    cuddly = (require 'cuddly') "#{pkg.name}:Message"
+    debug = (require 'tangible') "#{pkg.name}:Message"
     Promise = require 'bluebird'
     Messaging = require './Messaging'
 

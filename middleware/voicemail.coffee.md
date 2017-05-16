@@ -14,7 +14,7 @@ by FreeSwitch) which can then be transcoded.
 
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:voicemail"
-    debug = (require 'debug') @name
+    debug = (require 'tangible') @name
     seem = require 'seem'
 
 `esl` will wait 4000ms, while our own `Message` will wait 3000ms.

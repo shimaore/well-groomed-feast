@@ -3,7 +3,7 @@
 
     pkg = require '../package'
     @name = "#{pkg.name}:middleware:monitor"
-    debug = (require 'debug') @name
+    debug = (require 'tangible') @name
 
     request = (require 'superagent-as-promised') require 'superagent'
     PouchDB = require 'pouchdb'
@@ -81,7 +81,7 @@ At this point we expect to have a valid user database name.
 
       if not user_database.match /^u[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
         debug 'Invalid db name', user_database
-        cuddly.csr 'Invalid db name', user_database
+        debug.csr 'Invalid db name', user_database
         return
 
       target_db_uri = [cfg.userdb_base_uri,user_database].join '/'

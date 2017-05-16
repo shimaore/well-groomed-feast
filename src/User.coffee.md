@@ -41,7 +41,7 @@ Note: this requires the application to be database admin, which is OK.
 Debug as much as we can.
 
           debug "VM Box is not available", {user_id:@id}
-          cuddly.csr "VM Box is not available", {user_id:@id}
+          debug.csr "VM Box is not available", {user_id:@id}
 
 Tell the user to call support.
 
@@ -359,8 +359,7 @@ Default navigation is: read next message or return to the main menu
 
     module.exports = User
     pkg = require '../package.json'
-    debug = (require 'debug') "#{pkg.name}:User"
-    cuddly = (require 'cuddly') "#{pkg.name}:User"
+    debug = (require 'tangible') "#{pkg.name}:User"
     assert = require 'assert'
 
     moment = require 'moment-timezone'

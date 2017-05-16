@@ -27,8 +27,6 @@
     "bluebird": "^3.4.6",
     "charming-circle": "^3.3.1",
     "coffeescript-helpers": "^2.2.0",
-    "cuddly": "^1.1.5",
-    "debug": "^2.5.1",
     "jssip": "^3.0.0",
     "lru-cache": "^4.0.2",
     "milk": "^1.2.0",
@@ -42,6 +40,7 @@
     "shimaore-pouchdb": "^6.1.0",
     "superagent": "^3.3.1",
     "superagent-as-promised": "^4.0.0",
+    "tangible": "^1.2.2",
     "uuid": "^3.0.1"
   },
   "devDependencies": {

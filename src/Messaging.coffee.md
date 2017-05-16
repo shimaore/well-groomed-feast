@@ -50,7 +50,7 @@ In most cases `session.endpoint` is already provided.
 Internal consistency
 
         if @ctx.session.endpoint_name? and not @ctx.session.endpoint?
-          cuddly.dev "Missing session.endpoint for #{@ctx.session.endpoint_name}"
+          debug.dev "Missing session.endpoint for #{@ctx.session.endpoint_name}"
           return @ctx.prompt.error 'MSI-48'
 
 Number-domain selection
@@ -76,7 +76,7 @@ Fallback to the default one configured.
 
         if not number_domain?
           number_domain = @ctx.cfg.voicemail.number_domain ? 'local'
-          cuddly.csr "No user_domain specified for #{number}, using configured #{number_domain} instead."
+          debug.csr "No user_domain specified for #{number}, using configured #{number_domain} instead."
 
         @ctx.session.number_domain ?= number_domain
 
@@ -97,7 +97,7 @@ If the record was found but no user-database is specified, either the line has n
 
         if not user_database?
           debug "Customer #{user.id} has no user_database."
-          cuddly.csr "Customer #{user.id} has no user_database."
+          debug.csr "Customer #{user.id} has no user_database."
           return @ctx.prompt.error 'MSI-42'
 
         @ctx.session.number = number_data
@@ -130,7 +130,7 @@ Attempt to locate the local-number record.
           .get "number:#{user_id}"
           .catch (error) ->
             debug "number:#{user_id} not found, #{error}"
-            cuddly.dev "number:#{user_id} not found, #{error}"
+            debug.dev "number:#{user_id} not found, #{error}"
             {}
           .then (data) ->
             if data?.disabled then {} else data
@@ -169,7 +169,6 @@ Note: `userdb_base_uri` must contain authentication elements (e.g. "voicemail" u
 
     module.exports = Messaging
     pkg = require '../package.json'
-    debug = (require 'debug') "#{pkg.name}:Messaging"
-    cuddly = (require 'cuddly') "#{pkg.name}:Messaging"
+    debug = (require 'tangible') "#{pkg.name}:Messaging"
     assert = require 'assert'
     User = require './User'

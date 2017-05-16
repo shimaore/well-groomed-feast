@@ -1,6 +1,5 @@
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:setup"
-    debug = (require 'debug') @name
 
     url = require 'url'
     qs = require 'querystring'

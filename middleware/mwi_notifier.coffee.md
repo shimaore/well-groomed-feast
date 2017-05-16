@@ -2,8 +2,8 @@
     seem = require 'seem'
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:mwi_notifier"
-    debug = (require 'debug') @name
-    trace = (require 'debug') "#{@name}:trace"
+    debug = (require 'tangible') @name
+    trace = ->
     User = require '../src/User'
     Parser = require 'jssip/lib/Parser'
 
@@ -19,7 +19,7 @@
 
     @server_pre = (ctx) ->
       cfg = ctx.cfg
-      debug "server_pre, ctx = ", ctx
+      debug 'server_pre'
 
       socket = dgram.createSocket 'udp4'
 
