@@ -10,6 +10,7 @@
     @name = "#{pkg.name}:middleware:email_notifier"
     debug = (require 'tangible') @name
     assert = require 'assert'
+    {inspect} = require 'util'
 
     @include = ->
       cfg = @cfg
@@ -34,7 +35,7 @@ Template handling
 =================
 
       send_email_notification = seem (msg,opts) ->
-        debug 'send_email_notification', {msg,opts}
+        debug 'send_email_notification', {msg}
         file_name = if opts.attach
             'voicemail_notification_with_attachment'
           else if opts.do_not_record
@@ -112,9 +113,9 @@ FIXME: Migrate to new `node_mailer` conventions.
                 contentType: data.content_type
               }
 
-        debug 'sendMail', email_options
+        debug "sendMail", inspect email_options
         info = yield sendMail.call transport, email_options
-        debug 'sendMail', info
+        debug 'sendMail', inspect info
 
 Delete record once all data has been emailed.
 
@@ -125,7 +126,7 @@ API wrapper
 ===========
 
       send_notification_to = seem (user,msg_id) ->
-        debug 'send_notification_to', {user.id,msg_id}
+        debug 'send_notification_to', {user: inspect(user), msg_id}
 
 We can only send emails about a specific message.
 
@@ -164,7 +165,7 @@ We should only email about new messages.
             user: user
             sender: sender
           yield p.catch (error) ->
-            debug "sendMail: #{error}", message
+            debug "sendMail: #{inspect error}", message
         debug 'send_notification: done'
 
       cfg.notifiers.email ?= send_notification_to

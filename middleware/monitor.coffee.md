@@ -80,7 +80,6 @@ We exit at this point because updating the document will trigger a new `change` 
 At this point we expect to have a valid user database name.
 
       if not user_database.match /^u[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-        debug 'Invalid db name', user_database
         debug.csr 'Invalid db name', user_database
         return
 

@@ -40,7 +40,6 @@ Note: this requires the application to be database admin, which is OK.
 
 Debug as much as we can.
 
-          debug "VM Box is not available", {user_id:@id}
           debug.csr "VM Box is not available", {user_id:@id}
 
 Tell the user to call support.
@@ -182,7 +181,7 @@ Otherwise, authentication can only happen with the PIN.
         rows
 
       navigate_messages: seem (rows,current) ->
-        debug 'navigate_messages', {rows,current}
+        debug 'navigate_messages', {rows:rows?.length,current}
         # Exit once we reach the end or there are no messages, etc.
         if current < 0 or not rows? or current >= rows.length
           return

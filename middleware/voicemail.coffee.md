@@ -70,7 +70,7 @@ In any case closing too early will cause issues with email notifications.
           debug 'Retrieve and locate user'
           user = yield messaging.gather_user()
 
-          debug 'Authenticate', user
+          debug 'Authenticate', user.id
           yield user.authenticate()
 
           debug 'Present the main menu'

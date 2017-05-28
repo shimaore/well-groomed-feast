@@ -96,7 +96,6 @@ Internal consistency
 If the record was found but no user-database is specified, either the line has no voicemail, or the record is incorrect. Either way, we can't proceed any further.
 
         if not user_database?
-          debug "Customer #{user.id} has no user_database."
           debug.csr "Customer #{user.id} has no user_database."
           return @ctx.prompt.error 'MSI-42'
 
@@ -129,7 +128,6 @@ Attempt to locate the local-number record.
         number_data = yield @ctx.cfg.prov
           .get "number:#{user_id}"
           .catch (error) ->
-            debug "number:#{user_id} not found, #{error}"
             debug.dev "number:#{user_id} not found, #{error}"
             {}
           .then (data) ->

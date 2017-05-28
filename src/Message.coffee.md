@@ -41,7 +41,7 @@ new Message(ctx, User).create()
         name = "part#{part}.#{@format}"
         debug 'has_part', @id, part, @format, name
         doc = yield @user.db.get @id
-        debug 'has_part', doc._attachments?[name]
+        debug 'has_part', doc._attachments?[name]?
         doc._attachments?[name]?
 
 Record the current part
@@ -210,15 +210,13 @@ Note: now that we process `linger` properly this might be moved into `post_recor
           .then =>
             @notify 'create'
           .catch (e) =>
-            debug "Notification bug: #{e}"
             debug.dev "Notification bug: #{e}"
 
 Create new CDB record to hold the voicemail metadata
 
         @user.db.put msg
         .catch (e) =>
-          debug "Could not create message: #{e}.", @id
-          debug.csr "Could not create message: #{e}"
+          debug.csr "Could not create message: #{e}", @id
           @ctx.prompt.error 'MSG-180'
 
       notify: seem (flag) ->
@@ -228,8 +226,7 @@ Create new CDB record to hold the voicemail metadata
           yield do (name,notifier) =>
             notifier @user, @id, flag
             .catch (error) ->
-              debug "Notifier #{name} error: #{error}\n#{error.stack}"
-              debug.csr "Notifier #{name} error: #{error}"
+              debug.csr "Notifier #{name} error: #{error}\n#{error.stack}"
         null
 
       remove: seem ->
