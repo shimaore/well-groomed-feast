@@ -125,7 +125,7 @@ API wrapper
 ===========
 
       send_notification_to = seem (user,msg_id) ->
-        debug 'send_notification_to', {user,msg_id}
+        debug 'send_notification_to', {user.id,msg_id}
 
 We can only send emails about a specific message.
 
