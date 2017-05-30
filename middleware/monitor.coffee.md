@@ -202,10 +202,12 @@ Startup
           include_docs: true
           since: 'now'
         .on 'change', ({doc}) ->
-          fifo = doc.fifos?.find (fifo) -> fifo.default_voicemail_settings? or fifo.user_database?
-          on_change doc, fifo
-          .catch (error) ->
-            debug "on_change: #{error.stack ? error}"
+          return unless doc.fifos?
+          for fifo in doc.fifos when fifo.default_voicemail_settings? or fifo.user_database?
+            do (doc,fifo) ->
+              on_change doc, fifo
+              .catch (error) ->
+                debug "on_change: #{error.stack ? error}"
           return
         .on 'error', (error) ->
           debug "changes: #{error.stack ? error}"
