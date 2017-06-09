@@ -309,14 +309,14 @@ Default navigation is: read next message or return to the main menu
 
 * doc.voicemail_settings._attachments Contains prompts for the user's voicemail.
 
-      record_something: seem (that,phrase) ->
+      record_something: seem (that,phrase,min_duration = 3) ->
         debug 'record_something', {that,phrase}
         doc = yield @db.get 'voicemail_settings'
         rev = doc._rev
         yield @ctx.prompt.phrase phrase
         upload_url = @uri "#{that}.#{Message::format}", rev
         recorded = yield @ctx.prompt.record upload_url
-        if recorded < 3
+        if recorded < min_duration
           yield @ctx.prompt.phrase 'vm_say,too short'
           @record_something that,phrase
         else
@@ -331,7 +331,7 @@ Default navigation is: read next message or return to the main menu
 
       record_name: ->
         debug 'record_name'
-        @record_something 'name', 'voicemail_record_name'
+        @record_something 'name', 'voicemail_record_name', 1
         .catch (error) =>
           debug "record_name: #{error}"
           @ctx.prompt.error 'USR-270'
