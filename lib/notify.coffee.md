@@ -2,7 +2,7 @@ Notify a specific URI
 =====================
 
     pkg = require '../package'
-    debug = (require 'debug') "#{pkg.name}:notify"
+    debug = (require 'tangible') "#{pkg.name}:notify"
     seem = require 'seem'
 
     resolve = require './resolve'

@@ -4,8 +4,7 @@ URI DNS resolution and cache
     seem = require 'seem'
     pkg = require '../package'
     @name = "#{pkg.name}:resolve"
-    debug = (require 'debug') @name
-    trace = (require 'debug') "#{@name}:trace"
+    debug = (require 'tangible') @name
     LRU = require 'lru-cache'
 
     Promise = require 'bluebird'
@@ -27,7 +26,7 @@ URI = username@host:port
       if m = uri.match /^([^@]+)@(^[@:]+):(\d+)$/
         name = m[2]
         port = m[3]
-        trace 'resolve', {name,port}
+        debug 'resolve', {name,port}
         result.push {port,name}
 
 URI = username@domain
@@ -36,7 +35,7 @@ URI = username@domain
         domain = m[2]
 
         addresses = yield dns.resolveSrvAsync '_sip._udp.' + domain
-        trace 'Addresses', addresses
+        debug 'Addresses', addresses
         for address in addresses
           do (address) ->
             result.push address
