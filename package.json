@@ -27,8 +27,8 @@
     "bluebird": "^3.5.0",
     "charming-circle": "^3.5.2",
     "coffeescript-helpers": "^2.2.0",
-    "jssip": "^3.0.12",
-    "lru-cache": "^4.0.2",
+    "jssip": "^3.0.13",
+    "lru-cache": "^4.1.1",
     "milk": "^1.2.0",
     "moment-timezone": "^0.5.13",
     "nimble-direction": "^6.1.4",
@@ -41,12 +41,12 @@
     "shimaore-pouchdb": "*",
     "superagent": "^3.5.2",
     "superagent-as-promised": "^4.0.0",
-    "tangible": "^1.5.0",
-    "uuid": "^3.0.1"
+    "tangible": "^1.7.0",
+    "uuid": "^3.1.0"
   },
   "devDependencies": {
-    "chai": "^4.0.0",
-    "chai-as-promised": "^6.0.0",
+    "chai": "^4.0.2",
+    "chai-as-promised": "^7.1.0",
     "coffee-script": "^1.12.6",
     "mocha": "^3.4.2"
   }
