@@ -25,7 +25,7 @@
   "homepage": "https://github.com/shimaore/well-groomed-feast",
   "dependencies": {
     "bluebird": "^3.5.0",
-    "charming-circle": "^3.5.2",
+    "charming-circle": "^4.0.0",
     "coffeescript-helpers": "^2.2.0",
     "jssip": "^3.0.13",
     "lru-cache": "^4.1.1",
@@ -34,20 +34,19 @@
     "nimble-direction": "^6.1.4",
     "nodemailer": "^4.0.1",
     "nodemailer-smtp-transport": "^2.7.4",
-    "pouchdb": "*",
+    "pouchdb": "^6.3.4",
     "request": "^2.81.0",
     "scope-eval": "^1.0.0",
     "seem": "^2.0.0",
-    "shimaore-pouchdb": "*",
     "superagent": "^3.5.2",
     "superagent-as-promised": "^4.0.0",
     "tangible": "^1.7.0",
     "uuid": "^3.1.0"
   },
   "devDependencies": {
-    "chai": "^4.0.2",
-    "chai-as-promised": "^7.1.0",
-    "coffee-script": "^1.12.6",
-    "mocha": "^3.4.2"
+    "chai": "^4.1.1",
+    "chai-as-promised": "^7.1.1",
+    "coffee-script": "^1.12.7",
+    "mocha": "^3.5.0"
   }
 }
