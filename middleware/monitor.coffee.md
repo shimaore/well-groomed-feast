@@ -5,7 +5,7 @@
     @name = "#{pkg.name}:middleware:monitor"
     debug = (require 'tangible') @name
 
-    request = (require 'superagent-as-promised') require 'superagent'
+    request = require 'superagent'
     PouchDB = require 'pouchdb-core'
       .plugin require 'pouchdb-adapter-http'
     uuid = require 'uuid'
