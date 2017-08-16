@@ -64,15 +64,9 @@ Fallback to the number-domain associated with the endpoint, if any.
 
         number_domain ?= @ctx.session.endpoint?.number_domain
 
-Fallback to the one specified in the headers.
-
-* hdr.X-CCNQ3-Number-Domain In voicemail, used as fallback if the number domain could not be asserted from session.number_domain or session.endpoint.number_domain.
-
-        number_domain ?= @ctx.req.header 'X-CCNQ3-Number-Domain'
-
 Fallback to the default one configured.
 
-* cfg.voicemail.number_domain The default number-domain used for voicemail, if none is found in session.number_domain, session.endpoint.number_domain, or hdr.X-CCNQ3-Number-Domain.
+* cfg.voicemail.number_domain The default number-domain used for voicemail, if none is found in session.number_domain nor session.endpoint.number_domain
 
         if not number_domain?
           number_domain = @ctx.cfg.voicemail.number_domain ? 'local'
