@@ -5,7 +5,7 @@ This format is probably incorrect per section 3.1.2 of RFC3265 (the RURI or Even
 
     test_msg1 = '''
       SUBSCRIBE sip:test.phone.kwaoo.net SIP/2.0
-      X-CCNQ3-Endpoint: 0972222713@a.phone.kwaoo.net
+      X-En: 0972222713@a.phone.kwaoo.net
       Via: SIP/2.0/UDP 192.168.1.106:5063;branch=z9hG4bK-5e721c6;rport
       From: <sip:0972222713@test.phone.kwaoo.net>;tag=ed1530ada8e777c4
       To: <sip:test.phone.kwaoo.net>

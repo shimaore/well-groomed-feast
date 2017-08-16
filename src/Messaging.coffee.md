@@ -30,9 +30,9 @@ Gather a customer phone number and locate that record.
 Locate endpoint-data (`User` will also need it, so store it in the session).
 In most cases `session.endpoint` is already provided.
 
-* session.endpoint_name Name of the endpoint used for locating the number-domain, set from hdr.X-CCNQ3-Endpoint.
+* session.endpoint_name Name of the endpoint used for locating the number-domain, set from hdr.X-En
 
-        @ctx.session.endpoint_name ?= @ctx.req.header 'X-CCNQ3-Endpoint'
+        @ctx.session.endpoint_name ?= @ctx.req.header 'X-En'
 
 * session.endpoint Data of the endpoint used for locating the number-domain.
 
