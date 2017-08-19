@@ -24,7 +24,7 @@ In any case closing too early will cause issues with email notifications.
 
     finish = (user) ->
       setTimeout seem ->
-        yield user.close_db()
+        yield user?.close_db()
         user = null
       , close_delay
 
@@ -39,72 +39,79 @@ In any case closing too early will cause issues with email notifications.
       switch @destination
 
         when 'inbox'
-          yield @action 'answer'
-          yield @set language: @session.language ? @cfg.announcement_language
+          try
+            yield @action 'answer'
+            yield @set language: @session.language ? @cfg.announcement_language
 
-          debug 'Locate user', @source
-          user = yield messaging.locate_user @source
+            debug 'Locate user', @source
+            user = yield messaging.locate_user @source
 
-          debug 'Authenticate', user
-          yield user.authenticate()
+            debug 'Authenticate', user
+            yield user.authenticate()
 
-          debug 'Enumerate messages'
-          rows = yield user.new_messages()
-          yield user.navigate_messages rows, 0
+            debug 'Enumerate messages'
+            rows = yield user.new_messages()
+            yield user.navigate_messages rows, 0
 
-          debug 'Go to the main menu after message navigation'
-          yield user
-            .main_menu()
-            .catch (error) ->
-              debug "main_menu: #{error}"
+            debug 'Go to the main menu after message navigation'
+            yield user
+              .main_menu()
+              .catch (error) ->
+                debug "main_menu: #{error}"
 
-          finish user
-          user = null
-          rows = null
+          finally
+            finish user
+            user = null
+            rows = null
 
         when 'main'
 
-          yield @action 'answer'
-          yield @set language: @session.language ? @cfg.announcement_language
+          try
+            yield @action 'answer'
+            yield @set language: @session.language ? @cfg.announcement_language
 
-          debug 'Retrieve and locate user'
-          user = yield messaging.gather_user()
+            debug 'Retrieve and locate user'
+            user = yield messaging.gather_user()
 
-          debug 'Authenticate', user.id
-          yield user.authenticate()
+            debug 'Authenticate', user.id
+            yield user.authenticate()
 
-          debug 'Present the main menu'
-          yield user
-            .main_menu()
-            .catch (error) ->
-              debug "main_menu: #{error}"
+            debug 'Present the main menu'
+            yield user
+              .main_menu()
+              .catch (error) ->
+                debug "main_menu: #{error}"
 
-          finish user
-          user = null
+          finally
+            finish user
+            user = null
 
         else
 
-          yield @action 'answer'
-          yield @set language: @session.language ? @cfg.announcement_language
+          try
+            yield @action 'answer'
+            yield @set language: @session.language ? @cfg.announcement_language
 
-          debug 'Locate user', @destination
-          user = yield messaging.locate_user @destination
+            debug 'Locate user', @destination
+            user = yield messaging.locate_user @destination
 
-          msg = new Message this, user
-          yield msg.create()
+            msg = new Message this, user
+            yield msg.create()
 
-          do_recording = yield user.play_prompt()
-          if do_recording
-            yield msg.start_recording()
-            yield msg.post_recording()
+            do_recording = yield user.play_prompt()
+            if do_recording
+              yield msg.start_recording()
+              yield msg.post_recording()
 
-          @prompt.goodbye()
-            .catch (error) ->
-              debug "goodbye: #{error}"
+            @prompt.goodbye()
+              .catch (error) ->
+                debug "goodbye: #{error}"
 
-          finish user
-          user = null
-          msg = null
+          finally
+
+            finish user
+            user = null
+            msg = null
 
       messaging = null
 

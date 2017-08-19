@@ -204,7 +204,7 @@ Create a new voicemail record in the database
 If the user simply hungs up this is the only event we will receive.
 Note: now that we process `linger` properly this might be moved into `post_recording`, but the added complexity is probably not worth it.
 
-        @ctx.call.on 'cleanup_linger', =>
+        @ctx.call.once 'cleanup_linger', =>
           debug 'Disconnect Notice', @id
           Promise.delay 15000
           .then =>

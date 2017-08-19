@@ -26,7 +26,7 @@
       socket.on 'error', (error) ->
         debug "Socket error: #{error}"
 
-      socket.on 'listening', ->
+      socket.once 'listening', ->
         address = socket.address()
         debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
 
