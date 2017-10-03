@@ -27,10 +27,6 @@
         debug 'Missing `voicemail.sender`'
         return
 
-      transporter = smtpTransport cfg.mailer.SMTP
-      transport = mailer.createTransport transporter
-      sendMail = Promise.promisify transport.sendMail
-
 Template handling
 =================
 
@@ -88,8 +84,9 @@ Send email out
 ==============
 
         debug 'Ready to send.'
+        sender = opts.sender ? opts.email
         email_options =
-          from: opts.sender ? opts.email
+          from: sender
           to: opts.email
           subject: Milk.render template.subject, msg
           text: Milk.render template.body, msg
@@ -112,6 +109,18 @@ FIXME: Migrate to new `node_mailer` conventions.
                 path: ctx.voicemail_uri opts.user, msg._id, name, null, true
                 contentType: data.content_type
               }
+
+        options = {}
+        for own k,v of cfg.mailer.SMTP when k isnt 'auths'
+          options[k] = cfg.mailer.SMTP[k]
+
+        if cfg.mailer.SMTP.auths? and sender of cfg.mailer.SMTP.auths
+          options.auth = cfg.mailer.SMTP.auths[sender]
+        debug 'transport options', options
+
+        transporter = smtpTransport options
+        transport = mailer.createTransport transporter
+        sendMail = Promise.promisify transport.sendMail
 
         debug "sendMail", inspect email_options
         info = yield sendMail.call transport, email_options
