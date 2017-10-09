@@ -1,10 +1,6 @@
-    mailer = require 'nodemailer'
     Milk = require 'milk'
-    qs = require 'querystring'
-    path = require 'path'
-    Promise = require 'bluebird'
+    {send_mail} = require 'foamy-organization/send-email'
     seem = require 'seem'
-    smtpTransport = require 'nodemailer-smtp-transport'
 
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:email_notifier"
@@ -95,8 +91,6 @@ Send email out
 
         if opts.attach and msg._attachments
 
-Alternatively, enumerate the part#{n}.#{extension} files? (FIXME?)
-
           for name, data of msg._attachments
             do (name,data) ->
 
@@ -110,21 +104,7 @@ FIXME: Migrate to new `node_mailer` conventions.
                 contentType: data.content_type
               }
 
-        options = {}
-        for own k,v of cfg.mailer.SMTP when k isnt 'auths'
-          options[k] = cfg.mailer.SMTP[k]
-
-        if cfg.mailer.SMTP.auths? and sender of cfg.mailer.SMTP.auths
-          options.auth = cfg.mailer.SMTP.auths[sender]
-        debug 'transport options', options
-
-        transporter = smtpTransport options
-        transport = mailer.createTransport transporter
-        sendMail = Promise.promisify transport.sendMail
-
-        debug "sendMail", inspect email_options
-        info = yield sendMail.call transport, email_options
-        debug 'sendMail', inspect info
+        yield send_mail cfg, email_options
 
 Delete record once all data has been emailed.
 
