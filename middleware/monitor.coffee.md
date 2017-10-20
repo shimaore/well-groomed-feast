@@ -6,8 +6,7 @@
     debug = (require 'tangible') @name
 
     request = require 'superagent'
-    PouchDB = require 'pouchdb-core'
-      .plugin require 'pouchdb-adapter-http'
+    PouchDB = require 'ccnq4-pouchdb'
     uuid = require 'uuid'
     Promise = require 'bluebird'
 

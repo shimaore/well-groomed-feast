@@ -25,6 +25,7 @@
   "homepage": "https://github.com/shimaore/well-groomed-feast",
   "dependencies": {
     "bluebird": "^3.5.0",
+    "ccnq4-pouchdb": "^1.0.0",
     "charming-circle": "^4.1.1",
     "coffeescript-helpers": "^2.2.0",
     "foamy-organization": "^1.0.0",
@@ -33,8 +34,6 @@
     "milk": "^1.2.0",
     "moment-timezone": "^0.5.13",
     "nimble-direction": "^6.2.2",
-    "pouchdb-adapter-http": "^6.3.4",
-    "pouchdb-core": "^6.3.4",
     "request": "^2.81.0",
     "scope-eval": "^1.0.0",
     "seem": "^2.0.0",
