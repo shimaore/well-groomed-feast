@@ -14,13 +14,13 @@ by FreeSwitch) which can then be transcoded.
 
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:voicemail"
-    debug = (require 'tangible') @name
+    {debug,heal} = (require 'tangible') @name
     seem = require 'seem'
 
 `esl` will wait 4000ms, while our own `Message` will wait 3000ms.
 In any case closing too early will cause issues with email notifications.
 
-    close_delay = 30*seconds
+    close_delay = 60*seconds
 
     finish = (user) ->
       setTimeout seem ->
@@ -54,10 +54,11 @@ In any case closing too early will cause issues with email notifications.
             yield user.navigate_messages rows, 0
 
             debug 'Go to the main menu after message navigation'
-            yield user
-              .main_menu()
-              .catch (error) ->
-                debug "main_menu: #{error}"
+            yield user.main_menu()
+
+          catch error
+            debug.error 'inbox', error
+            heal @prompt.error 'VM-61'
 
           finally
             finish user
@@ -77,10 +78,11 @@ In any case closing too early will cause issues with email notifications.
             yield user.authenticate()
 
             debug 'Present the main menu'
-            yield user
-              .main_menu()
-              .catch (error) ->
-                debug "main_menu: #{error}"
+            yield user.main_menu()
+
+          catch error
+            debug.error 'main', error
+            heal @prompt.error 'VM-85'
 
           finally
             finish user
@@ -104,8 +106,10 @@ In any case closing too early will cause issues with email notifications.
               yield msg.post_recording()
 
             @prompt.goodbye()
-              .catch (error) ->
-                debug "goodbye: #{error}"
+
+          catch error
+            debug.error 'default', error
+            heal @prompt.error 'VM-61'
 
           finally
 
