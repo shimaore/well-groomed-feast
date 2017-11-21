@@ -21,6 +21,7 @@ Note: this requires the application to be database admin, which is OK.
         doc = yield @db.get(couchapp._id).catch -> {}
         doc[k] = v for own k,v of couchapp
         yield @db.put(doc).catch -> true
+        return
 
       close_db: ->
         yield @db.close?()
@@ -259,7 +260,7 @@ Default navigation is: read next message or return to the main menu
           else
             if current is rows.length-1
               return
-            yield @navigate_messages rows, current+1
+            @navigate_messages rows, current+1
 
       config_menu: seem (attempt = 3) ->
         debug 'config_menu'

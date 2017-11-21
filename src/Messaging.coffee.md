@@ -7,17 +7,16 @@
 
 Gather a customer phone number and locate that record.
 
-      gather_user: (attempts = 3) ->
+      gather_user: seem (attempts = 3) ->
         debug 'gather_user', {attempts}
         if attempts <= 0
           return @ctx.prompt.error()
 
-        @ctx.prompt.get_number()
-        .then (number) =>
-          if number?
-            @locate_user number, attempts-1
-          else
-            @gather_user attempts-1
+        number = yield @ctx.prompt.get_number()
+        if number?
+          @locate_user number, attempts-1
+        else
+          @gather_user attempts-1
 
       locate_user: seem (number,attempts = 3) ->
 
