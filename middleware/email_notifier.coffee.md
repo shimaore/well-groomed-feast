@@ -7,6 +7,7 @@
     debug = (require 'tangible') @name
     assert = require 'assert'
     {inspect} = require 'util'
+    sleep = (timeout) -> new Promise (resolve) -> setTimeout resolve, timeout
 
     @include = ->
       cfg = @cfg
@@ -123,7 +124,7 @@ We can only send emails about a specific message.
 
 FIXME: Sadly enough we don't have yet a way to be notified when the attachment might be available (it is pushed by HTTAPI through our proxy). If we do the retrieval too early, we might miss it. So let's pause for an arbitrary delay and hope the attachment gets uploaded in the time between, therefor allowing us to provide a proper notification.
 
-        yield Promise.delay 7*1000
+        yield sleep 7*1000
 
 * doc.local_number.voicemail_sender (email address) Address used as the sender for voicemail notifications via email. See doc.voicemail_settings, doc.voicemail_settings.email_notifications . Default: cfg.voicemail.sender
 * cfg.voicemail.sender (email address) Address used as default the sender for voicemail notifications via email. See doc.voicemail_settings, doc.voicemail_settings.email_notifications .

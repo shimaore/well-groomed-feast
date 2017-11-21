@@ -206,7 +206,7 @@ Note: now that we process `linger` properly this might be moved into `post_recor
 
         @ctx.call.once 'cleanup_linger', =>
           debug 'Disconnect Notice', @id
-          Promise.delay 15000
+          sleep 15000
           .then =>
             @notify 'create'
           .catch (e) =>
@@ -353,7 +353,7 @@ Do not leak.
     module.exports = Message
     pkg = require '../package.json'
     debug = (require 'tangible') "#{pkg.name}:Message"
-    Promise = require 'bluebird'
+    sleep = (timeout) -> new Promise (resolve) -> setTimeout resolve, timeout
     Messaging = require './Messaging'
 
     timestamp = -> new Date().toJSON()

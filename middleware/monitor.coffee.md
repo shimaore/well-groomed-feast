@@ -8,7 +8,7 @@
     request = require 'superagent'
     PouchDB = require 'ccnq4-pouchdb'
     uuid = require 'uuid'
-    Promise = require 'bluebird'
+    sleep = (timeout) -> new Promise (resolve) -> setTimeout resolve, timeout
 
     Nimble = require 'nimble-direction'
 
@@ -176,7 +176,7 @@ Startup
 
       on_change = seem (doc,data) ->
         if typeof cfg.voicemail?.monitoring is 'number'
-          yield Promise.delay cfg.voicemail?.monitoring
+          yield sleep cfg.voicemail?.monitoring
         monitored cfg, doc, data
 
       main = ->
