@@ -204,13 +204,10 @@ Create a new voicemail record in the database
 If the user simply hungs up this is the only event we will receive.
 Note: now that we process `linger` properly this might be moved into `post_recording`, but the added complexity is probably not worth it.
 
-        @ctx.call.once 'cleanup_linger', =>
+        @ctx.call.once 'cleanup_linger', hand =>
           debug 'Disconnect Notice', @id
-          sleep 15000
-          .then =>
-            @notify 'create'
-          .catch (e) =>
-            debug.dev "Notification bug: #{e}"
+          yield sleep 15000
+          heal @notify 'create'
 
 Create new CDB record to hold the voicemail metadata
 
@@ -234,7 +231,7 @@ Create new CDB record to hold the voicemail metadata
         doc = yield @user.db.get @id
         doc.box = 'trash'
         yield @user.db.put doc
-        yield @notify 'remove'
+        heal @notify 'remove'
         @ctx.action 'phrase', 'voicemail_ack,deleted'
 
       save: seem ->
@@ -242,7 +239,7 @@ Create new CDB record to hold the voicemail metadata
         doc = yield @user.db.get @id
         doc.box = 'saved'
         yield @user.db.put doc
-        yield @notify 'save'
+        heal @notify 'save'
         @ctx.action 'phrase', 'voicemail_ack,saved'
 
 The forward operation is a bit complex since it requires to:
@@ -352,7 +349,7 @@ Do not leak.
 
     module.exports = Message
     pkg = require '../package.json'
-    debug = (require 'tangible') "#{pkg.name}:Message"
+    {debug,hand,heal} = (require 'tangible') "#{pkg.name}:Message"
     sleep = (timeout) -> new Promise (resolve) -> setTimeout resolve, timeout
     Messaging = require './Messaging'
 
