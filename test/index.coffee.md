@@ -12,6 +12,7 @@
           prov:true
         m.server_pre.call {cfg}, {cfg}
         m.include.call {cfg}, {cfg}
+        cfg.notifiers.mwi.end()
 
       it 'setup', ->
         m = require '../middleware/setup'

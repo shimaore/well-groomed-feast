@@ -160,5 +160,8 @@ Static endpoint
         debug 'send_notification_to done', user.id
         return
 
+      send_notification_to.end = ->
+        socket.close()
+
       debug 'Configured.'
       return
