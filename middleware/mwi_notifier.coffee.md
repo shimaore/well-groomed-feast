@@ -2,7 +2,7 @@
     seem = require 'seem'
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:mwi_notifier"
-    debug = (require 'tangible') @name
+    {debug,heal} = (require 'tangible') @name
     trace = ->
     User = require '../src/User'
     Parser = require 'jssip/lib/Parser'
@@ -30,12 +30,9 @@
         address = socket.address()
         debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
 
-      socket.on 'message', ->
-        args = arguments
-        on_message
-          .apply ctx, args
-          .catch (error) ->
-            debug "on_message: #{error}\n#{error.stack}"
+      socket.on 'message', (args...) ->
+        heal on_message.apply ctx, args
+        return
 
       on_message = seem (msg,rinfo) ->
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
