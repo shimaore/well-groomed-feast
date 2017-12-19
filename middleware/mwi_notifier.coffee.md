@@ -132,6 +132,8 @@ Use the endpoint name and via to route the packet.
 
         trace 'send_notification_to', {via,endpoint}
 
+        return unless endpoint?
+
 Registered endpoint
 
         if m = endpoint.match /^([^@]+)@([^@]+)$/
