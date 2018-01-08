@@ -7,8 +7,10 @@ URI DNS resolution and cache
     debug = (require 'tangible') @name
     LRU = require 'lru-cache'
 
-    Promise = require 'bluebird'
-    dns = Promise.promisifyAll require 'dns'
+    dns = require 'dns'
+
+    resolveSrvAsync = (name) -> new Promise (resolve,reject) ->
+      dns.resolveSrv name, (err,res) -> if err then reject err else resolve res
 
     dns_cache = LRU
       max: 200
@@ -34,7 +36,7 @@ URI = username@domain
       if m = uri.match /^([^@]+)@([^@:]+)$/
         domain = m[2]
 
-        addresses = yield dns.resolveSrvAsync '_sip._udp.' + domain
+        addresses = yield resolveSrvAsync '_sip._udp.' + domain
         debug 'Addresses', addresses
         for address in addresses
           do (address) ->
