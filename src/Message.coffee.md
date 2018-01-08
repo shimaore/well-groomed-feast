@@ -33,6 +33,7 @@ new Message(ctx, User).create()
 
       constructor: (@ctx,@user,@id) ->
         @part = @the_first_part
+        @done = false
 
       uri: (name,rev) ->
         @ctx.voicemail_uri @user,@id,name,rev
@@ -125,6 +126,7 @@ Post-recording menu
 
       post_recording: seem ->
         debug 'post_recording', @id
+        return if @done
 
 Check whether the attachment exists (it might be deleted if it doesn't match the minimum duration)
 
@@ -206,6 +208,7 @@ Note: now that we process `linger` properly this might be moved into `post_recor
 
         @ctx.call.once 'cleanup_linger', hand =>
           debug 'Disconnect Notice', @id
+          @done = true
           yield sleep 15000
           heal @notify 'create'
           return
