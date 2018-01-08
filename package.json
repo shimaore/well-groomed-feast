@@ -4,7 +4,7 @@
   "description": "Voicemail Application for FreeSwitch with CouchDB back-end",
   "main": "index.js",
   "scripts": {
-    "prepublish": "coffee -c -M middleware/*.coffee.md src/*.coffee.md",
+    "prepublishOnly": "npm install --only=dev && rm package-lock.json && coffee -c middleware/*.coffee.md src/*.coffee.md lib/*.coffee.md",
     "pretest": "npm install",
     "test": "mocha"
   },
