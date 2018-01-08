@@ -105,7 +105,7 @@ In any case closing too early will cause issues with email notifications.
               yield msg.start_recording()
               yield msg.post_recording()
 
-            @prompt.goodbye()
+            yield @prompt.goodbye()
 
           catch error
             debug.error 'default', error
