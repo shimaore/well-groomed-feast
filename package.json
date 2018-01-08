@@ -28,15 +28,15 @@
     "charming-circle": "^4.1.3",
     "coffeescript-helpers": "^2.2.0",
     "foamy-organization": "^1.0.0",
-    "jssip": "^3.1.2",
+    "jssip": "^3.1.4",
     "lru-cache": "^4.1.1",
     "milk": "^1.2.0",
     "moment-timezone": "^0.5.14",
-    "nimble-direction": "^6.3.2",
+    "nimble-direction": "^6.3.3",
     "request": "^2.83.0",
     "scope-eval": "^1.0.0",
     "seem": "^2.0.0",
-    "superagent": "^3.8.1",
+    "superagent": "^3.8.2",
     "tangible": "^1.9.0",
     "uuid": "^3.1.0"
   },
@@ -44,6 +44,6 @@
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "coffee-script": "^1.12.7",
-    "mocha": "^4.0.1"
+    "mocha": "^4.1.0"
   }
 }
