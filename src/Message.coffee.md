@@ -208,6 +208,7 @@ Note: now that we process `linger` properly this might be moved into `post_recor
           debug 'Disconnect Notice', @id
           yield sleep 15000
           heal @notify 'create'
+          return
 
 Create new CDB record to hold the voicemail metadata
 
@@ -224,7 +225,7 @@ Create new CDB record to hold the voicemail metadata
             notifier @user, @id, flag
             .catch (error) ->
               debug.csr "Notifier #{name} error: #{error}\n#{error.stack}"
-        null
+        return
 
       remove: seem ->
         debug 'remove', @id
