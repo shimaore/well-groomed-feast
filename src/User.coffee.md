@@ -1,4 +1,5 @@
     seem = require 'seem'
+    Formats = require './Formats'
 
 User
 ====
@@ -72,10 +73,8 @@ Playing prompt before recording a voice message
         debug 'play_prompt'
         vm_settings = yield @voicemail_settings()
 
-        _of = (name) ->
-          "#{name}.#{Message::format}"
-        has = (name) ->
-          vm_settings._attachments?[ _of name ]
+        find = (name) ->
+          Formats.find vm_settings, name
 
 ### Selecting a prompt
 
@@ -88,21 +87,21 @@ The user might indicate which announcement they'd like to play; otherwise an ann
 
         switch
 
-          when vm_settings.prompt is 'prompt' and has 'prompt'
-            yield @ctx.prompt.play @uri _of 'prompt'
+          when vm_settings.prompt is 'prompt' and f = find 'prompt'
+            yield @ctx.prompt.play @uri f
 
-          when vm_settings.prompt is 'name' and has 'name'
-            yield @ctx.prompt.play @uri _of 'name'
+          when vm_settings.prompt is 'name' and f = find 'name'
+            yield @ctx.prompt.play @uri f
             yield @ctx.prompt.phrase 'voicemail_unavailable'
 
           when vm_settings.prompt is 'default'
             yield @ctx.prompt.phrase "voicemail_play_greeting,#{@id}"
 
-          when has 'prompt'
-            yield @ctx.prompt.play @uri _of 'prompt'
+          when f = find 'prompt'
+            yield @ctx.prompt.play @uri f
 
-          when has 'name'
-            yield @ctx.prompt.play @uri _of 'name'
+          when f = find 'name'
+            yield @ctx.prompt.play @uri f
             yield @ctx.prompt.phrase 'voicemail_unavailable'
 
           else
@@ -315,7 +314,8 @@ Default navigation is: read next message or return to the main menu
         doc = yield @db.get 'voicemail_settings'
         rev = doc._rev
         yield @ctx.prompt.phrase phrase
-        upload_url = @uri "#{that}.#{Message::format}", rev
+        name = Formats.name that
+        upload_url = @uri name, rev
         recorded = yield @ctx.prompt.record upload_url
         if recorded < min_duration
           yield @ctx.prompt.phrase 'vm_say,too short'

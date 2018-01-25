@@ -23,9 +23,10 @@ new Message(ctx, User).create()
     assert.equal 0, sum_of {a:-3,b:3}
     assert.equal 10, sum_of {a:4,b:3,c:2,d:1}
 
+    Formats = require './Formats'
+
     class Message
 
-      format: 'wav'
       min_duration: parseInt process.env.MESSAGE_MIN_DURATION ? 2
       max_duration: parseInt process.env.MESSAGE_MAX_DURATION ? 300
       the_first_part: 1
@@ -38,12 +39,10 @@ new Message(ctx, User).create()
       uri: (name,rev) ->
         @ctx.voicemail_uri @user,@id,name,rev
 
-      has_part: seem (part = @part) ->
-        name = "part#{part}.#{@format}"
-        debug 'has_part', @id, part, @format, name
+      get_part: seem (part = @part) ->
         doc = yield @user.db.get @id
-        debug 'has_part', doc._attachments?[name]?
-        doc._attachments?[name]?
+
+        Formats.find doc, "part#{part}"
 
 Record the current part
 -----------------------
@@ -56,7 +55,7 @@ Record the current part
 
 FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
 
-        name = "part#{@part}.#{@format}"
+        name = Formats.name "part#{@part}"
         upload_url = @uri name, doc._rev
         record_seconds = parseInt yield @ctx.prompt.record upload_url, @max_duration
         debug 'start_recording: message saved', {record_seconds}
@@ -83,11 +82,11 @@ Might need to add parameters (`url_params`, between `()`) here; names are:
 - nohead (skip querying with HEAD; this is used to cache files)
 See `file_open` in mod_httapi.c.
 
-        name = "part#{this_part}.#{@format}"
-        url = @uri name
-        it_does = yield @has_part this_part
-        debug 'play_recording', {it_does}
-        choice = yield @ctx.prompt.play url if it_does
+        name = yield @get_part this_part
+        if name
+          url = @uri name
+          debug 'play_recording', {name,url}
+          choice = yield @ctx.prompt.play url
 
 Keep playing if no user interaction
 
@@ -112,14 +111,16 @@ Delete parts
         debug 'delete_single_part', this_part
         doc = yield @user.db.get @id
         doc.durations ?= {}
-        name = "part#{this_part}.#{@format}"
-        delete doc.durations[name] if name of doc.durations
-        doc.duration = sum_of doc.durations
-        {rev} = yield @user.db.put doc
-        @user.db
-          .removeAttachment @id, name, rev
-          .catch (error) ->
-            debug "remove attachment: #{error}", {@id,name,rev}
+        for format in @format
+          name = "part#{this_part}.#{format}"
+          delete doc.durations[name] if name of doc.durations
+          doc.duration = sum_of doc.durations
+          {rev} = yield @user.db.put doc
+          @user.db
+            .removeAttachment @id, name, rev
+            .catch (error) ->
+              debug "remove attachment: #{error}", {@id,name,rev}
+        return
 
 Post-recording menu
 -------------------
@@ -130,7 +131,7 @@ Post-recording menu
 
 Check whether the attachment exists (it might be deleted if it doesn't match the minimum duration)
 
-        it_does = yield @has_part @part
+        it_does = yield @get_part @part
         debug 'post_recording', {it_does}
         unless it_does
           yield debug.ops "Could not record message part", {message_id:@id,user_id:@user.id}

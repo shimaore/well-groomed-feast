@@ -27,6 +27,8 @@
         m = require '../src/Message'
       it 'Messaging', ->
         m = require '../src/Messaging'
+      it 'Formats', ->
+        m = require '../src/Formats'
 
     describe 'Other', ->
       it 'couchapp', ->
