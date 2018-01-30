@@ -263,7 +263,7 @@ Default navigation is: read next message or return to the main menu
 
       config_menu: seem (attempt = 3) ->
         debug 'config_menu'
-        return if @ctx.call.closed
+        return if not @ctx.call? or @ctx.call.closed
         choice = yield @ctx.prompt.get_choice "phrase:'voicemail_config_menu:1:2:3:4:5'"
         switch choice
           when "1"
@@ -285,7 +285,7 @@ Default navigation is: read next message or return to the main menu
 
       main_menu: seem (attempt = 7) ->
         debug 'main_menu'
-        return if @ctx.call.closed
+        return if not @ctx.call? or @ctx.call.closed
         choice = yield @ctx.prompt.get_choice "phrase:'voicemail_menu:1:2:3:4'"
         debug 'main_menu', {choice}
         switch choice
@@ -339,7 +339,7 @@ Default navigation is: read next message or return to the main menu
 
       change_password: seem ->
         debug 'change_password'
-        return if @ctx.call.closed
+        return if not @ctx.call? or @ctx.call.closed
 
         get_pin = seem =>
           pin = yield @ctx.prompt.get_new_pin min:@min_pin_length
