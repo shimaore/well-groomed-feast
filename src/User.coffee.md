@@ -24,7 +24,7 @@ Note: this requires the application to be database admin, which is OK.
         yield @db.put(doc).catch -> true
         return
 
-      close_db: ->
+      close_db: seem ->
         yield @db.close?()
         @db = null
 
