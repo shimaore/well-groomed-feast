@@ -23,10 +23,12 @@ In any case closing too early will cause issues with email notifications.
     close_delay = 60*seconds
 
     finish = (user) ->
-      setTimeout seem ->
+      debug 'finish'
+      handler = seem ->
+        debug 'finish - closing db'
         yield user?.close_db()
         user = null
-      , close_delay
+      setTimeout handler, close_delay
 
     @include = seem ->
 
