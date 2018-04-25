@@ -1,4 +1,4 @@
-    Milk = require 'milk'
+    Mustache = require 'mustache'
     {send_mail} = require 'foamy-organization/send-email'
     seem = require 'seem'
 
@@ -85,9 +85,9 @@ Send email out
         email_options =
           from: sender
           to: opts.email
-          subject: Milk.render template.subject, msg
-          text: Milk.render template.body, msg
-          html: Milk.render template.html, msg
+          subject: Mustache.render template.subject, msg
+          text: Mustache.render template.body, msg
+          html: Mustache.render template.html, msg
           attachments: []
 
         if opts.attach and msg._attachments
