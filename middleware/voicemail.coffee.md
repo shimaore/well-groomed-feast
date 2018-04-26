@@ -32,7 +32,7 @@ In any case closing too early will cause issues with email notifications.
 
     @include = seem ->
 
-      return unless @session.direction is 'voicemail'
+      return unless @session?.direction is 'voicemail'
 
       messaging = new Messaging this
 
