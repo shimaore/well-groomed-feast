@@ -32,12 +32,12 @@
     "lru-cache": "^4.1.1",
     "mustache": "^2.3.0",
     "moment-timezone": "^0.5.14",
-    "nimble-direction": "^6.3.3",
+    "nimble-direction": "^7.0.0",
     "request": "^2.83.0",
     "scope-eval": "^1.0.0",
     "seem": "^2.0.0",
     "superagent": "^3.8.2",
-    "tangible": "^1.9.0",
+    "tangible": "^2.0.0",
     "uuid": "^3.1.0"
   },
   "devDependencies": {
