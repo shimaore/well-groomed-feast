@@ -12,7 +12,6 @@ new Message(ctx, User, id)
 new Message(ctx, User).create()
 ```
 
-    seem = require 'seem'
     assert = require 'assert'
 
     sum_of = (a) ->
@@ -39,41 +38,41 @@ new Message(ctx, User).create()
       uri: (name,rev) ->
         @ctx.voicemail_uri @user,@id,name,rev
 
-      get_part: seem (part = @part) ->
-        doc = yield @user.db.get @id
+      get_part: (part = @part) ->
+        doc = await @user.db.get @id
 
         Formats.find doc, "part#{part}"
 
 Record the current part
 -----------------------
 
-      start_recording: seem ->
+      start_recording: ->
         debug 'start_recording', @id
         record_seconds = null
-        doc = yield @user.db.get @id
+        doc = await @user.db.get @id
         doc.durations ?= {}
 
 FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
 
         name = Formats.name "part#{@part}"
         upload_url = @uri name, doc._rev
-        record_seconds = parseInt yield @ctx.prompt.record upload_url, @max_duration
+        record_seconds = parseInt await @ctx.prompt.record upload_url, @max_duration
         debug 'start_recording: message saved', {record_seconds}
         if (isNaN record_seconds) or record_seconds < @min_duration
-          yield @delete_single_part @part
+          await @delete_single_part @part
           0
         else
-          doc = yield @user.db.get @id
+          doc = await @user.db.get @id
           doc.durations ?= {}
           doc.durations[name] = record_seconds
           doc.duration = sum_of doc.durations
-          yield @user.db.put doc
+          await @user.db.put doc
           record_seconds
 
 Play a recording, optionally collect a digit
 ------------------------------------------------------------
 
-      play_recording: seem (this_part = @the_first_part) ->
+      play_recording: (this_part = @the_first_part) ->
         debug 'play_recording', @id, this_part
         return unless this_part <= @the_last_part
 
@@ -82,11 +81,11 @@ Might need to add parameters (`url_params`, between `()`) here; names are:
 - nohead (skip querying with HEAD; this is used to cache files)
 See `file_open` in mod_httapi.c.
 
-        name = yield @get_part this_part
+        name = await @get_part this_part
         if name
           url = @uri name
           debug 'play_recording', {name,url}
-          choice = yield @ctx.prompt.play url
+          choice = await @ctx.prompt.play url
 
 Keep playing if no user interaction
 
@@ -98,24 +97,24 @@ Keep playing if no user interaction
 Delete parts
 ------------
 
-      delete_all_parts: seem ->
+      delete_all_parts: ->
         debug 'delete_all_parts', @id
-        doc = yield @user.db.get @id
+        doc = await @user.db.get @id
         # Remove all attachments
         doc._attachments = {}
         doc.durations = {}
         doc.duration = 0
-        yield @user.db.put doc
+        await @user.db.put doc
 
-      delete_single_part: seem (this_part) ->
+      delete_single_part: (this_part) ->
         debug 'delete_single_part', this_part
-        doc = yield @user.db.get @id
+        doc = await @user.db.get @id
         doc.durations ?= {}
         for format in @format
           name = "part#{this_part}.#{format}"
           delete doc.durations[name] if name of doc.durations
           doc.duration = sum_of doc.durations
-          {rev} = yield @user.db.put doc
+          {rev} = await @user.db.put doc
           @user.db
             .removeAttachment @id, name, rev
             .catch (error) ->
@@ -125,39 +124,39 @@ Delete parts
 Post-recording menu
 -------------------
 
-      post_recording: seem ->
+      post_recording: ->
         debug 'post_recording', @id
         return if @done
 
 Check whether the attachment exists (it might be deleted if it doesn't match the minimum duration)
 
-        it_does = yield @get_part @part
+        it_does = await @get_part @part
         debug 'post_recording', {it_does}
         unless it_does
-          yield debug.ops "Could not record message part", {message_id:@id,user_id:@user.id}
-          yield @ctx.action 'phrase', "could not record please try again"
-          yield @start_recording()
+          await debug.ops "Could not record message part", {message_id:@id,user_id:@user.id}
+          await @ctx.action 'phrase', "could not record please try again"
+          await @start_recording()
           return
 
 FIXME The default FreeSwitch prompts only allow for one-part messages, while we allow for multiple.
 
-        choice = yield @ctx.prompt.get_choice 'phrase:voicemail_record_file_check:1:2:3'
+        choice = await @ctx.prompt.get_choice 'phrase:voicemail_record_file_check:1:2:3'
         switch choice
 
 Play
 
           when "1"
             debug 'post_recording: play'
-            yield @play_recording @the_first_part
+            await @play_recording @the_first_part
             @post_recording()
 
 Delete
 
           when "3"
             debug 'post_recording: delete'
-            yield @delete_all_parts()
+            await @delete_all_parts()
             @part = @the_first_part
-            yield @start_recording()
+            await @start_recording()
             @post_recording()
 
 Append
@@ -166,7 +165,7 @@ Append
             debug 'post_recording: append'
             if @part < @the_last_part
               @part++
-              yield @start_recording()
+              await @start_recording()
             else
               # FIXME: notify that the last part has been recorded
               @post_recording()
@@ -183,9 +182,9 @@ Save
 Play the message enveloppe
 --------------------------
 
-      play_enveloppe: seem (index) ->
+      play_enveloppe: (index) ->
         debug 'play_enveloppe', @id
-        doc = yield @user.db.get @id
+        doc = await @user.db.get @id
         user_timestamp = @user.time doc.timestamp
         @ctx.prompt.play "phrase:'message received:#{index+1}:#{doc.caller_id}:#{user_timestamp}'"
 
@@ -207,10 +206,10 @@ Create a new voicemail record in the database
 If the user simply hungs up this is the only event we will receive.
 Note: now that we process `linger` properly this might be moved into `post_recording`, but the added complexity is probably not worth it.
 
-        @ctx.call.once 'cleanup_linger', hand =>
+        @ctx.call.once 'cleanup_linger', foot =>
           debug 'Disconnect Notice', @id
           @done = true
-          yield sleep 15000
+          await sleep 15000
           heal @notify 'create'
           return
 
@@ -221,29 +220,29 @@ Create new CDB record to hold the voicemail metadata
           debug.csr "Could not create message: #{e}", @id
           @ctx.prompt.error 'MSG-180'
 
-      notify: seem (flag) ->
+      notify: (flag) ->
         debug 'notify', flag, @user.id, @id
         return unless @ctx.cfg.notifiers?
         for name, notifier of @ctx.cfg.notifiers
-          yield do (name,notifier) =>
+          await do (name,notifier) =>
             notifier @user, @id, flag
             .catch (error) ->
               debug.csr "Notifier #{name} error: #{error.stack ? error}"
         return
 
-      remove: seem ->
+      remove: ->
         debug 'remove', @id
-        doc = yield @user.db.get @id
+        doc = await @user.db.get @id
         doc.box = 'trash'
-        yield @user.db.put doc
+        await @user.db.put doc
         heal @notify 'remove'
         @ctx.action 'phrase', 'voicemail_ack,deleted'
 
-      save: seem ->
+      save: ->
         debug 'save', @id
-        doc = yield @user.db.get @id
+        doc = await @user.db.get @id
         doc.box = 'saved'
-        yield @user.db.put doc
+        await @user.db.put doc
         heal @notify 'save'
         @ctx.action 'phrase', 'voicemail_ack,saved'
 
@@ -256,9 +255,9 @@ The forward operation is a bit complex since it requires to:
 
 There used to be code properly handling "more than one attachment" in this module; however some of it was removed for ccnq4. Make sure all places know how to handle multi-part voicemails.
 
-      forward: seem (destination) ->
+      forward: (destination) ->
         messaging = new Messaging @ctx
-        {user} = yield messaging.retrieve_number destination
+        {user} = await messaging.retrieve_number destination
 
         if not user?
           ## Blabla destination does not exist, try again
@@ -268,22 +267,22 @@ There used to be code properly handling "more than one attachment" in this modul
         @ctx.destination = user.number
 
         target = new Message @ctx, user
-        yield target.create()
+        await target.create()
 
 Record an additional part, which should be put as the first part (and the remaining parts should be shifted).
 
-        yield target.user.play_prompt()
-        yield target.start_recording()
-        yield target.post_recording()
+        await target.user.play_prompt()
+        await target.start_recording()
+        await target.post_recording()
 
 So, mostly, we're left with:
 
         # Granted, downloading all the attachment in memory is not a good idea.
 
-        doc = yield @user.db.get @id,
+        doc = await @user.db.get @id,
           attachments:true
           binary:true
-        new_doc = yield target.user.db.get target.id,
+        new_doc = await target.user.db.get target.id,
           attachments:true
           binary:true
 
@@ -315,12 +314,12 @@ We need to rename the parts in `doc` so that they follow the ones in new_doc.
 
         new_doc.duration = sum_of new_doc.durations
 
-        yield target.user.db.put new_doc
+        await target.user.db.put new_doc
 
         ###
         # This is probably a better but more complex way to do it:
 
-        doc = yield @user.db.get @id
+        doc = await @user.db.get @id
 
         # etc, get without attachments
         # but still do the changes on `durations` and `duration`.
@@ -333,7 +332,7 @@ The issue is whether that method supports `pipe` in and out.
 
         for name, attachment of doc._attachments
 
-          yield @user.db.request
+          await @user.db.request
             method: 'GET'
             url: "#{@id}/#{name}"
           .pipe user.db.request
@@ -346,7 +345,7 @@ The issue is whether that method supports `pipe` in and out.
 
 Do not leak.
 
-        yield target.user.close_db()
+        await target.user.close_db()
         target.user = null
         target = null
 
@@ -354,7 +353,7 @@ Do not leak.
 
     module.exports = Message
     pkg = require '../package.json'
-    {debug,hand,heal} = (require 'tangible') "#{pkg.name}:Message"
+    {debug,foot,heal} = (require 'tangible') "#{pkg.name}:Message"
     sleep = (timeout) -> new Promise (resolve) -> setTimeout resolve, timeout
     Messaging = require './Messaging'
 

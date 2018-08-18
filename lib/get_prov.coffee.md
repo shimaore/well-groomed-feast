@@ -1,14 +1,13 @@
 Provisioning cache
 ==================
 
-    seem = require 'seem'
     LRU = require 'lru-cache'
 
     prov_cache = LRU
       max: 200
       maxAge: 20 * 1000
 
-    module.exports = get_prov = seem (prov,key) ->
+    module.exports = get_prov = (prov,key) ->
 
 Use cache if available
 
@@ -17,7 +16,7 @@ Use cache if available
 
 Use database otherwise
 
-      val = yield prov
+      val = await prov
         .get key
         .catch (error) ->
           {}

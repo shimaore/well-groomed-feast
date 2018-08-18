@@ -1,5 +1,4 @@
     {p_fun} = require 'coffeescript-helpers'
-    seem = require 'seem'
 
     pkg = require '../package'
     @name = "#{pkg.name}:middleware:monitor"
@@ -36,20 +35,20 @@ The couchapp inserted in the user's database, contains the views used by the voi
 Initial configuration
 ---------------------
 
-    config = seem (cfg) ->
+    config = (cfg) ->
 
       debug "config: Nimble"
-      yield Nimble cfg
+      await Nimble cfg
 
 Install the couchapp in the (local) provisioning database.
 
       debug "config: push couchapp"
-      yield cfg.push couchapp
+      await cfg.push couchapp
 
 Individual user database changes
 --------------------------------
 
-    monitored = seem (cfg,doc,data = doc) ->
+    monitored = (cfg,doc,data = doc) ->
 
       {default_voicemail_settings,user_database} = data
 
@@ -67,7 +66,7 @@ If no user-database is specified (but a set of default voicemail settings is pre
         user_database = "u#{uuid.v4()}"
         data.user_database = user_database
         debug 'Setting user_database', doc
-        yield cfg.master_push(doc).catch (error) ->
+        await cfg.master_push(doc).catch (error) ->
           return if error.status is 409
           debug "monitored: setting user_database: #{error}"
 
@@ -91,7 +90,7 @@ Create / access the user database.
 
       target_db = new PouchDB target_db_uri
       debug 'Creating target database', target_db_uri
-      yield target_db.info()
+      await target_db.info()
 
 It's OK if the database already exists.
 
@@ -100,7 +99,7 @@ It's OK if the database already exists.
 Make sure the users can access it.
 
       debug 'Setting security', target_db_uri
-      yield set_security user_database, cfg.userdb_base_uri
+      await set_security user_database, cfg.userdb_base_uri
 
 ### Limit number of documents revisions
 
@@ -108,7 +107,7 @@ Restrict number of available past revisions
 
       debug 'Restrict number of available past revisions'
 
-      yield request
+      await request
         .put [target_db_uri,'_revs_limit'].join '/'
         .send '10'
         .catch (error) ->
@@ -120,11 +119,11 @@ Restrict number of available past revisions
 This is also done in `src/User`, but doing it here ensures the design document is available to outside applications (e.g. a web-based user panel).
 
       debug 'Insert user application'
-      app = yield target_db
+      app = await target_db
         .get user_app._id
         .catch -> {}
       app[k] = v for own k,v of user_app
-      yield target_db
+      await target_db
         .put app
         .catch -> true
 
@@ -134,7 +133,7 @@ Create the voicemail settings record.
 
       VM_ID = 'voicemail_settings'
 
-      vm_settings = yield target_db
+      vm_settings = await target_db
         .get VM_ID
         .catch -> null
 
@@ -149,34 +148,34 @@ If the voicemail-settings document does not exist, create one based on the defau
         vm_settings._id = VM_ID
 
         debug 'Update voicemail settings', vm_settings
-        yield target_db
+        await target_db
           .put vm_settings
 
 Close.
 
-      yield target_db.close?()
+      await target_db.close?()
       target_db = null
       return
 
 Startup
 -------
 
-    run = seem (cfg) ->
+    run = (cfg) ->
       if cfg.voicemail?.monitoring is false
         return
 
       debug 'Starting monitor.'
 
-      yield config cfg
+      await config cfg
         .catch (error) ->
           debug "config: #{error.stack ? error}"
           run cfg
 
       debug 'Starting changes listener'
 
-      on_change = seem (doc,data) ->
+      on_change = (doc,data) ->
         if typeof cfg.voicemail?.monitoring is 'number'
-          yield sleep cfg.voicemail?.monitoring
+          await sleep cfg.voicemail?.monitoring
         monitored cfg, doc, data
 
       main = ->

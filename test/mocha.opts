@@ -1,4 +1,2 @@
---compilers coffee.md:coffee-script/register
 --reporter spec
 --require chai
---require chai-as-promised

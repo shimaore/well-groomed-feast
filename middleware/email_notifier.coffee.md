@@ -1,6 +1,5 @@
     Mustache = require 'mustache'
     {send_mail} = require 'foamy-organization/send-email'
-    seem = require 'seem'
 
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:email_notifier"
@@ -27,7 +26,7 @@
 Template handling
 =================
 
-      send_email_notification = seem (msg,opts) ->
+      send_email_notification = (msg,opts) ->
         debug 'send_email_notification', {msg}
         file_name = if opts.attach
             'voicemail_notification_with_attachment'
@@ -54,10 +53,10 @@ Get templates
 
         template = {}
 
-        yield Promise.all (Object.keys default_templates).map seem (part) ->
+        await Promise.all (Object.keys default_templates).map (part) ->
           uri_name = [file_name, opts.language, part].join '.'
 
-          data = yield cfg.prov
+          data = await cfg.prov
             .getAttachment opts.user.number_domain, uri_name
             .catch -> null
 
@@ -67,7 +66,7 @@ Get templates
 
 ### Templates in the provisioning database
 
-          data = yield cfg.prov
+          data = await cfg.prov
             .getAttachment "config:voicemail", uri_name
             .catch (error) -> null
 
@@ -105,17 +104,17 @@ FIXME: Migrate to new `node_mailer` conventions.
                 contentType: data.content_type
               }
 
-        yield send_mail cfg, email_options
+        await send_mail cfg, email_options
 
 Delete record once all data has been emailed.
 
         if (opts.attach or opts.do_not_record) and opts.send_then_delete
-          yield opts.user.db.remove msg
+          await opts.user.db.remove msg
 
 API wrapper
 ===========
 
-      send_notification_to = seem (user,msg_id) ->
+      send_notification_to = (user,msg_id) ->
         debug 'send_notification_to', {user: inspect(user), msg_id}
 
 We can only send emails about a specific message.
@@ -124,15 +123,15 @@ We can only send emails about a specific message.
 
 FIXME: Sadly enough we don't have yet a way to be notified when the attachment might be available (it is pushed by HTTAPI through our proxy). If we do the retrieval too early, we might miss it. So let's pause for an arbitrary delay and hope the attachment gets uploaded in the time between, therefor allowing us to provide a proper notification.
 
-        yield sleep 7*1000
+        await sleep 7*1000
 
 * doc.local_number.voicemail_sender (email address) Address used as the sender for voicemail notifications via email. See doc.voicemail_settings, doc.voicemail_settings.email_notifications . Default: cfg.voicemail.sender
 * cfg.voicemail.sender (email address) Address used as default the sender for voicemail notifications via email. See doc.voicemail_settings, doc.voicemail_settings.email_notifications .
 
-        number_doc = yield cfg.prov.get "number:#{user.id}"
+        number_doc = await cfg.prov.get "number:#{user.id}"
         return if number_doc.disabled
         sender = number_doc.voicemail_sender ? cfg.voicemail.sender
-        message = yield user.db.get msg_id
+        message = await user.db.get msg_id
 
 We should only email about new messages.
 
@@ -143,7 +142,7 @@ We should only email about new messages.
 * doc.voicemail_settings.email_notifications (hash) For each destination email address, provides parameters used when sending voicemail notifications via email.
 * doc.voicemail_settings.email_notifications[].attach_message (boolean) If true, when sending an email notification for voicemail, attach the audio file(s) to the email. Default: false.
 
-        settings = yield user.db.get 'voicemail_settings'
+        settings = await user.db.get 'voicemail_settings'
         return unless settings.email_notifications
         for email, params of settings.email_notifications
           p = send_email_notification message,
@@ -154,7 +153,7 @@ We should only email about new messages.
             language: settings.language
             user: user
             sender: sender
-          yield p.catch (error) ->
+          await p.catch (error) ->
             debug "sendMail: #{inspect error}", message
         debug 'send_notification: done'
 

@@ -1,5 +1,4 @@
     dgram = require 'dgram'
-    seem = require 'seem'
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:mwi_notifier"
     {debug,heal} = (require 'tangible') @name
@@ -34,7 +33,7 @@
         heal on_message.apply ctx, args
         return
 
-      on_message = seem (msg,rinfo) ->
+      on_message = (msg,rinfo) ->
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
 
         content = msg.toString 'ascii'
@@ -58,7 +57,7 @@ Try to recover the number and the endpoint from the message.
 
 Recover the number-domain from the endpoint.
 
-        {number_domain} = yield get_prov cfg.prov, "endpoint:#{endpoint}"
+        {number_domain} = await get_prov cfg.prov, "endpoint:#{endpoint}"
 
         user_id = "#{number}@#{number_domain}"
 
@@ -68,7 +67,7 @@ Recover the number-domain from the endpoint.
 
 Recover the local-number's user-database.
 
-        {user_database} = yield get_prov cfg.prov, "number:#{user_id}"
+        {user_database} = await get_prov cfg.prov, "number:#{user_id}"
 
 Ready to send a notification
 
@@ -84,11 +83,11 @@ Create a User object and use it to send the notification.
 
         user = new User ctx, user_id, user_database, db_uri
         try
-          yield send_notification_to user
+          await send_notification_to user
         catch error
           debug "SUBSCRIBE send_notification_to: #{error.stack ? error}", user_id
         finally
-          yield user.close_db()
+          await user.close_db()
           user = null
 
         debug "SUBSCRIBE done"
@@ -105,20 +104,20 @@ Start socket
 Notifier Callback: Send notification to a user
 ==============================================
 
-      send_notification_to = seem (user) ->
+      send_notification_to = (user) ->
         trace 'send_notification_to', user.id
 
 Collect the number of messages from the user's database.
 
-        {total_rows} = yield user.db.query 'voicemail/new_messages'
+        {total_rows} = await user.db.query 'voicemail/new_messages'
         new_messages = total_rows
-        {total_rows} = yield user.db.query 'voicemail/saved_messages'
+        {total_rows} = await user.db.query 'voicemail/saved_messages'
         saved_messages = total_rows
         trace 'send_notification_to', {new_messages,saved_messages}
 
 Collect the endpoint/via fields from the local number.
 
-        number_doc = yield get_prov cfg.prov, "number:#{user.id}"
+        number_doc = await get_prov cfg.prov, "number:#{user.id}"
         return if number_doc.disabled
 
 * doc.local_number.endpoint_via (domain name string) If present, domain name used to route voicemail notifications via the SUBSCRIBE/PUBLISH mechanism. It is optional for dynamic endpoints (`<username>@<endpoint-domain>`) and required for static endpoints. Default: the domain of doc.local_number.endpoint (for dynamic endpoints), none for static endpoints.
@@ -143,7 +142,7 @@ Registered endpoint
           else
             uri = endpoint
           debug 'Notifying endpoint', {endpoint,uri,to}
-          yield notify socket, uri, to, new_messages, saved_messages
+          await notify socket, uri, to, new_messages, saved_messages
 
 Static endpoint
 
@@ -152,7 +151,7 @@ Static endpoint
             to = [user.id,endpoint].join '@'
             uri = [user.id,via].join '@'
             debug 'Notifying endpoint', {endpoint,uri,to}
-            yield notify socket, uri, to, new_messages, saved_messages
+            await notify socket, uri, to, new_messages, saved_messages
           else
             debug 'No `via` for static endpoint, skipping.'
 

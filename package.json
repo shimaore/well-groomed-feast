@@ -4,8 +4,9 @@
   "description": "Voicemail Application for FreeSwitch with CouchDB back-end",
   "main": "index.js",
   "scripts": {
-    "prepublishOnly": "npm install --only=dev && rm package-lock.json && coffee -c middleware/*.coffee.md src/*.coffee.md lib/*.coffee.md",
-    "pretest": "npm install",
+    "build": "npm install --only=dev && rm package-lock.json && coffee -c middleware/*.coffee.md src/*.coffee.md lib/*.coffee.md",
+    "prepublishOnly": "npm run build",
+    "pretest": "npm run build && coffee -c test/*.coffee.md",
     "test": "mocha"
   },
   "repository": {
@@ -29,21 +30,19 @@
     "coffeescript-helpers": "^2.2.0",
     "foamy-organization": "^1.0.0",
     "jssip": "^3.1.4",
-    "lru-cache": "^4.1.1",
-    "mustache": "^2.3.0",
-    "moment-timezone": "^0.5.14",
-    "nimble-direction": "^7.0.0",
-    "request": "^2.83.0",
+    "lru-cache": "^4.1.3",
+    "mustache": "^2.3.2",
+    "moment-timezone": "^0.5.21",
+    "nimble-direction": "^7.1.1",
+    "request": "^2.88.0",
     "scope-eval": "^1.0.0",
-    "seem": "^2.0.0",
-    "superagent": "^3.8.2",
+    "superagent": "^3.8.3",
     "tangible": "^2.0.0",
-    "uuid": "^3.1.0"
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "chai": "^4.1.2",
-    "chai-as-promised": "^7.1.1",
-    "coffee-script": "^1.12.7",
-    "mocha": "^4.1.0"
+    "coffeescript": "^2.3.1",
+    "mocha": "^5.2.0"
   }
 }

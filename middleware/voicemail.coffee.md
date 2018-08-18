@@ -15,7 +15,6 @@ by FreeSwitch) which can then be transcoded.
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:voicemail"
     {debug,heal} = (require 'tangible') @name
-    seem = require 'seem'
 
 `esl` will wait 4000ms, while our own `Message` will wait 3000ms.
 In any case closing too early will cause issues with email notifications.
@@ -24,13 +23,13 @@ In any case closing too early will cause issues with email notifications.
 
     finish = (user) ->
       debug 'finish'
-      handler = seem ->
+      handler = ->
         debug 'finish - closing db'
-        yield user?.close_db()
+        await user?.close_db()
         user = null
       setTimeout handler, close_delay
 
-    @include = seem ->
+    @include = ->
 
       return unless @session?.direction is 'voicemail'
 
@@ -42,22 +41,22 @@ In any case closing too early will cause issues with email notifications.
 
         when 'inbox'
           try
-            yield @action 'answer'
+            await @action 'answer'
             return unless @session?
-            yield @set language: @session.language ? @cfg.announcement_language
+            await @set language: @session.language ? @cfg.announcement_language
 
             debug 'Locate user', @source
-            user = yield messaging.locate_user @source
+            user = await messaging.locate_user @source
 
             debug 'Authenticate', user
-            yield user.authenticate()
+            await user.authenticate()
 
             debug 'Enumerate messages'
-            rows = yield user.new_messages()
-            yield user.navigate_messages rows, 0
+            rows = await user.new_messages()
+            await user.navigate_messages rows, 0
 
             debug 'Go to the main menu after message navigation'
-            yield user.main_menu()
+            await user.main_menu()
 
           catch error
             debug.error 'inbox', error
@@ -71,18 +70,18 @@ In any case closing too early will cause issues with email notifications.
         when 'main'
 
           try
-            yield @action 'answer'
+            await @action 'answer'
             return unless @session?
-            yield @set language: @session.language ? @cfg.announcement_language
+            await @set language: @session.language ? @cfg.announcement_language
 
             debug 'Retrieve and locate user'
-            user = yield messaging.gather_user()
+            user = await messaging.gather_user()
 
             debug 'Authenticate', user.id
-            yield user.authenticate()
+            await user.authenticate()
 
             debug 'Present the main menu'
-            yield user.main_menu()
+            await user.main_menu()
 
           catch error
             debug.error 'main', error
@@ -95,22 +94,22 @@ In any case closing too early will cause issues with email notifications.
         else
 
           try
-            yield @action 'answer'
+            await @action 'answer'
             return unless @session?
-            yield @set language: @session.language ? @cfg.announcement_language
+            await @set language: @session.language ? @cfg.announcement_language
 
             debug 'Locate user', @destination
-            user = yield messaging.locate_user @destination
+            user = await messaging.locate_user @destination
 
             msg = new Message this, user
-            yield msg.create()
+            await msg.create()
 
-            do_recording = yield user.play_prompt()
+            do_recording = await user.play_prompt()
             if do_recording
-              yield msg.start_recording()
-              yield msg.post_recording()
+              await msg.start_recording()
+              await msg.post_recording()
 
-            yield @prompt.goodbye()
+            await @prompt.goodbye()
 
           catch error
             debug.error 'default', error

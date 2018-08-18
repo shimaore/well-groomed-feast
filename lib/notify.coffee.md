@@ -3,16 +3,15 @@ Notify a specific URI
 
     pkg = require '../package'
     debug = (require 'tangible') "#{pkg.name}:notify"
-    seem = require 'seem'
 
     resolve = require './resolve'
 
 We route based on the URI domain, as per RFC.
 
-    module.exports = notify = seem (socket,uri,to,new_messages,saved_messages) ->
+    module.exports = notify = (socket,uri,to,new_messages,saved_messages) ->
       debug 'notify', {uri,to,new_messages,saved_messages}
 
-      addresses = yield resolve uri
+      addresses = await resolve uri
 
       for address in addresses
         do (address) ->

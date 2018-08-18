@@ -1,7 +1,6 @@
 URI DNS resolution and cache
 ============================
 
-    seem = require 'seem'
     pkg = require '../package'
     @name = "#{pkg.name}:resolve"
     debug = (require 'tangible') @name
@@ -16,7 +15,7 @@ URI DNS resolution and cache
       max: 200
       maxAge: 10 * 60 * 1000
 
-    module.exports = resolve = seem (uri) ->
+    module.exports = resolve = (uri) ->
 
       result = dns_cache.get uri
       return result if result?
@@ -36,7 +35,7 @@ URI = username@domain
       if m = uri.match /^([^@]+)@([^@:]+)$/
         domain = m[2]
 
-        addresses = yield resolveSrvAsync '_sip._udp.' + domain
+        addresses = await resolveSrvAsync '_sip._udp.' + domain
         debug 'Addresses', addresses
         for address in addresses
           do (address) ->
