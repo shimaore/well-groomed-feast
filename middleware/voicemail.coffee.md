@@ -43,6 +43,7 @@ In any case closing too early will cause issues with email notifications.
         when 'inbox'
           try
             yield @action 'answer'
+            return unless @session?
             yield @set language: @session.language ? @cfg.announcement_language
 
             debug 'Locate user', @source
@@ -71,6 +72,7 @@ In any case closing too early will cause issues with email notifications.
 
           try
             yield @action 'answer'
+            return unless @session?
             yield @set language: @session.language ? @cfg.announcement_language
 
             debug 'Retrieve and locate user'
@@ -94,6 +96,7 @@ In any case closing too early will cause issues with email notifications.
 
           try
             yield @action 'answer'
+            return unless @session?
             yield @set language: @session.language ? @cfg.announcement_language
 
             debug 'Locate user', @destination
