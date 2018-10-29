@@ -109,10 +109,10 @@ Notifier Callback: Send notification to a user
 
 Collect the number of messages from the user's database.
 
-        {total_rows} = await user.db.query 'voicemail/new_messages'
-        new_messages = total_rows
-        {total_rows} = await user.db.query 'voicemail/saved_messages'
-        saved_messages = total_rows
+        rows = await user.get_new_messages()
+        new_messages = rows.length
+        rows = await user.get_saved_messages()
+        saved_messages = rows.length
         trace 'send_notification_to', {new_messages,saved_messages}
 
 Collect the endpoint/via fields from the local number.

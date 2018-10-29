@@ -109,7 +109,7 @@ FIXME: Migrate to new `node_mailer` conventions.
 Delete record once all data has been emailed.
 
         if (opts.attach or opts.do_not_record) and opts.send_then_delete
-          await opts.user.db.remove msg
+          await opts.user.db.delete msg
 
 API wrapper
 ===========

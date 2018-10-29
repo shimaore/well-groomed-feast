@@ -316,33 +316,6 @@ We need to rename the parts in `doc` so that they follow the ones in new_doc.
 
         await target.user.db.put new_doc
 
-        ###
-        # This is probably a better but more complex way to do it:
-
-        doc = await @user.db.get @id
-
-        # etc, get without attachments
-        # but still do the changes on `durations` and `duration`.
-
-        # Then:
-
-Message is created, now push the attachments in it.
-This uses `request`, [undocumented](https://github.com/pouchdb/pouchdb/issues/3502).
-The issue is whether that method supports `pipe` in and out.
-
-        for name, attachment of doc._attachments
-
-          await @user.db.request
-            method: 'GET'
-            url: "#{@id}/#{name}"
-          .pipe user.db.request
-            method: 'PUT'
-            url: "#{target.id}/#{name}"
-            headers:
-              'Content-Type': attachment.content_type
-
-        ###
-
 Do not leak.
 
         await target.user.close_db()

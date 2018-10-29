@@ -11,7 +11,17 @@ User
 
       constructor: (@ctx,@id,@database,@db_uri) ->
         [@number,@number_domain] = @id.split '@'
-        @db = new PouchDB @db_uri
+        @db = new CouchDB @db_uri, true
+
+Extend most-couchdb, adding `removeAttachment`.
+
+        @db.removeAttachment = (_id,_rev,name) ->
+          uri = new URL "#{ec(_id)}/#{ec(name)}", @uri+'/'
+          uri.searchParams.set 'rev', _rev
+          @agent
+          .delete uri.toString()
+          .accept 'json'
+          .then ({body}) -> body
 
 Inject the views into the database.
 Note: this requires the application to be database admin, which is OK.
@@ -167,15 +177,30 @@ Otherwise, authentication can only happen with the PIN.
         else
           @authenticate attempts-1
 
+      get_new_messages: ->
+        debug 'get_new_messages'
+        rows = []
+        await @db
+          .query 'voicemail', 'new_messages'
+          .observe (row) -> rows.push row
+        rows
+
       new_messages: ->
         debug 'new_messages'
-        {rows} = await @db.query 'voicemail/new_messages'
+        rows = @get_new_messages()
         await @ctx.action 'phrase', "voicemail_message_count,#{rows.length}:new"
         rows
 
+      get_saved_messages: ->
+        debug 'get_saved_messages'
+        rows = []
+        await @db
+          .query 'voicemail', 'saved_messages'
+          .observe (row) -> rows.push row
+        rows
+
       saved_messages: ->
-        debug 'saved_messages'
-        {rows} = await @db.query 'voicemail/saved_messages'
+        rows = @get_saved_messages()
         await @ctx.action 'phrase', "voicemail_message_count,#{rows.length}:saved"
         rows
 
@@ -362,12 +387,9 @@ Default navigation is: read next message or return to the main menu
     assert = require 'assert'
 
     moment = require 'moment-timezone'
-    PouchDB = require 'ccnq4-pouchdb'
-      .defaults
-        ajax:
-          forever: true
-          timeout: 10000
-        skip_setup: true
+    CouchDB = require 'most-couchdb'
+    ec = encodeURIComponent
+    {URL} = require 'url'
     Message = require './Message'
 
     couchapp = require './couchapp'
