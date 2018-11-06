@@ -187,7 +187,7 @@ Otherwise, authentication can only happen with the PIN.
 
       new_messages: ->
         debug 'new_messages'
-        rows = @get_new_messages()
+        rows = await @get_new_messages()
         await @ctx.action 'phrase', "voicemail_message_count,#{rows.length}:new"
         rows
 
@@ -200,7 +200,7 @@ Otherwise, authentication can only happen with the PIN.
         rows
 
       saved_messages: ->
-        rows = @get_saved_messages()
+        rows = await @get_saved_messages()
         await @ctx.action 'phrase', "voicemail_message_count,#{rows.length}:saved"
         rows
 
