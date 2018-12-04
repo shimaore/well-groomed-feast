@@ -3,7 +3,7 @@ Provisioning cache
 
     LRU = require 'lru-cache'
 
-    prov_cache = LRU
+    prov_cache = new LRU
       max: 200
       maxAge: 20 * 1000
 

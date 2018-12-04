@@ -11,7 +11,7 @@ URI DNS resolution and cache
     resolveSrvAsync = (name) -> new Promise (resolve,reject) ->
       dns.resolveSrv name, (err,res) -> if err then reject err else resolve res
 
-    dns_cache = LRU
+    dns_cache = new LRU
       max: 200
       maxAge: 10 * 60 * 1000
 

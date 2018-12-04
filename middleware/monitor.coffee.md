@@ -5,7 +5,7 @@
     debug = (require 'tangible') @name
 
     request = require 'superagent'
-    PouchDB = require 'ccnq4-pouchdb'
+    CouchDB = require 'most-couchdb'
     uuid = require 'uuid'
     sleep = (timeout) -> new Promise (resolve) -> setTimeout resolve, timeout
 
@@ -88,8 +88,9 @@ At this point we expect to have a valid user database name.
 
 Create / access the user database.
 
-      target_db = new PouchDB target_db_uri
+      target_db = new CouchDB target_db_uri, true
       debug 'Creating target database', target_db_uri
+      await target_db.create().catch -> yes
       await target_db.info()
 
 It's OK if the database already exists.
@@ -153,7 +154,6 @@ If the voicemail-settings document does not exist, create one based on the defau
 
 Close.
 
-      await target_db.close?()
       target_db = null
       return
 

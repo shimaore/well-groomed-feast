@@ -1,17 +1,19 @@
     describe 'Middlewares', ->
 
       it 'email_notifier', ->
+        @timeout 4000
         m = require '../middleware/email_notifier'
         cfg =
           prov:true
-        m.include.apply {cfg}
+        await m.include.apply {cfg}
 
       it 'mwi_notifier', ->
+        @timeout 4000
         m = require '../middleware/mwi_notifier'
         cfg =
           prov:true
-        m.server_pre.call {cfg}, {cfg}
-        m.include.call {cfg}, {cfg}
+        await m.server_pre.call {cfg}, {cfg}
+        await m.include.call {cfg}, {cfg}
         cfg.notifiers.mwi.end()
 
       it 'setup', ->
