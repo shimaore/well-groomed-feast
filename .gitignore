@@ -3,3 +3,4 @@ test/live/src.tar
 local/
 *.js
 *.js.map
+.nyc_output/
