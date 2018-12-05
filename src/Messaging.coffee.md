@@ -1,6 +1,7 @@
     class Messaging
       constructor: (@ctx) ->
-        assert @ctx.cfg.prov?, 'Missing @ctx.cfg.prov'
+        assert @ctx.cfg.provisioning?, 'Missing @ctx.cfg.provisioning'
+        @prov = new CouchDB @ctx.cfg.provisioning
         assert @ctx.cfg.userdb_base_uri?, 'Missing @ctx.cfg.userdb_base_uri'
 
 Gather a customer phone number and locate that record.
@@ -34,7 +35,7 @@ In most cases `session.endpoint` is already provided.
 * session.endpoint Data of the endpoint used for locating the number-domain.
 
         if @ctx.session.endpoint_name?
-          @ctx.session.endpoint ?= await @ctx.cfg.prov
+          @ctx.session.endpoint ?= await @prov
             .get "endpoint:#{@ctx.session.endpoint_name}"
             .catch (error) =>
               debug "Endpoint #{@ctx.session.endpoint_name} not found, #{error.stack ? error}."
@@ -116,7 +117,7 @@ Attempt to locate the local-number record.
 * doc.local_number.user_database Name of the user's database.
 * session.number.user_database Name of the user's database, see doc.local_number.user_database
 
-        number_data = await @ctx.cfg.prov
+        number_data = await @prov
           .get "number:#{user_id}"
           .catch (error) ->
             debug.dev "number:#{user_id} not found, #{error}"
@@ -161,3 +162,4 @@ Note: `userdb_base_uri` must contain authentication elements (e.g. "voicemail" u
     debug = (require 'tangible') "#{pkg.name}:Messaging"
     assert = require 'assert'
     User = require './User'
+    CouchDB = require 'most-couchdb'

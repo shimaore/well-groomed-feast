@@ -2,16 +2,14 @@
 
     pkg = require '../package'
     @name = "#{pkg.name}:middleware:monitor"
-    debug = (require 'tangible') @name
+    {debug,heal} = (require 'tangible') @name
 
     request = require 'superagent'
     CouchDB = require 'most-couchdb'
     uuid = require 'uuid'
     sleep = (timeout) -> new Promise (resolve) -> setTimeout resolve, timeout
 
-    Nimble = require 'nimble-direction'
-
-    set_security = require 'charming-circle/set-security'
+    set_security = require '../lib/set-security'
 
 The couchapp used in the (local) provisioning database to monitor changes.
 
@@ -36,9 +34,6 @@ Initial configuration
 ---------------------
 
     config = (cfg) ->
-
-      debug "config: Nimble"
-      await Nimble cfg
 
 Install the couchapp in the (local) provisioning database.
 
@@ -100,7 +95,7 @@ It's OK if the database already exists.
 Make sure the users can access it.
 
       debug 'Setting security', target_db_uri
-      await set_security user_database, cfg.userdb_base_uri
+      await heal 'set_security', set_security target_db
 
 ### Limit number of documents revisions
 
@@ -172,6 +167,7 @@ Startup
           run cfg
 
       debug 'Starting changes listener'
+      prov = new CouchDB cfg.provisioning
 
       on_change = (doc,data) ->
         if typeof cfg.voicemail?.monitoring is 'number'
@@ -179,28 +175,26 @@ Startup
         monitored cfg, doc, data
 
       main = ->
-        cfg.prov.changes
+        prov.changes
           live: true
           filter: "#{couchapp.id}/numbers"
           include_docs: true
           since: 'now'
-        .on 'change', ({doc}) ->
+        .observe ({doc}) ->
           on_change doc
-          .catch (error) ->
-            debug "on_change: #{error.stack ? error}"
           return
-        .on 'error', (error) ->
-          debug "changes: #{error.stack ? error}"
+        .catch (error) ->
+          debug "(main) changes: #{error.stack ? error}"
           do main
           return
 
       main2 = ->
-        cfg.prov.changes
+        prov.changes
           live: true
           filter: "#{couchapp.id}/number_domains"
           include_docs: true
           since: 'now'
-        .on 'change', ({doc}) ->
+        .observe ({doc}) ->
           return unless doc.fifos?
           for fifo in doc.fifos when fifo.default_voicemail_settings? or fifo.user_database?
             do (doc,fifo) ->
@@ -208,8 +202,8 @@ Startup
               .catch (error) ->
                 debug "on_change: #{error.stack ? error}"
           return
-        .on 'error', (error) ->
-          debug "changes: #{error.stack ? error}"
+        .catch (error) ->
+          debug "(main2) changes: #{error.stack ? error}"
           do main2
           return
 

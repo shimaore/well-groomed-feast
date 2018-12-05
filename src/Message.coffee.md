@@ -52,11 +52,11 @@ Record the current part
         doc = await @user.db.get @id
         doc.durations ?= {}
 
-FIXME: Add 'set', "RECORD_TITLE=Call from #{caller}", "RECORD_DATE=..."
+        await @ctx.set RECORD_TITLE:"Call from #{doc.caller_id}"
 
         name = Formats.name "part#{@part}"
         upload_url = @uri name, doc._rev
-        record_seconds = parseInt await @ctx.prompt.record upload_url, @max_duration
+        record_seconds = parseInt (await @ctx.prompt.record upload_url, @max_duration), 10
         debug 'start_recording: message saved', {record_seconds}
         if (isNaN record_seconds) or record_seconds < @min_duration
           await @delete_single_part @part
