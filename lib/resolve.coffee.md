@@ -37,9 +37,8 @@ URI = username@domain
 
         addresses = await resolveSrvAsync '_sip._udp.' + domain
         debug 'Addresses', addresses
-        for address in addresses
-          do (address) ->
-            result.push address
+        addresses.forEach (address) ->
+          result.push address
 
       dns_cache.set uri, result
       result

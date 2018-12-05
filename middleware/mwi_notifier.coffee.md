@@ -1,10 +1,11 @@
     dgram = require 'dgram'
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:mwi_notifier"
-    {debug,heal} = (require 'tangible') @name
+    {debug,foot} = (require 'tangible') @name
     trace = ->
     User = require '../src/User'
     Parser = require 'jssip/lib/Parser'
+    CouchDB = require 'most-couchdb'
 
     send_notification_to = null
 
@@ -16,24 +17,25 @@
     get_prov = require '../lib/get_prov'
     notify = require '../lib/notify'
 
+    socket = dgram.createSocket 'udp4'
+
+    socket.on 'error', (error) ->
+      debug.dev "Socket error: #{error}"
+
+    socket.once 'listening', ->
+      address = socket.address()
+      debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
+
+    @end = ->
+      socket.close()
+
     @server_pre = (ctx) ->
-      cfg = ctx.cfg
+      {cfg} = ctx
       debug 'server_pre'
 
-      socket = dgram.createSocket 'udp4'
+      prov = new CouchDB cfg.provisioning
 
-      socket.on 'error', (error) ->
-        debug "Socket error: #{error}"
-
-      socket.once 'listening', ->
-        address = socket.address()
-        debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
-
-      socket.on 'message', (args...) ->
-        heal on_message.apply ctx, args
-        return
-
-      on_message = (msg,rinfo) ->
+      socket.on 'message', (msg,rinfo) ->
         debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
 
         content = msg.toString 'ascii'
@@ -49,7 +51,7 @@ The parser returns an IncomingRequest for a SUBSCRIBE message.
 Try to recover the number and the endpoint from the message.
 
         number = request.ruri?.user ? request.from?.uri?.user
-        endpoint = request.headers['X-Ccnq-Endpoint']?[0]?.raw
+        endpoint = request.headers['X-En']?[0]?.raw
 
         trace 'SUBSCRIBE', {number, endpoint}
 
@@ -57,7 +59,7 @@ Try to recover the number and the endpoint from the message.
 
 Recover the number-domain from the endpoint.
 
-        {number_domain} = await get_prov cfg.prov, "endpoint:#{endpoint}"
+        {number_domain} = await get_prov prov, "endpoint:#{endpoint}"
 
         user_id = "#{number}@#{number_domain}"
 
@@ -67,7 +69,7 @@ Recover the number-domain from the endpoint.
 
 Recover the local-number's user-database.
 
-        {user_database} = await get_prov cfg.prov, "number:#{user_id}"
+        {user_database} = await get_prov prov, "number:#{user_id}"
 
 Ready to send a notification
 
@@ -117,7 +119,7 @@ Collect the number of messages from the user's database.
 
 Collect the endpoint/via fields from the local number.
 
-        number_doc = await get_prov cfg.prov, "number:#{user.id}"
+        number_doc = await get_prov prov, "number:#{user.id}"
         return if number_doc.disabled
 
 * doc.local_number.endpoint_via (domain name string) If present, domain name used to route voicemail notifications via the SUBSCRIBE/PUBLISH mechanism. It is optional for dynamic endpoints (`<username>@<endpoint-domain>`) and required for static endpoints. Default: the domain of doc.local_number.endpoint (for dynamic endpoints), none for static endpoints.
@@ -157,9 +159,6 @@ Static endpoint
 
         debug 'send_notification_to done', user.id
         return
-
-      send_notification_to.end = ->
-        socket.close()
 
       debug 'Configured.'
       return
