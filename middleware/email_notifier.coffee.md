@@ -1,20 +1,19 @@
     Mustache = require 'mustache'
     {send_mail} = require 'foamy-organization/send-email'
+    CouchDB = require 'most-couchdb'
 
-    pkg = require '../package.json'
-    @name = "#{pkg.name}:middleware:email_notifier"
+    @name = "well-groomed-feast:middleware:email_notifier"
     debug = (require 'tangible') @name
     assert = require 'assert'
     {inspect} = require 'util'
     sleep = (timeout) -> new Promise (resolve) -> setTimeout resolve, timeout
+    ec = encodeURIComponent
 
     @include = ->
       cfg = @cfg
-      ctx = @
+      {voicemail_uri} = @
       cfg.notifiers ?= {}
       return if cfg.notifiers.email?
-
-      assert cfg.prov, 'Missing prov'
 
       unless cfg.mailer?.SMTP?
         debug 'Missing `mailer.SMTP`'
@@ -22,6 +21,13 @@
       unless cfg.voicemail?.sender?
         debug 'Missing `voicemail.sender`'
         return
+
+      prov = new CouchDB cfg.provisioning
+      prov.getAttachment = (_id,name) ->
+        uri = new URL ec(_id)+'/'+ec(name), @uri+'/'
+        @agent
+        .get uri.toString()
+        .then ({body}) -> body
 
 Template handling
 =================
@@ -56,7 +62,7 @@ Get templates
         await Promise.all (Object.keys default_templates).map (part) ->
           uri_name = [file_name, opts.language, part].join '.'
 
-          data = await cfg.prov
+          data = await prov
             .getAttachment opts.user.number_domain, uri_name
             .catch -> null
 
@@ -66,7 +72,7 @@ Get templates
 
 ### Templates in the provisioning database
 
-          data = await cfg.prov
+          data = await prov
             .getAttachment "config:voicemail", uri_name
             .catch (error) -> null
 
@@ -75,6 +81,7 @@ Get templates
             return
 
           template[part] = default_templates[part]
+          return
 
 Send email out
 ==============
@@ -100,7 +107,7 @@ FIXME: Migrate to new `node_mailer` conventions.
 
               email_options.attachments.push {
                 filename: name
-                path: ctx.voicemail_uri opts.user, msg._id, name, null, true
+                path: voicemail_uri opts.user, msg._id, name, null, true
                 contentType: data.content_type
               }
 
@@ -110,6 +117,8 @@ Delete record once all data has been emailed.
 
         if (opts.attach or opts.do_not_record) and opts.send_then_delete
           await opts.user.db.delete msg
+
+        return
 
 API wrapper
 ===========
@@ -128,7 +137,7 @@ FIXME: Sadly enough we don't have yet a way to be notified when the attachment m
 * doc.local_number.voicemail_sender (email address) Address used as the sender for voicemail notifications via email. See doc.voicemail_settings, doc.voicemail_settings.email_notifications . Default: cfg.voicemail.sender
 * cfg.voicemail.sender (email address) Address used as default the sender for voicemail notifications via email. See doc.voicemail_settings, doc.voicemail_settings.email_notifications .
 
-        number_doc = await cfg.prov.get "number:#{user.id}"
+        number_doc = await prov.get "number:#{user.id}"
         return if number_doc.disabled
         sender = number_doc.voicemail_sender ? cfg.voicemail.sender
         message = await user.db.get msg_id
@@ -159,3 +168,4 @@ We should only email about new messages.
 
       cfg.notifiers.email ?= send_notification_to
       debug 'Configured.'
+      return

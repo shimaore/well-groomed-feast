@@ -3,7 +3,6 @@
 
     url = require 'url'
     qs = require 'querystring'
-    seem = require 'seem'
 
     @config = ->
       if @cfg.userdb_base_uri?

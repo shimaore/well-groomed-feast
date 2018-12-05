@@ -2,7 +2,7 @@ Notify a specific URI
 =====================
 
     pkg = require '../package'
-    debug = (require 'tangible') "#{pkg.name}:notify"
+    {debug,foot} = (require 'tangible') "#{pkg.name}:notify"
 
     resolve = require './resolve'
 
@@ -23,18 +23,18 @@ We route based on the URI domain, as per RFC.
 Send notification packet to an URI at a given address and port
 ==============================================================
 
-    send_sip_notification = (socket,uri,to,new_messages,saved_messages,target_port,target_name) ->
+    send_sip_notification = foot (socket,uri,to,new_messages,saved_messages,target_port,target_name) ->
       debug 'Send SIP notification', {uri,target_port,target_name}
 
 [RFC3842](https://tools.ietf.org/html/rfc3842)
 
-      body = new Buffer """
+      body = Buffer.from """
         Message-Waiting: #{if new_messages > 0 then 'yes' else 'no'}
         Voice-Message: #{new_messages}/#{saved_messages}
 
       """
 
-      headers = new Buffer """
+      headers = Buffer.from """
         PUBLISH sip:#{uri} SIP/2.0
         Via: SIP/2.0/UDP #{target_name}:#{target_port};branch=0
         Max-Forwards: 2
@@ -49,10 +49,16 @@ Send notification packet to an URI at a given address and port
         \n
       """.replace /\n/g, "\r\n"
 
-      message = new Buffer headers.length + body.length
+      message = Buffer.allocUnsafe headers.length + body.length
       headers.copy message
       body.copy message, headers.length
 
-      socket.send message, 0, message.length, target_port, target_name
+      await new Promise (resolve,reject) ->
+        socket.send message, 0, message.length, target_port, target_name, (error) ->
+          if error
+            reject error
+          else
+            resolve()
+          return
       debug 'Sent SIP notification'
       return

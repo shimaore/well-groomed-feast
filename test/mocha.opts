@@ -1,2 +1,3 @@
 --reporter spec
 --require chai
+--check-leaks

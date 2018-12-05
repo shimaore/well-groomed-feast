@@ -1,26 +1,29 @@
     describe 'Middlewares', ->
+      m1 = require '../middleware/email_notifier'
+      m2 = require '../middleware/mwi_notifier'
+      m3 = require '../middleware/setup'
+      m4 = require '../middleware/voicemail'
 
       it 'email_notifier', ->
         @timeout 4000
-        m = require '../middleware/email_notifier'
         cfg =
-          prov:true
-        await m.include.apply {cfg}
+          provisioning:'http://127.0.0.1:5984/provisioning'
+        await m1.include.apply {cfg}
 
       it 'mwi_notifier', ->
         @timeout 4000
-        m = require '../middleware/mwi_notifier'
         cfg =
-          prov:true
-        await m.server_pre.call {cfg}, {cfg}
-        await m.include.call {cfg}, {cfg}
-        cfg.notifiers.mwi.end()
+          provisioning:'http://127.0.0.1:5984/provisioning'
+        await m2.server_pre.call {cfg}, {cfg}
+        await m2.include.call {cfg}, {cfg}
+        await m2.end()
 
       it 'setup', ->
-        m = require '../middleware/setup'
+        cfg = {}
+        await m3.config.call {cfg}, {cfg}
 
       it 'voicemail', ->
-        m = require '../middleware/voicemail'
+        await m4.include.call {}, {}
 
     describe 'Classes', ->
       it 'User', ->
