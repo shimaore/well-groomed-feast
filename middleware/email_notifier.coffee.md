@@ -27,6 +27,7 @@
         uri = new URL ec(_id)+'/'+ec(name), @uri+'/'
         @agent
         .get uri.toString()
+        .buffer true
         .then ({body}) -> body
 
 Template handling
