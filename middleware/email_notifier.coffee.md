@@ -114,11 +114,6 @@ FIXME: Migrate to new `node_mailer` conventions.
 
         await send_mail cfg, email_options
 
-Delete record once all data has been emailed.
-
-        if (opts.attach or opts.do_not_record) and opts.send_then_delete
-          await opts.user.db.delete msg
-
         return
 
 API wrapper
@@ -154,6 +149,9 @@ We should only email about new messages.
 
         settings = await user.db.get 'voicemail_settings'
         return unless settings.email_notifications
+
+        all_attached = true
+
         for email, params of settings.email_notifications
           p = send_email_notification message,
             email: email
@@ -165,7 +163,19 @@ We should only email about new messages.
             sender: sender
           await p.catch (error) ->
             debug "sendMail: #{inspect error}", message
+
+          all_attached = false if not params.attach_message
+
         debug 'send_notification: done'
+
+Delete record once all data has been emailed.
+
+        if (all_attached or settings.do_not_record) and opts.send_then_delete
+          message.box = 'trash'
+          await user.db.put message
+          debug 'moved message to trash'
+
+        return
 
       cfg.notifiers.email ?= send_notification_to
       debug 'Configured.'
