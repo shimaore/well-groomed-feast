@@ -170,7 +170,7 @@ We should only email about new messages.
 
 Delete record once all data has been emailed.
 
-        if (all_attached or settings.do_not_record) and opts.send_then_delete
+        if (all_attached or settings.do_not_record) and settings.send_then_delete
           message.box = 'trash'
           await user.db.put message
           debug 'moved message to trash'
