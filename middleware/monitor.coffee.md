@@ -2,7 +2,7 @@
 
     pkg = require '../package'
     @name = "#{pkg.name}:middleware:monitor"
-    {debug,heal} = (require 'tangible') @name
+    {debug,heal,foot} = (require 'tangible') @name
 
     request = require 'superagent'
     CouchDB = require 'most-couchdb'
@@ -11,39 +11,14 @@
 
     set_security = require '../lib/set-security'
 
-The couchapp used in the (local) provisioning database to monitor changes.
-
-    id = "#{@name}-#{pkg.version}"
-    couchapp =
-      _id: "_design/#{id}"
-      id: id
-      filters:
-        numbers: p_fun (doc,req) ->
-          return false unless doc.type is 'number'
-          doc.default_voicemail_settings? or doc.user_database?
-
-        number_domains: p_fun (doc,req) ->
-          return false unless doc.type is 'number_domain'
-          doc.fifos?.some (fifo) -> fifo.default_voicemail_settings? or fifo.user_database?
-
 The couchapp inserted in the user's database, contains the views used by the voicemail application.
 
     user_app = require '../src/couchapp'
 
-Initial configuration
----------------------
-
-    config = (cfg) ->
-
-Install the couchapp in the (local) provisioning database.
-
-      debug "config: push couchapp"
-      await cfg.push couchapp
-
 Individual user database changes
 --------------------------------
 
-    monitored = (cfg,doc,data = doc) ->
+    monitored = (cfg,doc,data) ->
 
       {default_voicemail_settings,user_database} = data
 
@@ -63,7 +38,7 @@ If no user-database is specified (but a set of default voicemail settings is pre
         debug 'Setting user_database', doc
         await cfg.master_push(doc).catch (error) ->
           return if error.status is 409
-          debug "monitored: setting user_database: #{error}"
+          debug.dev "monitored: setting user_database: #{error}"
 
 We exit at this point because updating the document will trigger a new `change` event.
 
@@ -85,7 +60,7 @@ Create / access the user database.
 
       target_db = new CouchDB target_db_uri, true
       debug 'Creating target database', target_db_uri
-      await target_db.create().catch -> yes
+      await heal target_db.create()
       await target_db.info()
 
 It's OK if the database already exists.
@@ -159,55 +134,46 @@ Startup
       if cfg.voicemail?.monitoring is false
         return
 
-      debug 'Starting monitor.'
-
-      await config cfg
-        .catch (error) ->
-          debug "config: #{error.stack ? error}"
-          run cfg
-
       debug 'Starting changes listener'
       prov = new CouchDB cfg.provisioning
 
       on_change = (doc,data) ->
         if typeof cfg.voicemail?.monitoring is 'number'
           await sleep cfg.voicemail?.monitoring
-        monitored cfg, doc, data
+        await monitored cfg, doc, data
 
-      main = ->
-        prov.changes
-          live: true
-          filter: "#{couchapp.id}/numbers"
+      changes = prov
+        .changes
           include_docs: true
-          since: 'now'
-        .observe ({doc}) ->
-          on_change doc
-          return
-        .catch (error) ->
-          debug "(main) changes: #{error.stack ? error}"
-          do main
-          return
+        .map ({doc}) -> doc
+
+      main1 = ->
+        while true
+          s = changes
+            .filter (doc) ->
+              return false unless doc.type is 'number'
+              doc.default_voicemail_settings? or doc.user_database?
+            .observe foot (doc) ->
+              await on_change doc, doc
+              return
+          await heal '(main1) changes', s
+        return
 
       main2 = ->
-        prov.changes
-          live: true
-          filter: "#{couchapp.id}/number_domains"
-          include_docs: true
-          since: 'now'
-        .observe ({doc}) ->
-          return unless doc.fifos?
-          for fifo in doc.fifos when fifo.default_voicemail_settings? or fifo.user_database?
-            do (doc,fifo) ->
-              on_change doc, fifo
-              .catch (error) ->
-                debug "on_change: #{error.stack ? error}"
-          return
-        .catch (error) ->
-          debug "(main2) changes: #{error.stack ? error}"
-          do main2
-          return
+        while true
+          s = changes
+            .filter (doc) ->
+              return false unless doc.type is 'number_domain'
+              doc.fifos?.some (fifo) -> fifo.default_voicemail_settings? or fifo.user_database?
+            .observe foot ({doc}) ->
+              return unless doc.fifos?
+              for fifo in doc.fifos when fifo.default_voicemail_settings? or fifo.user_database?
+                await on_change doc, fifo
+              return
+          await heal '(main2) changes', s
+        return
 
-      do main
+      do main1
       do main2
       debug 'Ready'
 
