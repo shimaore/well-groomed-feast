@@ -23,12 +23,16 @@
         return
 
       prov = new CouchDB cfg.provisioning
-      prov.getAttachment = (_id,name) ->
+
+For 'application/octet-stream', `text` is undefined and `body` contains a Buffer.
+For 'text/html', body is `{}` and text contains a string.
+
+      prov.getTextAttachment = (_id,name) ->
         uri = new URL ec(_id)+'/'+ec(name), @uri+'/'
         @agent
         .get uri.toString()
         .buffer true
-        .then ({body}) -> body
+        .then ({text,body}) -> text ? body?.toString()
 
 Template handling
 =================
@@ -64,21 +68,21 @@ Get templates
           uri_name = [file_name, opts.language, part].join '.'
 
           data = await prov
-            .getAttachment opts.user.number_domain, uri_name
+            .getTextAttachment opts.user.number_domain, uri_name
             .catch -> null
 
           if data?
-            template[part] = data.toString()
+            template[part] = data
             return
 
 ### Templates in the provisioning database
 
           data = await prov
-            .getAttachment "config:voicemail", uri_name
+            .getTextAttachment "config:voicemail", uri_name
             .catch (error) -> null
 
           if data?
-            template[part] = data.toString()
+            template[part] = data
             return
 
           template[part] = default_templates[part]
