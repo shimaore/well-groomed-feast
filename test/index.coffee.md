@@ -40,9 +40,3 @@
         m = require '../src/couchapp'
       it 'monitor', ->
         m = require '../middleware/monitor'
-      it 'resolve', ->
-        m = require '../lib/resolve'
-      it 'get_prov', ->
-        m = require '../lib/get_prov'
-      it 'notify', ->
-        m = require '../lib/notify'

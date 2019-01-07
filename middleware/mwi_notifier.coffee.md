@@ -4,7 +4,6 @@
     {debug,foot} = (require 'tangible') @name
     trace = ->
     User = require '../src/User'
-    Parser = require 'jssip/lib/Parser'
     CouchDB = require 'most-couchdb'
 
     send_notification_to = null
@@ -14,17 +13,14 @@
       @cfg.notifiers.mwi ?= send_notification_to
       null
 
-    get_prov = require '../lib/get_prov'
-    notify = require '../lib/notify'
+    get_prov = require 'five-toes/get-prov'
+    message_summary = require 'five-toes/message-summary'
+    ccnq4_resolve = require 'five-toes/ccnq4-resolve'
+    ccnq4_receiver = require 'five-toes/ccnq4-receiver'
+    SIPSender = require 'five-toes/sip-sender'
 
     socket = dgram.createSocket 'udp4'
-
-    socket.on 'error', (error) ->
-      debug.dev "Socket error: #{error}"
-
-    socket.once 'listening', ->
-      address = socket.address()
-      debug "Listening for SUBSCRIBE messages on #{address.address}:#{address.port}"
+    sender = new SIPSender socket
 
     @end = ->
       socket.close()
@@ -34,38 +30,10 @@
       debug 'server_pre'
 
       prov = new CouchDB cfg.provisioning
+      receive = ccnq4_receiver cfg
+      resolve = ccnq4_resolve cfg
 
-      socket.on 'message', (msg,rinfo) ->
-        debug "Received #{msg.length} bytes message from #{rinfo.address}:#{rinfo.port}"
-
-        content = msg.toString 'ascii'
-        trace 'Received message', content
-
-        ua = {}
-
-The parser returns an IncomingRequest for a SUBSCRIBE message.
-
-        request = Parser.parseMessage content, ua
-        return unless request? and request.method is 'SUBSCRIBE' and request.event?.event is 'message-summary'
-
-Try to recover the number and the endpoint from the message.
-
-        number = request.ruri?.user ? request.from?.uri?.user
-        endpoint = request.headers['X-En']?[0]?.raw
-
-        trace 'SUBSCRIBE', {number, endpoint}
-
-        return unless number? and endpoint?
-
-Recover the number-domain from the endpoint.
-
-        {number_domain} = await get_prov prov, "endpoint:#{endpoint}"
-
-        user_id = "#{number}@#{number_domain}"
-
-        trace 'SUBSCRIBE', {number_domain,user_id}
-
-        return unless number_domain?
+      receive socket, ({user_id}) ->
 
 Recover the local-number's user-database.
 
@@ -95,7 +63,6 @@ Create a User object and use it to send the notification.
         debug "SUBSCRIBE done"
         return
 
-
 Start socket
 ------------
 
@@ -117,47 +84,18 @@ Collect the number of messages from the user's database.
         saved_messages = rows.length
         trace 'send_notification_to', {new_messages,saved_messages}
 
+        content = message_summary new_messages, saved_messages
+
 Collect the endpoint/via fields from the local number.
 
-        number_doc = await get_prov prov, "number:#{user.id}"
-        return if number_doc.disabled
+        dest = await resolve user.id
 
 * doc.local_number.endpoint_via (domain name string) If present, domain name used to route voicemail notifications via the SUBSCRIBE/PUBLISH mechanism. It is optional for dynamic endpoints (`<username>@<endpoint-domain>`) and required for static endpoints. Default: the domain of doc.local_number.endpoint (for dynamic endpoints), none for static endpoints.
 * doc.local_number.endpoint (endpoint name string) If `<username>@<endpoint-domain>`, used for routing voicemail notifications va the SUBSCRIBE/PUBLISH mechanism, unless doc.local_number.endpoint_via is specified. If `<endpoint-domain>` (for static endpoints), domain name used as destination for voicemail notifications, while routing is done using the doc.local_number.endpoint_via domain name.
 
-        via = number_doc.endpoint_via
+        await sender.publish dest, content
 
-Use the endpoint name and via to route the packet.
-
-        endpoint = number_doc.endpoint
-
-        trace 'send_notification_to', {via,endpoint}
-
-        return unless endpoint?
-
-Registered endpoint
-
-        if m = endpoint.match /^([^@]+)@([^@]+)$/
-          to = endpoint
-          if via?
-            uri = [m[1],via].join '@'
-          else
-            uri = endpoint
-          debug 'Notifying endpoint', {endpoint,uri,to}
-          await notify socket, uri, to, new_messages, saved_messages
-
-Static endpoint
-
-        else
-          if via?
-            to = [user.id,endpoint].join '@'
-            uri = [user.id,via].join '@'
-            debug 'Notifying endpoint', {endpoint,uri,to}
-            await notify socket, uri, to, new_messages, saved_messages
-          else
-            debug 'No `via` for static endpoint, skipping.'
-
-        debug 'send_notification_to done', user.id
+        trace 'send_notification_to: done', user.id
         return
 
       debug 'Configured.'
