@@ -38,5 +38,3 @@
     describe 'Other', ->
       it 'couchapp', ->
         m = require '../src/couchapp'
-      it 'monitor', ->
-        m = require '../middleware/monitor'
