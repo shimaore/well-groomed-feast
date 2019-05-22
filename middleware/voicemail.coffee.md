@@ -25,7 +25,7 @@ In any case closing too early will cause issues with email notifications.
       debug 'finish'
       handler = ->
         debug 'finish - closing db'
-        await user?.close_db()
+        try await user?.close_db()
         user = null
       setTimeout handler, close_delay
 

@@ -345,7 +345,8 @@ Default navigation is: read next message or return to the main menu
           await @ctx.prompt.phrase 'vm_say,too short'
           @record_something that,phrase
         else
-          @ctx.prompt.phrase 'vm_say,thank you'
+          await @ctx.prompt.phrase 'vm_say,thank you'
+        return
 
       record_greeting: ->
         debug 'record_greeting'
@@ -379,7 +380,8 @@ Default navigation is: read next message or return to the main menu
         vm_settings.pin = new_pin
         await @db.put vm_settings
         delete @vm_settings # remove memoized value
-        @ctx.prompt.phrase 'vm_say,thank you'
+        await @ctx.prompt.phrase 'vm_say,thank you'
+        return
 
     module.exports = User
     pkg = require '../package.json'
