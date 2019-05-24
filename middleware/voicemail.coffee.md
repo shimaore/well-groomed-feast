@@ -14,7 +14,7 @@ by FreeSwitch) which can then be transcoded.
 
     pkg = require '../package.json'
     @name = "#{pkg.name}:middleware:voicemail"
-    {debug,heal} = (require 'tangible') @name
+    {debug} = (require 'tangible') @name
 
 `esl` will wait 4000ms, while our own `Message` will wait 3000ms.
 In any case closing too early will cause issues with email notifications.
@@ -60,7 +60,6 @@ In any case closing too early will cause issues with email notifications.
 
           catch error
             debug.error 'inbox', error
-            heal @prompt.error 'VM-61'
 
           finally
             finish user
@@ -85,7 +84,6 @@ In any case closing too early will cause issues with email notifications.
 
           catch error
             debug.error 'main', error
-            heal @prompt.error 'VM-85'
 
           finally
             finish user
@@ -113,7 +111,6 @@ In any case closing too early will cause issues with email notifications.
 
           catch error
             debug.error 'default', error
-            heal @prompt.error 'VM-61'
 
           finally
 
