@@ -13,24 +13,12 @@ User
         [@number,@number_domain] = @id.split '@'
         @db = new CouchDB @db_uri, true
 
-Extend most-couchdb, adding `removeAttachment`.
-
-        @db.removeAttachment = (_id,_rev,name) ->
-          uri = new URL "#{ec(_id)}/#{ec(name)}", @uri+'/'
-          uri.searchParams.set 'rev', _rev
-          @agent
-          .delete uri.toString()
-          .accept 'json'
-          .then ({body}) -> body
-
 Inject the views into the database.
 Note: this requires the application to be database admin, which is OK.
 
       init_db: ->
         debug 'init_db'
-        doc = await @db.get(couchapp._id).catch -> {}
-        doc[k] = v for own k,v of couchapp
-        await @db.put(doc).catch -> true
+        await @db.update couchapp
         return
 
       close_db: ->
@@ -389,7 +377,7 @@ Default navigation is: read next message or return to the main menu
     assert = require 'assert'
 
     moment = require 'moment-timezone'
-    CouchDB = require 'most-couchdb'
+    CouchDB = require 'most-couchdb/with-update'
     ec = encodeURIComponent
     {URL} = require 'url'
     Message = require './Message'

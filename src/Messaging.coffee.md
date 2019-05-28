@@ -1,8 +1,6 @@
     class Messaging
       constructor: (@ctx) ->
-        assert @ctx.cfg.provisioning?, 'Missing @ctx.cfg.provisioning'
-        @prov = new CouchDB @ctx.cfg.provisioning
-        assert @ctx.cfg.userdb_base_uri?, 'Missing @ctx.cfg.userdb_base_uri'
+        @prov = new CouchDB (Nimble @ctx.cfg).provisioning
 
 Gather a customer phone number and locate that record.
 
@@ -163,3 +161,4 @@ Note: `userdb_base_uri` must contain authentication elements (e.g. "voicemail" u
     assert = require 'assert'
     User = require './User'
     CouchDB = require 'most-couchdb'
+    Nimble = require 'nimble-direction'

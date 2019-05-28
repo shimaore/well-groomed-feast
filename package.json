@@ -30,8 +30,9 @@
     "foamy-organization": "^1.1.0",
     "lru-cache": "^5.1.1",
     "moment-timezone": "^0.5.23",
-    "most-couchdb": "^1.5.1",
+    "most-couchdb": "^3.2.0",
     "mustache": "^3.0.1",
+    "nimble-direction": "^9.0.1",
     "tangible": "^3.0.0"
   },
   "devDependencies": {

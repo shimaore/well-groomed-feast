@@ -110,13 +110,12 @@ Delete parts
         debug 'delete_single_part', this_part
         doc = await @user.db.get @id
         doc.durations ?= {}
-        for format in @format
-          name = "part#{this_part}.#{format}"
+        while name = Formats.find doc, "part#{this_part}"
           delete doc.durations[name] if name of doc.durations
           doc.duration = sum_of doc.durations
           {rev} = await @user.db.put doc
-          @user.db
-            .removeAttachment @id, name, rev
+          await @user.db
+            .deleteAttachment @id, name, rev
             .catch (error) ->
               debug "remove attachment: #{error}", {@id,name,rev}
         return
