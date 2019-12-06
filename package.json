@@ -32,7 +32,7 @@
     "moment-timezone": "^0.5.23",
     "most-couchdb": "^3.2.0",
     "mustache": "^3.0.1",
-    "nimble-direction": "^9.0.2",
+    "nimble-direction": "^9.1.0",
     "tangible": "^3.0.0"
   },
   "devDependencies": {
