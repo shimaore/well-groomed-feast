@@ -1,6 +1,7 @@
     Mustache = require 'mustache'
     {send_mail} = require 'foamy-organization/send-email'
     CouchDB = require 'most-couchdb'
+    Nimble = require 'nimble-direction'
 
     @name = "well-groomed-feast:middleware:email_notifier"
     debug = (require 'tangible') @name
@@ -22,7 +23,7 @@
         debug 'Missing `voicemail.sender`'
         return
 
-      prov = new CouchDB cfg.provisioning
+      prov = new CouchDB (Nimble cfg).provisioning
 
 For 'application/octet-stream', `text` is undefined and `body` contains a Buffer.
 For 'text/html', body is `{}` and text contains a string.

@@ -5,6 +5,7 @@
     trace = ->
     User = require '../src/User'
     CouchDB = require 'most-couchdb'
+    Nimble = require 'nimble-direction'
 
     send_notification_to = null
 
@@ -26,7 +27,7 @@
       socket.close()
 
     @server_pre = (ctx) ->
-      {cfg} = ctx
+      cfg = Nimble ctx.cfg
       debug 'server_pre'
 
       prov = new CouchDB cfg.provisioning
